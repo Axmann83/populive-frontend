@@ -2,9 +2,6 @@ import { useState, useEffect, useCallback } from 'react';
 
 const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:3000';
 
-// ------------------------------------------------------------
-// 1) INVIO
-// ------------------------------------------------------------
 export function RosaSend({ senderId, receiverId, arenaSessionId, venueId, onSent, onCancel }) {
   const [drinks, setDrinks] = useState([]);
   const [selectedDrink, setSelectedDrink] = useState(null);
@@ -102,9 +99,6 @@ function reasonToMessage(reason) {
   return messages[reason] || 'Invio non riuscito — riprova.';
 }
 
-// ------------------------------------------------------------
-// 2) NOTIFICA DI RICEZIONE — le tre varianti
-// ------------------------------------------------------------
 export function RosaNotification({ rosa, currentUserId, arenaSessionId, onResolved }) {
   const [loading, setLoading] = useState(false);
   const [showGuessGame, setShowGuessGame] = useState(false);
@@ -187,11 +181,7 @@ export function RosaNotification({ rosa, currentUserId, arenaSessionId, onResolv
   );
 }
 
-// ------------------------------------------------------------
-// 3) MINIGIOCO — indovina chi ti ha inviato la Rosa+Like
-// ------------------------------------------------------------
 export function RosaGuessGame({ rosaId, currentUserId, candidates, onFinished, redeemCode }) {
-  const [remaining, setRemaining] = useState(null);
   const [message, setMessage] = useState('Hai tot tentativi per provare a scoprire chi è.');
 
   async function guess(guessedUserId) {
@@ -213,7 +203,6 @@ export function RosaGuessGame({ rosaId, currentUserId, candidates, onFinished, r
       setMessage('Tentativi esauriti — la Rosa resta tua, il mittente rimane un mistero.');
       setTimeout(() => onFinished({ matched: false }), 1500);
     } else {
-      setRemaining(data.attemptsRemaining);
       setMessage(`Non era lui/lei — ${data.attemptsRemaining} tentativi rimasti.`);
     }
   }
@@ -237,9 +226,6 @@ export function RosaGuessGame({ rosaId, currentUserId, candidates, onFinished, r
   );
 }
 
-// ------------------------------------------------------------
-// 4) RISCATTO AL BANCONE — sigillo con timer, mostrato al bartender
-// ------------------------------------------------------------
 export function RosaRedeemSeal({ rosaId, redeemCode, onDone }) {
   const [state, setState] = useState('idle');
   const [secondsLeft, setSecondsLeft] = useState(30);

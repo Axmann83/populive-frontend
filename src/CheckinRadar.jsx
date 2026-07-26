@@ -107,7 +107,7 @@ export default function CheckinRadar({ userId, venueId, onArenaSession }) {
       setStatus('error');
       setErrorReason('network_error');
     }
-  }, [userId, venueId, socketInstance]);
+  }, [userId, venueId, socketInstance, onArenaSession]);
 
   if (status === 'idle' || status === 'checking_in') {
     return (

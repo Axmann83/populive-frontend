@@ -4,7 +4,7 @@ import { io } from 'socket.io-client';
 import ProfileCreation from './ProfileCreation';
 import CheckinRadar from './CheckinRadar';
 import LiveRanking from './LiveRanking';
-import { RosaSend, RosaNotification } from './RosaFlow';
+import { RosaNotification } from './RosaFlow';
 import ChatWindow from './ChatWindow';
 import Settings from './Settings';
 import MyRoses from './MyRoses';

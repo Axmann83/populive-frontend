@@ -15,24 +15,10 @@ import './populive-styles.css';
 
 const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:3000';
 
-/**
- * ============================================================
- * POPULIVE — SHELL DELL'APP
- * ============================================================
- * Tiene insieme tutto quello che abbiamo scritto finora come
- * componenti separati. Gestisce:
- *   - chi sei (userId, salvato dopo l'onboarding)
- *   - dove sei (venueId/arenaSessionId, dopo il check-in)
- *   - la barra di navigazione in basso (radar/classifica/rose/profilo)
- *   - gli eventi WebSocket "trasversali" che possono capitare in
- *     qualunque schermata (rosa_received, chat_unlocked) e che
- *     aprono un overlay sopra qualunque cosa tu stia guardando
- * ============================================================
- */
 export default function App() {
   const [userId, setUserId] = useState(() => localStorage_safe_get('pl_user_id'));
   const [onboarded, setOnboarded] = useState(!!userId);
-  const [venueId] = useState('demo-venue-id'); // in produzione: scelto dallo scan del QR d'ingresso
+  const [venueId] = useState('f923e9c8-c47f-40d6-a4b8-98afe38d43cc');
   const [arenaSessionId, setArenaSessionId] = useState(null);
 
   const [activeTab, setActiveTab] = useState('radar');
@@ -42,12 +28,6 @@ export default function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [showExploreMap, setShowExploreMap] = useState(false);
 
-  // --------------------------------------------------------
-  // Connessione WebSocket "trasversale" — indipendente dalla
-  // schermata attiva, cattura eventi che possono arrivare in
-  // qualunque momento (una Rosa può arrivare mentre guardi la
-  // classifica, non solo mentre sei sul radar).
-  // --------------------------------------------------------
   useEffect(() => {
     if (!onboarded || !userId) return;
     const socket = io(API_BASE);
@@ -59,9 +39,6 @@ export default function App() {
     });
 
     socket.on('chat_unlocked', (payload) => {
-      // Non forziamo l'apertura della chat: la persona potrebbe
-      // essere nel mezzo di un'altra azione. Segnaliamo solo che
-      // è disponibile (badge/notifica), l'apertura resta una sua scelta.
       setActiveChatConversationId((prev) => prev || payload.conversationId);
     });
 
@@ -152,7 +129,6 @@ export default function App() {
         <NavItem icon="🙂" label="Profilo" active={activeTab === 'profilo'} onClick={() => setActiveTab('profilo')} />
       </div>
 
-      {/* Overlay Esplora Locali */}
       {showExploreMap && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 50 }}>
           <div style={{ width: '100%', maxWidth: 420, background: 'var(--surface)', borderRadius: '24px 24px 0 0', padding: 20, maxHeight: '85vh', overflowY: 'auto' }}>
@@ -161,7 +137,6 @@ export default function App() {
         </div>
       )}
 
-      {/* Overlay Impostazioni — richiamabile in ogni momento dal profilo */}
       {showSettings && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 50 }}>
           <div style={{ width: '100%', maxWidth: 420, background: 'var(--surface)', borderRadius: '24px 24px 0 0', padding: 20 }}>
@@ -170,9 +145,6 @@ export default function App() {
         </div>
       )}
 
-      {/* Overlay "trasversale": una Rosa può arrivare mentre sei
-          su qualunque tab, la mostriamo sopra a tutto finché non
-          viene gestita. */}
       {pendingRosaNotification && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 50 }}>
           <div style={{ width: '100%', maxWidth: 420, background: 'var(--surface)', borderRadius: '24px 24px 0 0', padding: 20 }}>
@@ -202,13 +174,6 @@ function NavItem({ icon, label, active, onClick, badge }) {
   );
 }
 
-/**
- * Teaser "in arrivo" per le funzionalità di business già progettate
- * a fondo ma non ancora scritte in codice (missioni sponsorizzate,
- * bacheca storica) — stesso trattamento già dato al Wallet, utile
- * per mostrare la visione completa del prodotto a settembre/ottobre
- * senza dover aspettare di averle costruite per davvero.
- */
 function ComingSoonSection() {
   const items = [
     { icon: '🎯', title: 'Missioni Sponsorizzate', sub: 'I brand potranno invitarti, con una notifica geolocalizzata, a visitare un loro punto vendita per ottenere punti bonus — sempre con il tuo consenso esplicito.' },
@@ -231,8 +196,6 @@ function ComingSoonSection() {
   );
 }
 
-// localStorage non è sempre disponibile (es. render lato server) —
-// piccoli helper "sicuri" per non far crashare l'app in quei casi.
 function localStorage_safe_get(key) {
   try { return localStorage.getItem(key); } catch { return null; }
 }

@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:3000';
 
 export default function MyProfile({ userId, arenaSessionId, onOpenSettings }) {
-  const [profile, setProfile] = useState(null);
   const [ranking, setRanking] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -11,16 +10,11 @@ export default function MyProfile({ userId, arenaSessionId, onOpenSettings }) {
     let cancelled = false;
     async function load() {
       setLoading(true);
-      const [profileRes, rankingRes] = await Promise.all([
-        fetch(`${API_BASE}/api/profile/${userId}/settings`, { headers: { 'x-user-id': userId } }),
-        fetch(`${API_BASE}/api/users/${userId}/ranking-summary?arenaSessionId=${arenaSessionId || ''}`, {
-          headers: { 'x-user-id': userId },
-        }),
-      ]);
-      const profileData = await profileRes.json();
+      const rankingRes = await fetch(`${API_BASE}/api/users/${userId}/ranking-summary?arenaSessionId=${arenaSessionId || ''}`, {
+        headers: { 'x-user-id': userId },
+      });
       const rankingData = await rankingRes.json();
       if (!cancelled) {
-        if (profileData.success) setProfile(profileData.settings);
         if (rankingData.success) setRanking(rankingData.summary);
       }
       setLoading(false);

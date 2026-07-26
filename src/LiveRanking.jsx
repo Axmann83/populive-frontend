@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { io } from 'socket.io-client';
 
 const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:3000';
@@ -7,7 +7,6 @@ export default function LiveRanking({ arenaSessionId, currentUserId, isGlobal })
   const [ranking, setRanking] = useState([]);
   const [loading, setLoading] = useState(true);
   const [recentDeltas, setRecentDeltas] = useState({});
-  const prevPositions = useRef({});
 
   useEffect(() => {
     let cancelled = false;

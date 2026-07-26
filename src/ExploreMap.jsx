@@ -1,5 +1,3 @@
-import { useState } from 'react';
-
 const DEMO_VENUES = [
   { id: 1, name: 'Piper Club', area: 'Roma · Parioli', people: 87, men: 52, women: 48, popularity: 78, ambassador: { name: 'Elena', hashtag: '#fitness' } },
   { id: 2, name: 'Shari Vari', area: 'Roma · Trastevere', people: 134, men: 44, women: 56, popularity: 91, ambassador: null },

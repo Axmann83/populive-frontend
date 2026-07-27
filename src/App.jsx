@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { io } from 'socket.io-client';
 
+import Login from './Login';
 import ProfileCreation from './ProfileCreation';
 import CheckinRadar from './CheckinRadar';
 import LiveRanking from './LiveRanking';
@@ -10,14 +11,14 @@ import Settings from './Settings';
 import MyRoses from './MyRoses';
 import MyProfile from './MyProfile';
 import ExploreMap from './ExploreMap';
+import { API_BASE, apiFetch, getToken, getStoredUserId, clearSession } from './apiClient';
 
 import './populive-styles.css';
 
-const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:3000';
-
 export default function App() {
-  const [userId, setUserId] = useState(() => localStorage_safe_get('pl_user_id'));
-  const [onboarded, setOnboarded] = useState(!!userId);
+  const [authState, setAuthState] = useState('checking');
+  const [userId, setUserId] = useState(null);
+
   const [venueId] = useState('f923e9c8-c47f-40d6-a4b8-98afe38d43cc');
   const [arenaSessionId, setArenaSessionId] = useState(null);
 
@@ -29,7 +30,33 @@ export default function App() {
   const [showExploreMap, setShowExploreMap] = useState(false);
 
   useEffect(() => {
-    if (!onboarded || !userId) return;
+    async function checkExistingSession() {
+      const token = getToken();
+      const storedUserId = getStoredUserId();
+      if (!token || !storedUserId) {
+        setAuthState('login');
+        return;
+      }
+      try {
+        const res = await apiFetch('/api/auth/me');
+        const data = await res.json();
+        if (data.success) {
+          setUserId(data.userId);
+          setAuthState(data.onboardingCompleted ? 'app' : 'onboarding');
+        } else {
+          clearSession();
+          setAuthState('login');
+        }
+      } catch {
+        clearSession();
+        setAuthState('login');
+      }
+    }
+    checkExistingSession();
+  }, []);
+
+  useEffect(() => {
+    if (authState !== 'app' || !userId) return;
     const socket = io(API_BASE);
     socket.emit('join_private_room', { userId });
 
@@ -43,15 +70,41 @@ export default function App() {
     });
 
     return () => socket.disconnect();
-  }, [onboarded, userId]);
+  }, [authState, userId]);
 
-  const handleOnboardingComplete = useCallback((newUserId) => {
-    localStorage_safe_set('pl_user_id', newUserId);
+  const handleLoggedIn = useCallback((newUserId, isNewUser, onboardingCompleted) => {
     setUserId(newUserId);
-    setOnboarded(true);
+    setAuthState(onboardingCompleted ? 'app' : 'onboarding');
   }, []);
 
-  if (!onboarded) {
+  const handleOnboardingComplete = useCallback(() => {
+    setAuthState('app');
+  }, []);
+
+  if (authState === 'checking') {
+    return (
+      <div className="pl-app-shell">
+        <div className="pl-content" style={{ paddingTop: 40, textAlign: 'center' }}>
+          <div className="pl-hint">Caricamento…</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (authState === 'login') {
+    return (
+      <div className="pl-app-shell">
+        <div className="pl-content" style={{ paddingTop: 20 }}>
+          <div className="pl-brand" style={{ justifyContent: 'center', marginBottom: 20 }}>
+            Popu<span className="pl-brand-live">Live</span>
+          </div>
+          <Login onLoggedIn={handleLoggedIn} />
+        </div>
+      </div>
+    );
+  }
+
+  if (authState === 'onboarding') {
     return (
       <div className="pl-app-shell">
         <div className="pl-content" style={{ paddingTop: 20 }}>
@@ -194,11 +247,4 @@ function ComingSoonSection() {
       ))}
     </div>
   );
-}
-
-function localStorage_safe_get(key) {
-  try { return localStorage.getItem(key); } catch { return null; }
-}
-function localStorage_safe_set(key, value) {
-  try { localStorage.setItem(key, value); } catch { /* ignorato */ }
 }

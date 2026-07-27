@@ -1,7 +1,16 @@
 import { useState, useEffect, useCallback } from 'react';
 
-const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:3000';
+import { apiFetch } from './apiClient';
 
+/**
+ * ============================================================
+ * POPULIVE — LE TUE ROSE (componente reale)
+ * ============================================================
+ * Lista di tutte le Rose ricevute. Quelle ancora "pending" si
+ * possono toccare per riaprire la stessa schermata di decisione
+ * (RosaNotification) che si vede quando arrivano in tempo reale.
+ * ============================================================
+ */
 export default function MyRoses({ userId, onOpenRosa }) {
   const [roses, setRoses] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -9,9 +18,7 @@ export default function MyRoses({ userId, onOpenRosa }) {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/api/users/${userId}/roses`, {
-        headers: { 'x-user-id': userId },
-      });
+      const res = await apiFetch(`/api/users/${userId}/roses`);
       const data = await res.json();
       if (data.success) setRoses(data.roses);
     } catch (err) {

@@ -1,8 +1,19 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { io } from 'socket.io-client';
 
-const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:3000';
+import { API_BASE, apiFetch } from './apiClient';
 
+/**
+ * ============================================================
+ * POPULIVE — CHAT 1-A-1 (componente reale)
+ * ============================================================
+ * Si apre quando arriva l'evento 'chat_unlocked' (v. i tre punti
+ * di sblocco lato server: Rosa+Superlike, match nel minigioco,
+ * Superlike semplice accettato). Chiusa a fine sessione: se
+ * isClosed è true, il campo di scrittura si disabilita, ma la
+ * cronologia resta leggibile finché la schermata è aperta.
+ * ============================================================
+ */
 export default function ChatWindow({ conversationId, currentUserId, otherUserName }) {
   const [messages, setMessages] = useState([]);
   const [isClosed, setIsClosed] = useState(false);
@@ -15,9 +26,7 @@ export default function ChatWindow({ conversationId, currentUserId, otherUserNam
   useEffect(() => {
     let cancelled = false;
     async function load() {
-      const res = await fetch(`${API_BASE}/api/chat/${conversationId}/messages`, {
-        headers: { 'x-user-id': currentUserId },
-      });
+      const res = await apiFetch(`/api/chat/${conversationId}/messages`);
       const data = await res.json();
       if (!cancelled && data.success) {
         setMessages(data.messages);
@@ -66,9 +75,9 @@ export default function ChatWindow({ conversationId, currentUserId, otherUserNam
       id: `local-${Date.now()}`, sender_id: currentUserId, body, created_at: new Date().toISOString(),
     }]);
 
-    await fetch(`${API_BASE}/api/chat/${conversationId}/messages`, {
+    await apiFetch(`/api/chat/${conversationId}/messages`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-user-id': currentUserId },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ body }),
     });
   }, [draft, isClosed, conversationId, currentUserId]);
@@ -76,9 +85,9 @@ export default function ChatWindow({ conversationId, currentUserId, otherUserNam
   const toggleKeep = useCallback(async () => {
     const newValue = !myWantsKeep;
     setMyWantsKeep(newValue);
-    const res = await fetch(`${API_BASE}/api/chat/${conversationId}/keep-preference`, {
+    const res = await apiFetch(`/api/chat/${conversationId}/keep-preference`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-user-id': currentUserId },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ wantsKeep: newValue }),
     });
     const data = await res.json();

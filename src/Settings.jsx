@@ -10,12 +10,17 @@ export default function Settings({ userId, onClose }) {
   useEffect(() => {
     let cancelled = false;
     async function load() {
-      const res = await fetch(`${API_BASE}/api/profile/${userId}/settings`, {
-        headers: { 'x-user-id': userId },
-      });
-      const data = await res.json();
-      if (!cancelled && data.success) setSettings(data.settings);
-      setLoading(false);
+      try {
+        const res = await fetch(`${API_BASE}/api/profile/${userId}/settings`, {
+          headers: { 'x-user-id': userId },
+        });
+        const data = await res.json();
+        if (!cancelled && data.success) setSettings(data.settings);
+      } catch (err) {
+        console.error('Errore nel caricamento delle impostazioni:', err);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
     }
     load();
     return () => { cancelled = true; };

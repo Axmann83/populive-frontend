@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { apiFetch } from './apiClient';
 
 /**
  * ============================================================
@@ -9,17 +10,16 @@ import { useState } from 'react';
  *   2) Foto (upload verso storage esterno, qui solo l'URL risultante)
  *   3) Schermata di consenso — MAI saltabile, mai un malus per chi
  *      sceglie il minimo, solo bonus per chi condivide di più
- * Solo dopo il passaggio 3 l'utente può usare il resto dell'app
- * (il "cancello" requireOnboarded lato server blocca tutto prima).
+ * L'identità dell'utente arriva dal token (v. apiClient.js), non
+ * più da un ID passato a mano — l'account esiste già dal momento
+ * della verifica del codice SMS.
  * ============================================================
  */
 
-const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:3000';
 const MAX_HASHTAGS = 5;
 
 export default function ProfileCreation({ onComplete }) {
   const [step, setStep] = useState(1);
-  const [userId, setUserId] = useState(null);
   const [displayName, setDisplayName] = useState('');
   const [bio, setBio] = useState('');
   const [hashtagInput, setHashtagInput] = useState('');
@@ -31,28 +31,19 @@ export default function ProfileCreation({ onComplete }) {
     receiveRosesEnabled: true,
     contactFilter: 'everyone',
   });
-  // Consenso legale OBBLIGATORIO (Privacy Policy + Termini) — separato
-  // dai consensi opzionali sopra: qui non c'è bonus/malus, è la base
-  // minima per legge per poter usare l'app. TESTI VERI da inserire
-  // non appena arrivano dallo studio legale — per ora placeholder,
-  // ma il meccanismo di blocco (non puoi continuare senza spuntarlo)
-  // è già quello definitivo.
   const [legalAccepted, setLegalAccepted] = useState(false);
   const PRIVACY_POLICY_VERSION = 'v1.0-placeholder';
   const TERMS_VERSION = 'v1.0-placeholder';
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // --------------------------------------------------------
-  // Step 1 → crea il profilo base sul server
-  // --------------------------------------------------------
   async function submitBaseProfile(e) {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
     try {
-      const res = await fetch(`${API_BASE}/api/profile`, {
+      const res = await apiFetch('/api/profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ displayName, bio, hashtagNames: hashtags }),
@@ -67,7 +58,6 @@ export default function ProfileCreation({ onComplete }) {
         return;
       }
 
-      setUserId(data.userId);
       setStep(2);
     } catch {
       setError('Non siamo riusciti a raggiungere il server — riprova.');
@@ -83,9 +73,6 @@ export default function ProfileCreation({ onComplete }) {
     setHashtagInput('');
   }
 
-  // --------------------------------------------------------
-  // Step 2 → foto (upload verso storage esterno + salvataggio URL)
-  // --------------------------------------------------------
   async function submitPhoto() {
     setLoading(true);
     setError(null);
@@ -94,7 +81,7 @@ export default function ProfileCreation({ onComplete }) {
       let photoUrl = null;
       if (photoFile) {
         photoUrl = await uploadToStorage(photoFile);
-        await fetch(`${API_BASE}/api/profile/${userId}/photo`, {
+        await apiFetch('/api/profile/me/photo', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ photoUrl }),
@@ -109,16 +96,12 @@ export default function ProfileCreation({ onComplete }) {
     }
   }
 
-  // --------------------------------------------------------
-  // Step 3 → consenso — l'unico passaggio davvero obbligatorio
-  // per poter usare l'app
-  // --------------------------------------------------------
   async function submitConsent() {
     setLoading(true);
     setError(null);
 
     try {
-      const res = await fetch(`${API_BASE}/api/profile/${userId}/onboarding`, {
+      const res = await apiFetch('/api/profile/me/onboarding', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -130,7 +113,7 @@ export default function ProfileCreation({ onComplete }) {
       const data = await res.json();
 
       if (data.success) {
-        onComplete(userId);
+        onComplete();
       } else {
         setError('Qualcosa è andato storto nel salvataggio delle preferenze.');
       }

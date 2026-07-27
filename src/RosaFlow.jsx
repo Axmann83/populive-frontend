@@ -1,6 +1,19 @@
 import { useState, useEffect, useCallback } from 'react';
 
-const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:3000';
+import { apiFetch } from './apiClient';
+
+/**
+ * ============================================================
+ * POPULIVE — CICLO ROSA COMPLETO (componenti reali)
+ * ============================================================
+ * Quattro pezzi, ognuno collegato a un endpoint vero:
+ *   1) RosaSend       → POST /api/roses/send
+ *   2) RosaNotification → POST /api/roses/:id/respond
+ *   3) RosaGuessGame   → POST /api/roses/:id/guess
+ *   4) RosaRedeemSeal  → POST /api/roses/:id/redeem
+ * ============================================================
+ */
+
 
 export function RosaSend({ senderId, receiverId, arenaSessionId, venueId, onSent, onCancel }) {
   const [drinks, setDrinks] = useState([]);
@@ -10,7 +23,7 @@ export function RosaSend({ senderId, receiverId, arenaSessionId, venueId, onSent
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetch(`${API_BASE}/api/venues/${venueId}/drinks`)
+    apiFetch(`/api/venues/${venueId}/drinks`)
       .then((r) => r.json())
       .then((data) => { if (data.success) setDrinks(data.drinks); });
   }, [venueId]);
@@ -21,9 +34,9 @@ export function RosaSend({ senderId, receiverId, arenaSessionId, venueId, onSent
     setError(null);
 
     try {
-      const res = await fetch(`${API_BASE}/api/roses/send`, {
+      const res = await apiFetch(`/api/roses/send`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-user-id': senderId },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           receiverId, arenaSessionId, drinkProductId: selectedDrink.id, tier,
         }),
@@ -99,6 +112,7 @@ function reasonToMessage(reason) {
   return messages[reason] || 'Invio non riuscito — riprova.';
 }
 
+
 export function RosaNotification({ rosa, currentUserId, arenaSessionId, onResolved }) {
   const [loading, setLoading] = useState(false);
   const [showGuessGame, setShowGuessGame] = useState(false);
@@ -109,9 +123,9 @@ export function RosaNotification({ rosa, currentUserId, arenaSessionId, onResolv
   async function respond(action) {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/api/roses/${rosa.rosaId}/respond`, {
+      const res = await apiFetch(`/api/roses/${rosa.rosaId}/respond`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-user-id': currentUserId },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action }),
       });
       const data = await res.json();
@@ -120,7 +134,7 @@ export function RosaNotification({ rosa, currentUserId, arenaSessionId, onResolv
       if (action === 'accept') {
         if (rosa.tier === 'like' && data.canStillPlayGuessGame) {
           setPendingRedeemCode(data.redeemCode);
-          const candRes = await fetch(`${API_BASE}/api/arenas/${arenaSessionId}/guess-candidates`);
+          const candRes = await apiFetch(`/api/arenas/${arenaSessionId}/guess-candidates`);
           const candData = await candRes.json();
           setGuessCandidates(candData.candidates || []);
           setShowGuessGame(true);
@@ -181,13 +195,14 @@ export function RosaNotification({ rosa, currentUserId, arenaSessionId, onResolv
   );
 }
 
+
 export function RosaGuessGame({ rosaId, currentUserId, candidates, onFinished, redeemCode }) {
   const [message, setMessage] = useState('Hai tot tentativi per provare a scoprire chi è.');
 
   async function guess(guessedUserId) {
-    const res = await fetch(`${API_BASE}/api/roses/${rosaId}/guess`, {
+    const res = await apiFetch(`/api/roses/${rosaId}/guess`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-user-id': currentUserId },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ guessedUserId }),
     });
     const data = await res.json();
@@ -226,6 +241,7 @@ export function RosaGuessGame({ rosaId, currentUserId, candidates, onFinished, r
   );
 }
 
+
 export function RosaRedeemSeal({ rosaId, redeemCode, onDone }) {
   const [state, setState] = useState('idle');
   const [secondsLeft, setSecondsLeft] = useState(30);
@@ -248,7 +264,7 @@ export function RosaRedeemSeal({ rosaId, redeemCode, onDone }) {
     setFlash(true);
     setTimeout(() => setFlash(false), 350);
 
-    const res = await fetch(`${API_BASE}/api/roses/${rosaId}/redeem`, {
+    const res = await apiFetch(`/api/roses/${rosaId}/redeem`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ redeemCode }),

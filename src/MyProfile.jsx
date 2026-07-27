@@ -10,14 +10,19 @@ export default function MyProfile({ userId, arenaSessionId, onOpenSettings }) {
     let cancelled = false;
     async function load() {
       setLoading(true);
-      const rankingRes = await fetch(`${API_BASE}/api/users/${userId}/ranking-summary?arenaSessionId=${arenaSessionId || ''}`, {
-        headers: { 'x-user-id': userId },
-      });
-      const rankingData = await rankingRes.json();
-      if (!cancelled) {
-        if (rankingData.success) setRanking(rankingData.summary);
+      try {
+        const rankingRes = await fetch(`${API_BASE}/api/users/${userId}/ranking-summary?arenaSessionId=${arenaSessionId || ''}`, {
+          headers: { 'x-user-id': userId },
+        });
+        const rankingData = await rankingRes.json();
+        if (!cancelled && rankingData.success) {
+          setRanking(rankingData.summary);
+        }
+      } catch (err) {
+        console.error('Errore nel caricamento della classifica personale:', err);
+      } finally {
+        if (!cancelled) setLoading(false);
       }
-      setLoading(false);
     }
     load();
     return () => { cancelled = true; };

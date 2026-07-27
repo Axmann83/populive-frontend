@@ -1,7 +1,17 @@
 import { useState, useEffect } from 'react';
 
-const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:3000';
+import { apiFetch } from './apiClient';
 
+/**
+ * ============================================================
+ * POPULIVE — IL TUO PROFILO (componente reale)
+ * ============================================================
+ * A differenza di un profilo altrui visto dal radar, qui il
+ * proprietario vede SEMPRE i propri dati di classifica reali, a
+ * prescindere dal toggle show_ranking_on_profile — quel toggle
+ * riguarda solo cosa vedono gli ALTRI.
+ * ============================================================
+ */
 export default function MyProfile({ userId, arenaSessionId, onOpenSettings }) {
   const [ranking, setRanking] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -11,9 +21,7 @@ export default function MyProfile({ userId, arenaSessionId, onOpenSettings }) {
     async function load() {
       setLoading(true);
       try {
-        const rankingRes = await fetch(`${API_BASE}/api/users/${userId}/ranking-summary?arenaSessionId=${arenaSessionId || ''}`, {
-          headers: { 'x-user-id': userId },
-        });
+        const rankingRes = await apiFetch(`/api/users/${userId}/ranking-summary?arenaSessionId=${arenaSessionId || ''}`);
         const rankingData = await rankingRes.json();
         if (!cancelled && rankingData.success) {
           setRanking(rankingData.summary);

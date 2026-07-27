@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { io } from 'socket.io-client';
+import { apiFetch } from './apiClient';
 
 const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:3000';
 
@@ -22,9 +23,9 @@ export default function CheckinRadar({ userId, venueId, onArenaSession }) {
     if (!tableCode.trim()) return;
     setTableJoinLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/api/table/join`, {
+      const res = await apiFetch('/api/table/join', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-user-id': userId },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           tableQrCode: tableCode.trim(),
           arenaSessionId,
@@ -77,12 +78,9 @@ export default function CheckinRadar({ userId, venueId, onArenaSession }) {
     setErrorReason(null);
 
     try {
-      const res = await fetch(`${API_BASE}/api/checkin`, {
+      const res = await apiFetch('/api/checkin', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-user-id': userId,
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ venueId }),
       });
       const data = await res.json();

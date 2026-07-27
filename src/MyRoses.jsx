@@ -8,12 +8,17 @@ export default function MyRoses({ userId, onOpenRosa }) {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const res = await fetch(`${API_BASE}/api/users/${userId}/roses`, {
-      headers: { 'x-user-id': userId },
-    });
-    const data = await res.json();
-    if (data.success) setRoses(data.roses);
-    setLoading(false);
+    try {
+      const res = await fetch(`${API_BASE}/api/users/${userId}/roses`, {
+        headers: { 'x-user-id': userId },
+      });
+      const data = await res.json();
+      if (data.success) setRoses(data.roses);
+    } catch (err) {
+      console.error('Errore nel caricamento delle Rose:', err);
+    } finally {
+      setLoading(false);
+    }
   }, [userId]);
 
   useEffect(() => { load(); }, [load]);

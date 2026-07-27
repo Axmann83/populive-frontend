@@ -92,7 +92,7 @@ export default function ChatWindow({ conversationId, currentUserId, otherUserNam
     });
     const data = await res.json();
     if (data.chatNowClosed) setIsClosed(true);
-  }, [myWantsKeep, conversationId, currentUserId]);
+  }, [myWantsKeep, conversationId]);
 
   if (loading) return <div className="pl-chat-loading">Caricamento…</div>;
 

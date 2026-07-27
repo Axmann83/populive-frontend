@@ -1,7 +1,14 @@
 import { useState, useEffect } from 'react';
 
-const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:3000';
+import { apiFetch } from './apiClient';
 
+/**
+ * ============================================================
+ * POPULIVE — IMPOSTAZIONI (componente reale)
+ * ============================================================
+ * Richiamabile in ogni momento dal profilo (icona rotella ⚙️).
+ * ============================================================
+ */
 export default function Settings({ userId, onClose }) {
   const [settings, setSettings] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -11,9 +18,7 @@ export default function Settings({ userId, onClose }) {
     let cancelled = false;
     async function load() {
       try {
-        const res = await fetch(`${API_BASE}/api/profile/${userId}/settings`, {
-          headers: { 'x-user-id': userId },
-        });
+        const res = await apiFetch(`/api/profile/${userId}/settings`);
         const data = await res.json();
         if (!cancelled && data.success) setSettings(data.settings);
       } catch (err) {
@@ -28,9 +33,9 @@ export default function Settings({ userId, onClose }) {
 
   async function save() {
     setSaving(true);
-    await fetch(`${API_BASE}/api/profile/${userId}/settings`, {
+    await apiFetch(`/api/profile/${userId}/settings`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-user-id': userId },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(settings),
     });
     setSaving(false);

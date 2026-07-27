@@ -52,7 +52,7 @@ export function RosaSend({ senderId, receiverId, arenaSessionId, venueId, onSent
     } finally {
       setSending(false);
     }
-  }, [selectedDrink, tier, senderId, receiverId, arenaSessionId, onSent]);
+  }, [selectedDrink, tier, receiverId, arenaSessionId, onSent]);
 
   const tiers = [
     { id: 'standalone', label: 'Solo Rosa', sub: 'Anonima al 100% — nessun contatto' },

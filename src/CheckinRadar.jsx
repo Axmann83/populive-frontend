@@ -40,7 +40,7 @@ export default function CheckinRadar({ userId, venueId, onArenaSession }) {
     } finally {
       setTableJoinLoading(false);
     }
-  }, [tableCode, wantsConnector, arenaSessionId, userId]);
+  }, [tableCode, wantsConnector, arenaSessionId]);
 
   useEffect(() => {
     const socket = io(API_BASE);

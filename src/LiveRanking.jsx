@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react';
 import { io } from 'socket.io-client';
+import ProfileFullScreen from './ProfileFullScreen';
+import ProfileDetail from './ProfileDetail';
 
 const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:3000';
 
-export default function LiveRanking({ arenaSessionId, currentUserId, isGlobal }) {
+export default function LiveRanking({ arenaSessionId, currentUserId, isGlobal, venueId }) {
   const [ranking, setRanking] = useState([]);
   const [loading, setLoading] = useState(true);
   const [recentDeltas, setRecentDeltas] = useState({});
+  const [selectedProfileUserId, setSelectedProfileUserId] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -76,15 +79,36 @@ export default function LiveRanking({ arenaSessionId, currentUserId, isGlobal })
           entry={entry}
           isMe={entry.userId === currentUserId}
           delta={recentDeltas[entry.userId]}
+          onClick={() => {
+            if (entry.userId !== currentUserId) setSelectedProfileUserId(entry.userId);
+          }}
         />
       ))}
+
+      {selectedProfileUserId && !isGlobal && (
+        <ProfileFullScreen
+          userId={selectedProfileUserId}
+          arenaSessionId={arenaSessionId}
+          currentUserId={currentUserId}
+          venueId={venueId}
+          onClose={() => setSelectedProfileUserId(null)}
+        />
+      )}
+      {selectedProfileUserId && isGlobal && (
+        <ProfileDetail
+          userId={selectedProfileUserId}
+          arenaSessionId={null}
+          onBack={() => setSelectedProfileUserId(null)}
+          onClose={() => setSelectedProfileUserId(null)}
+        />
+      )}
     </div>
   );
 }
 
-function RankRow({ entry, isMe, delta }) {
+function RankRow({ entry, isMe, delta, onClick }) {
   return (
-    <div className={`pl-rank-row ${isMe ? 'pl-rank-row-me' : ''}`}>
+    <div className={`pl-rank-row ${isMe ? 'pl-rank-row-me' : ''}`} onClick={onClick} style={{ cursor: isMe ? 'default' : 'pointer' }}>
       <span className="pl-rank-num">{entry.rank}</span>
 
       <span className="pl-rank-avatar-wrap">

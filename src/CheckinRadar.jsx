@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { io } from 'socket.io-client';
 import { apiFetch } from './apiClient';
+import ProfileFullScreen from './ProfileFullScreen';
 
 const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:3000';
 
@@ -18,6 +19,7 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
   const [wantsConnector, setWantsConnector] = useState(false);
   const [tableJoined, setTableJoined] = useState(false);
   const [tableJoinLoading, setTableJoinLoading] = useState(false);
+  const [selectedProfileUserId, setSelectedProfileUserId] = useState(null);
 
   const handleJoinTable = useCallback(async () => {
     if (!tableCode.trim()) return;
@@ -166,7 +168,13 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
           <p>{radarPeople.length} persone connesse ora</p>
           <div className="pl-radar-list">
             {radarPeople.map((p) => (
-              <RadarCard key={p.userId} personId={p.userId} arenaSessionId={arenaSessionId} viewerId={userId} />
+              <RadarCard
+                key={p.userId}
+                personId={p.userId}
+                arenaSessionId={arenaSessionId}
+                viewerId={userId}
+                onClick={() => setSelectedProfileUserId(p.userId)}
+              />
             ))}
           </div>
         </>
@@ -208,13 +216,23 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
           </button>
         </div>
       )}
+
+      {selectedProfileUserId && (
+        <ProfileFullScreen
+          userId={selectedProfileUserId}
+          arenaSessionId={arenaSessionId}
+          currentUserId={userId}
+          venueId={venueId}
+          onClose={() => setSelectedProfileUserId(null)}
+        />
+      )}
     </div>
   );
 }
 
-function RadarCard({ personId, arenaSessionId, viewerId }) {
+function RadarCard({ personId, arenaSessionId, viewerId, onClick }) {
   return (
-    <div className="pl-radar-card">
+    <div className="pl-radar-card" onClick={onClick} style={{ cursor: 'pointer' }}>
       <span className="pl-radar-card-id">{personId}</span>
     </div>
   );

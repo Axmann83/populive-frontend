@@ -25,7 +25,14 @@ export function RosaSend({ senderId, receiverId, arenaSessionId, venueId, onSent
   useEffect(() => {
     apiFetch(`/api/venues/${venueId}/drinks`)
       .then((r) => r.json())
-      .then((data) => { if (data.success) setDrinks(data.drinks); });
+      .then((data) => {
+        if (data.success) {
+          setDrinks(data.drinks);
+          if (data.drinks.length === 1) {
+            setSelectedDrink(data.drinks[0]);
+          }
+        }
+      });
   }, [venueId]);
 
   const handleSend = useCallback(async () => {
@@ -65,22 +72,39 @@ export function RosaSend({ senderId, receiverId, arenaSessionId, venueId, onSent
       <div className="pl-sheet-close" onClick={onCancel}>Chiudi ✕</div>
       <h3>Invia una Rosa</h3>
 
-      <div className="pl-section-label">Scegli la Rosa</div>
-      {drinks.map((d) => (
-        <div
-          key={d.id}
-          className={`pl-rosa-option ${selectedDrink?.id === d.id ? 'selected' : ''}`}
-          onClick={() => setSelectedDrink(d)}
-        >
+      {drinks.length > 1 && (
+        <>
+          <div className="pl-section-label">Scegli la Rosa</div>
+          {drinks.map((d) => (
+            <div
+              key={d.id}
+              className={`pl-rosa-option ${selectedDrink?.id === d.id ? 'selected' : ''}`}
+              onClick={() => setSelectedDrink(d)}
+            >
+              <div className="pl-rosa-title">
+                {d.name}
+                {d.sponsor_name && <span className="pl-sponsor-tag"> · {d.sponsor_name}</span>}
+              </div>
+              <div className="pl-rosa-price">
+                {((d.base_price_cents - (d.sponsor_discount_cents || 0)) / 100).toFixed(2)}€
+              </div>
+            </div>
+          ))}
+        </>
+      )}
+
+      {drinks.length === 1 && (
+        <div className="pl-rosa-option selected" style={{ cursor: 'default' }}>
           <div className="pl-rosa-title">
-            {d.name}
-            {d.sponsor_name && <span className="pl-sponsor-tag"> · {d.sponsor_name}</span>}
+            {drinks[0].name}
+            {drinks[0].sponsor_name && <span className="pl-sponsor-tag"> · {drinks[0].sponsor_name}</span>}
           </div>
           <div className="pl-rosa-price">
-            {((d.base_price_cents - (d.sponsor_discount_cents || 0)) / 100).toFixed(2)}€
+            {((drinks[0].base_price_cents - (drinks[0].sponsor_discount_cents || 0)) / 100).toFixed(2)}€
           </div>
         </div>
-      ))}
+      )}
+
       {drinks.length === 0 && <p className="pl-hint">Nessun drink disponibile in questo locale al momento.</p>}
 
       <div className="pl-section-label">Come vuoi inviarla</div>

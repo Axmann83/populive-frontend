@@ -162,7 +162,6 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
     <div className="pl-screen">
       {arenaActive ? (
         <>
-          <div className="pl-arena-pill">🔴 Arena attiva</div>
           <h2>Il radar è live</h2>
           <p>{radarPeople.length} persone connesse ora</p>
           <div className="pl-radar-list">

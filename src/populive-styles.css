@@ -1,5 +1,9 @@
 /* ============================================================
    POPULIVE — FOGLIO DI STILE CONDIVISO
+   ============================================================
+   Palette e pattern presi identici dalle demo HTML già validate:
+   nero + teak/beige neutro + ciano elettrico dominante, font Syne
+   per i titoli, Inter per il resto.
    ============================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap');
@@ -98,6 +102,11 @@ button{ font-family:inherit; }
   font-size:11px; font-weight:600; padding:5px 10px; border-radius:999px;
 }
 .pl-hashtag-pill button{ background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:11px; padding:0; }
+.pl-hashtag{
+  display:inline-block;
+  background:rgba(228,212,200,0.1); border:1px solid rgba(228,212,200,0.2); color:var(--teak);
+  font-size:11px; font-weight:600; padding:5px 10px; border-radius:999px;
+}
 .pl-consent-row{
   display:flex; align-items:center; justify-content:space-between;
   background:var(--surface); border:1px solid rgba(228,212,200,0.1);
@@ -147,6 +156,7 @@ button{ font-family:inherit; }
   animation:pl-float-up 1.8s ease-out forwards;
 }
 @keyframes pl-float-up{ 0%{opacity:0; transform:translateY(4px);} 20%{opacity:1;} 100%{opacity:0; transform:translateY(-14px);} }
+@keyframes pl-toast-in{ 0%{opacity:0; transform:translateY(-10px) scale(0.95);} 100%{opacity:1; transform:translateY(0) scale(1);} }
 .pl-ranking-loading{ text-align:center; color:var(--text-muted); font-size:12px; padding:30px 0; }
 
 .pl-sheet{ display:flex; flex-direction:column; gap:6px; }

@@ -154,7 +154,7 @@ export default function App() {
         )}
 
         {activeTab === 'locale' && arenaSessionId && (
-          <LiveRanking arenaSessionId={arenaSessionId} currentUserId={userId} />
+          <LiveRanking arenaSessionId={arenaSessionId} currentUserId={userId} venueId={venueId} />
         )}
         {activeTab === 'locale' && !arenaSessionId && (
           <div className="pl-hint" style={{ textAlign: 'center', marginTop: 40 }}>

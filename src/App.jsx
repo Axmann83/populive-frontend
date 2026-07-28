@@ -19,7 +19,18 @@ export default function App() {
   const [authState, setAuthState] = useState('checking');
   const [userId, setUserId] = useState(null);
 
-  const [venueId] = useState('f923e9c8-c47f-40d6-a4b8-98afe38d43cc');
+  const [venueId, setVenueId] = useState('f923e9c8-c47f-40d6-a4b8-98afe38d43cc');
+  const [arrivedViaQr, setArrivedViaQr] = useState(false);
+
+  useEffect(() => {
+    const match = window.location.pathname.match(/^\/checkin\/([a-zA-Z0-9-]+)/);
+    if (match) {
+      setVenueId(match[1]);
+      setArrivedViaQr(true);
+      window.history.replaceState(null, '', '/');
+    }
+  }, []);
+
   const [arenaSessionId, setArenaSessionId] = useState(null);
 
   const [activeTab, setActiveTab] = useState('radar');
@@ -131,6 +142,7 @@ export default function App() {
               userId={userId}
               venueId={venueId}
               onArenaSession={setArenaSessionId}
+              autoCheckin={arrivedViaQr}
             />
             <button
               onClick={() => setShowExploreMap(true)}

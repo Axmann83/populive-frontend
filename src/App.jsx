@@ -154,7 +154,7 @@ export default function App() {
         )}
 
         {activeTab === 'locale' && arenaSessionId && (
-          <LiveRanking arenaSessionId={arenaSessionId} currentUserId={userId} venueId={venueId} />
+          <LiveRanking arenaSessionId={arenaSessionId} currentUserId={userId} venueId={venueId} onSelectSelf={() => setActiveTab('profilo')} />
         )}
         {activeTab === 'locale' && !arenaSessionId && (
           <div className="pl-hint" style={{ textAlign: 'center', marginTop: 40 }}>
@@ -163,7 +163,7 @@ export default function App() {
         )}
 
         {activeTab === 'globale' && (
-          <LiveRanking arenaSessionId={null} currentUserId={userId} isGlobal />
+          <LiveRanking arenaSessionId={null} currentUserId={userId} isGlobal onSelectSelf={() => setActiveTab('profilo')} />
         )}
 
         {activeTab === 'rose' && (

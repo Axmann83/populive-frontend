@@ -21,6 +21,14 @@ export default function ProfileDetail({ userId, arenaSessionId, onClose, onBack 
           if (profileData.success) setProfile(profileData.profile);
           if (rankingData.success) setRanking(rankingData.summary);
         }
+
+        if (arenaSessionId) {
+          apiFetch('/api/profile-views', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ viewedUserId: userId, arenaSessionId }),
+          }).catch(() => {});
+        }
       } catch (err) {
         console.error('Errore nel caricamento del profilo completo:', err);
       } finally {

@@ -19,6 +19,14 @@ export default function ProfileFullScreen({ userId, arenaSessionId, currentUserI
         const res = await apiFetch(`/api/users/${userId}/public-profile?arenaSessionId=${arenaSessionId || ''}`);
         const data = await res.json();
         if (!cancelled && data.success) setProfile(data.profile);
+
+        if (arenaSessionId) {
+          apiFetch('/api/profile-views', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ viewedUserId: userId, arenaSessionId }),
+          }).catch(() => {});
+        }
       } catch (err) {
         console.error('Errore nel caricamento del profilo:', err);
       } finally {

@@ -9,7 +9,8 @@ import { apiFetch } from './apiClient';
  * A differenza di un profilo altrui visto dal radar, qui il
  * proprietario vede SEMPRE i propri dati di classifica reali, a
  * prescindere dal toggle show_ranking_on_profile — quel toggle
- * riguarda solo cosa vedono gli ALTRI.
+ * riguarda solo cosa vedono gli ALTRI (v. Settings.jsx e la
+ * discussione già fatta su questo punto).
  * ============================================================
  */
 export default function MyProfile({ userId, arenaSessionId, onOpenSettings }) {
@@ -51,8 +52,12 @@ export default function MyProfile({ userId, arenaSessionId, onOpenSettings }) {
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', marginBottom: 10 }}>
-        <div className="pl-rank-avatar" style={{ width: 64, height: 64, fontSize: 28, border: '2px solid var(--teak)' }}>🙂</div>
-        <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 700, fontSize: 15, marginTop: 8 }}>Tu</div>
+        <div className="pl-rank-avatar" style={{ width: 64, height: 64, fontSize: 28, border: '2px solid var(--teak)', overflow: 'hidden' }}>
+          {ranking?.photoUrl
+            ? <img src={ranking.photoUrl} alt={ranking.displayName || 'Tu'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            : (ranking?.avatarEmoji || '🙂')}
+        </div>
+        <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 700, fontSize: 15, marginTop: 8 }}>{ranking?.displayName || 'Tu'}</div>
       </div>
 
       {ranking && (

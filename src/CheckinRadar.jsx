@@ -4,7 +4,7 @@ import { apiFetch } from './apiClient';
 
 const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:3000';
 
-export default function CheckinRadar({ userId, venueId, onArenaSession }) {
+export default function CheckinRadar({ userId, venueId, onArenaSession, autoCheckin }) {
   const [arenaActive, setArenaActive] = useState(false);
   const [checkinCount, setCheckinCount] = useState(0);
   const [threshold, setThreshold] = useState(20);
@@ -69,6 +69,16 @@ export default function CheckinRadar({ userId, venueId, onArenaSession }) {
       });
     });
 
+    socket.on('radar_snapshot', ({ userIds }) => {
+      setRadarPeople((prev) => {
+        const existingIds = new Set(prev.map((p) => p.userId));
+        const newEntries = userIds
+          .filter((id) => !existingIds.has(id))
+          .map((id) => ({ userId: id, joinedAt: Date.now() }));
+        return [...prev, ...newEntries];
+      });
+    });
+
     setSocketRef(socket);
     return () => socket.disconnect();
   }, []);
@@ -106,6 +116,13 @@ export default function CheckinRadar({ userId, venueId, onArenaSession }) {
       setErrorReason('network_error');
     }
   }, [userId, venueId, socketInstance, onArenaSession]);
+
+  useEffect(() => {
+    if (autoCheckin && status === 'idle' && socketInstance) {
+      handleScanQr();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoCheckin, socketInstance, status]);
 
   if (status === 'idle' || status === 'checking_in') {
     return (

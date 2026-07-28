@@ -5,7 +5,7 @@ import ProfileDetail from './ProfileDetail';
 
 const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:3000';
 
-export default function LiveRanking({ arenaSessionId, currentUserId, isGlobal, venueId }) {
+export default function LiveRanking({ arenaSessionId, currentUserId, isGlobal, venueId, onSelectSelf }) {
   const [ranking, setRanking] = useState([]);
   const [loading, setLoading] = useState(true);
   const [recentDeltas, setRecentDeltas] = useState({});
@@ -80,7 +80,11 @@ export default function LiveRanking({ arenaSessionId, currentUserId, isGlobal, v
           isMe={entry.userId === currentUserId}
           delta={recentDeltas[entry.userId]}
           onClick={() => {
-            if (entry.userId !== currentUserId) setSelectedProfileUserId(entry.userId);
+            if (entry.userId === currentUserId) {
+              onSelectSelf?.();
+            } else {
+              setSelectedProfileUserId(entry.userId);
+            }
           }}
         />
       ))}
@@ -108,7 +112,7 @@ export default function LiveRanking({ arenaSessionId, currentUserId, isGlobal, v
 
 function RankRow({ entry, isMe, delta, onClick }) {
   return (
-    <div className={`pl-rank-row ${isMe ? 'pl-rank-row-me' : ''}`} onClick={onClick} style={{ cursor: isMe ? 'default' : 'pointer' }}>
+    <div className={`pl-rank-row ${isMe ? 'pl-rank-row-me' : ''}`} onClick={onClick} style={{ cursor: 'pointer' }}>
       <span className="pl-rank-num">{entry.rank}</span>
 
       <span className="pl-rank-avatar-wrap">

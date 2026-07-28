@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { io } from 'socket.io-client';
 
 import Login from './Login';
@@ -39,6 +39,31 @@ export default function App() {
   const [roseBadgeCount, setRoseBadgeCount] = useState(0);
   const [showSettings, setShowSettings] = useState(false);
   const [showExploreMap, setShowExploreMap] = useState(false);
+  const [pointsToasts, setPointsToasts] = useState([]);
+
+  const showPointsToast = useCallback((icon, points) => {
+    const id = Date.now() + Math.random();
+    setPointsToasts((prev) => [...prev, { id, icon, points }]);
+    setTimeout(() => {
+      setPointsToasts((prev) => prev.filter((t) => t.id !== id));
+    }, 2800);
+  }, []);
+
+  const pointsIconFor = useCallback((source) => {
+    const base = source.replace(/_sent$/, '');
+    const icons = {
+      profile_view: '👀',
+      like_received: '❤️',
+      superlike_received: '⭐',
+      rosa_standalone: '🌹',
+      rosa_like: '🌹',
+      rosa_super: '🌹',
+      rosa_guess_won: '🎉',
+      mission_completed: '🎯',
+      connector_discovery_bonus: '🔗',
+    };
+    return icons[base] || '✨';
+  }, []);
 
   useEffect(() => {
     async function checkExistingSession() {
@@ -66,9 +91,12 @@ export default function App() {
     checkExistingSession();
   }, []);
 
+  const socketRef = useRef(null);
+
   useEffect(() => {
     if (authState !== 'app' || !userId) return;
     const socket = io(API_BASE);
+    socketRef.current = socket;
     socket.emit('join_private_room', { userId });
 
     socket.on('rosa_received', (payload) => {
@@ -76,12 +104,27 @@ export default function App() {
       setRoseBadgeCount((n) => n + 1);
     });
 
+    socket.on('points_update', (payload) => {
+      if (payload.userId === userId) {
+        showPointsToast(pointsIconFor(payload.source), payload.points);
+      }
+    });
+
     socket.on('chat_unlocked', (payload) => {
       setActiveChatConversationId((prev) => prev || payload.conversationId);
     });
 
-    return () => socket.disconnect();
-  }, [authState, userId]);
+    return () => {
+      socket.disconnect();
+      socketRef.current = null;
+    };
+  }, [authState, userId, showPointsToast, pointsIconFor]);
+
+  useEffect(() => {
+    if (arenaSessionId && socketRef.current && userId) {
+      socketRef.current.emit('join_arena', { arenaSessionId, userId });
+    }
+  }, [arenaSessionId, userId]);
 
   const handleLoggedIn = useCallback((newUserId, isNewUser, onboardingCompleted) => {
     setUserId(newUserId);
@@ -225,6 +268,25 @@ export default function App() {
           </div>
         </div>
       )}
+
+      <div style={{ position: 'fixed', top: 70, left: '50%', transform: 'translateX(-50%)', zIndex: 70, display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center', pointerEvents: 'none' }}>
+        {pointsToasts.map((t) => (
+          <div
+            key={t.id}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              background: 'var(--surface-2)', border: '1px solid rgba(47,211,232,0.4)',
+              borderRadius: 999, padding: '9px 16px',
+              fontSize: 13, fontWeight: 700, color: 'var(--text)',
+              boxShadow: '0 8px 24px -8px rgba(0,0,0,0.5)',
+              animation: 'pl-toast-in 0.25s ease-out',
+            }}
+          >
+            <span style={{ fontSize: 16 }}>{t.icon}</span>
+            <span style={{ color: 'var(--cyan)' }}>+{t.points} punti</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

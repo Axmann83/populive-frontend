@@ -231,9 +231,25 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
 }
 
 function RadarCard({ personId, arenaSessionId, viewerId, onClick }) {
+  const [preview, setPreview] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    apiFetch(`/api/users/${personId}/public-profile?arenaSessionId=${arenaSessionId || ''}`)
+      .then((r) => r.json())
+      .then((data) => { if (!cancelled && data.success) setPreview(data.profile); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [personId, arenaSessionId]);
+
   return (
     <div className="pl-radar-card" onClick={onClick} style={{ cursor: 'pointer' }}>
-      <span className="pl-radar-card-id">{personId}</span>
+      <span className="pl-radar-card-avatar">
+        {preview?.photoUrl
+          ? <img src={preview.photoUrl} alt={preview.displayName} />
+          : (preview?.avatarEmoji || '🙂')}
+      </span>
+      <span className="pl-radar-card-id">{preview?.displayName || 'Caricamento…'}</span>
     </div>
   );
 }

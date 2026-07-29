@@ -1,5 +1,9 @@
 /* ============================================================
    POPULIVE — FOGLIO DI STILE CONDIVISO
+   ============================================================
+   Palette e pattern presi identici dalle demo HTML già validate:
+   nero + teak/beige neutro + ciano elettrico dominante, font Syne
+   per i titoli, Inter per il resto.
    ============================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap');

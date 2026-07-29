@@ -29,6 +29,10 @@ export default function App() {
       setArrivedViaQr(true);
       window.history.replaceState(null, '', '/');
     }
+
+    if (window.location.search.includes('rosa_sent') || window.location.search.includes('rosa_cancelled')) {
+      window.history.replaceState(null, '', '/');
+    }
   }, []);
 
   const [arenaSessionId, setArenaSessionId] = useState(null);
@@ -64,6 +68,31 @@ export default function App() {
     };
     return icons[base] || '✨';
   }, []);
+
+  const offerLikeCreditsPurchase = useCallback(async () => {
+    const confirmed = window.confirm('Da qui in poi i tuoi Like in questa Arena non ti fanno più guadagnare punti. Vuoi sbloccarne altri 10?');
+    if (!confirmed) return;
+
+    try {
+      const catalogRes = await apiFetch('/api/products');
+      const catalogData = await catalogRes.json();
+      const product = catalogData.products?.find((p) => p.product_type === 'like_credits');
+      if (!product) return;
+
+      const purchaseRes = await apiFetch('/api/purchases/initiate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId: product.id, arenaSessionId }),
+      });
+      const purchaseData = await purchaseRes.json();
+
+      if (purchaseData.requiresPayment) {
+        window.location.href = purchaseData.checkoutUrl;
+      }
+    } catch (err) {
+      console.error('Errore nella proposta di acquisto Like extra:', err);
+    }
+  }, [arenaSessionId]);
 
   useEffect(() => {
     async function checkExistingSession() {
@@ -110,6 +139,10 @@ export default function App() {
       }
     });
 
+    socket.on('like_limit_reached', () => {
+      offerLikeCreditsPurchase();
+    });
+
     socket.on('chat_unlocked', (payload) => {
       setActiveChatConversationId((prev) => prev || payload.conversationId);
     });
@@ -118,7 +151,7 @@ export default function App() {
       socket.disconnect();
       socketRef.current = null;
     };
-  }, [authState, userId, showPointsToast, pointsIconFor]);
+  }, [authState, userId, showPointsToast, pointsIconFor, offerLikeCreditsPurchase]);
 
   useEffect(() => {
     if (arenaSessionId && socketRef.current && userId) {

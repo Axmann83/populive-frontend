@@ -11,6 +11,7 @@ import Settings from './Settings';
 import MyRoses from './MyRoses';
 import MyProfile from './MyProfile';
 import ExploreMap from './ExploreMap';
+import SplashScreen from './SplashScreen';
 import { API_BASE, apiFetch, getToken, getStoredUserId, clearSession } from './apiClient';
 
 import './populive-styles.css';
@@ -18,6 +19,19 @@ import './populive-styles.css';
 export default function App() {
   const [authState, setAuthState] = useState('checking');
   const [userId, setUserId] = useState(null);
+
+  const MIN_SPLASH_MS = 1200;
+  const [showSplash, setShowSplash] = useState(true);
+  const [splashFadingOut, setSplashFadingOut] = useState(false);
+  const appMountedAt = useRef(Date.now());
+
+  useEffect(() => {
+    if (authState === 'checking' || !showSplash || splashFadingOut) return;
+    const elapsed = Date.now() - appMountedAt.current;
+    const remaining = Math.max(0, MIN_SPLASH_MS - elapsed);
+    const t = setTimeout(() => setSplashFadingOut(true), remaining);
+    return () => clearTimeout(t);
+  }, [authState, showSplash, splashFadingOut]);
 
   const [venueId, setVenueId] = useState('f923e9c8-c47f-40d6-a4b8-98afe38d43cc');
   const [arrivedViaQr, setArrivedViaQr] = useState(false);
@@ -169,42 +183,43 @@ export default function App() {
   }, []);
 
   if (authState === 'checking') {
-    return (
-      <div className="pl-app-shell">
-        <div className="pl-content" style={{ paddingTop: 40, textAlign: 'center' }}>
-          <div className="pl-hint">Caricamento…</div>
-        </div>
-      </div>
-    );
+    return <SplashScreen fadingOut={splashFadingOut} onExited={() => setShowSplash(false)} />;
   }
 
   if (authState === 'login') {
     return (
-      <div className="pl-app-shell">
-        <div className="pl-content" style={{ paddingTop: 20 }}>
-          <div className="pl-brand" style={{ justifyContent: 'center', marginBottom: 20 }}>
-            Popu<span className="pl-brand-live">Live</span>
+      <>
+        <div className="pl-app-shell">
+          <div className="pl-content" style={{ paddingTop: 20 }}>
+            <div className="pl-brand" style={{ justifyContent: 'center', marginBottom: 20 }}>
+              Popu<span className="pl-brand-live">Live</span>
+            </div>
+            <Login onLoggedIn={handleLoggedIn} />
           </div>
-          <Login onLoggedIn={handleLoggedIn} />
         </div>
-      </div>
+        {showSplash && <SplashScreen fadingOut={splashFadingOut} onExited={() => setShowSplash(false)} />}
+      </>
     );
   }
 
   if (authState === 'onboarding') {
     return (
-      <div className="pl-app-shell">
-        <div className="pl-content" style={{ paddingTop: 20 }}>
-          <div className="pl-brand" style={{ justifyContent: 'center', marginBottom: 20 }}>
-            Popu<span className="pl-brand-live">Live</span>
+      <>
+        <div className="pl-app-shell">
+          <div className="pl-content" style={{ paddingTop: 20 }}>
+            <div className="pl-brand" style={{ justifyContent: 'center', marginBottom: 20 }}>
+              Popu<span className="pl-brand-live">Live</span>
+            </div>
+            <ProfileCreation onComplete={handleOnboardingComplete} />
           </div>
-          <ProfileCreation onComplete={handleOnboardingComplete} />
         </div>
-      </div>
+        {showSplash && <SplashScreen fadingOut={splashFadingOut} onExited={() => setShowSplash(false)} />}
+      </>
     );
   }
 
   return (
+    <>
     <div className="pl-app-shell">
       <div className="pl-top-bar">
         <div className="pl-brand">Popu<span className="pl-brand-live">Live</span></div>
@@ -321,6 +336,8 @@ export default function App() {
         ))}
       </div>
     </div>
+    {showSplash && <SplashScreen fadingOut={splashFadingOut} onExited={() => setShowSplash(false)} />}
+    </>
   );
 }
 

@@ -182,45 +182,33 @@ export default function App() {
     setAuthState('app');
   }, []);
 
-  if (authState === 'checking') {
-    return <SplashScreen fadingOut={splashFadingOut} onExited={() => setShowSplash(false)} />;
-  }
+  let mainContent = null;
 
   if (authState === 'login') {
-    return (
-      <>
-        <div className="pl-app-shell">
-          <div className="pl-content" style={{ paddingTop: 20 }}>
-            <div className="pl-brand" style={{ justifyContent: 'center', marginBottom: 20 }}>
-              Popu<span className="pl-brand-live">Live</span>
-            </div>
-            <Login onLoggedIn={handleLoggedIn} />
+    mainContent = (
+      <div className="pl-app-shell">
+        <div className="pl-content" style={{ paddingTop: 20 }}>
+          <div className="pl-brand" style={{ justifyContent: 'center', marginBottom: 20 }}>
+            Popu<span className="pl-brand-live">Live</span>
           </div>
+          <Login onLoggedIn={handleLoggedIn} />
         </div>
-        {showSplash && <SplashScreen fadingOut={splashFadingOut} onExited={() => setShowSplash(false)} />}
-      </>
+      </div>
     );
-  }
-
-  if (authState === 'onboarding') {
-    return (
-      <>
-        <div className="pl-app-shell">
-          <div className="pl-content" style={{ paddingTop: 20 }}>
-            <div className="pl-brand" style={{ justifyContent: 'center', marginBottom: 20 }}>
-              Popu<span className="pl-brand-live">Live</span>
-            </div>
-            <ProfileCreation onComplete={handleOnboardingComplete} />
+  } else if (authState === 'onboarding') {
+    mainContent = (
+      <div className="pl-app-shell">
+        <div className="pl-content" style={{ paddingTop: 20 }}>
+          <div className="pl-brand" style={{ justifyContent: 'center', marginBottom: 20 }}>
+            Popu<span className="pl-brand-live">Live</span>
           </div>
+          <ProfileCreation onComplete={handleOnboardingComplete} />
         </div>
-        {showSplash && <SplashScreen fadingOut={splashFadingOut} onExited={() => setShowSplash(false)} />}
-      </>
+      </div>
     );
-  }
-
-  return (
-    <>
-    <div className="pl-app-shell">
+  } else if (authState === 'app') {
+    mainContent = (
+      <div className="pl-app-shell">
       <div className="pl-top-bar">
         <div className="pl-brand">Popu<span className="pl-brand-live">Live</span></div>
         {arenaSessionId && <div className="pl-arena-pill">🔴 Arena attiva</div>}
@@ -336,9 +324,14 @@ export default function App() {
         ))}
       </div>
     </div>
-    {showSplash && <SplashScreen fadingOut={splashFadingOut} onExited={() => setShowSplash(false)} />}
-    </>
-  );
+    );
+  }
+
+  if (showSplash) {
+    return <SplashScreen fadingOut={splashFadingOut} onExited={() => setShowSplash(false)} />;
+  }
+
+  return mainContent;
 }
 
 function NavItem({ icon, label, active, onClick, badge }) {

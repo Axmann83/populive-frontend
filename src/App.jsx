@@ -20,7 +20,7 @@ export default function App() {
   const [authState, setAuthState] = useState('checking');
   const [userId, setUserId] = useState(null);
 
-  const MIN_SPLASH_MS = 1200;
+  const MIN_SPLASH_MS = 3000;
   const [showSplash, setShowSplash] = useState(true);
   const [splashFadingOut, setSplashFadingOut] = useState(false);
   const appMountedAt = useRef(Date.now());

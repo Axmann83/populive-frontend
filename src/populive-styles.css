@@ -128,6 +128,11 @@ button{ font-family:inherit; }
   border-radius:14px; padding:9px 12px;
 }
 .pl-radar-card-id{ font-size:11px; color:var(--text-muted); }
+.pl-radar-card-avatar{
+  width:32px; height:32px; border-radius:50%; overflow:hidden; flex-shrink:0;
+  background:var(--surface-2); display:flex; align-items:center; justify-content:center; font-size:15px;
+}
+.pl-radar-card-avatar img{ width:100%; height:100%; object-fit:cover; }
 
 .pl-ranking-list{ display:flex; flex-direction:column; gap:8px; }
 .pl-rank-row{
@@ -212,11 +217,7 @@ button{ font-family:inherit; }
 .pl-chat-loading{ text-align:center; color:var(--text-muted); padding:30px 0; font-size:12px; }
 
 /* ============================================================
-   SPLASH — schermata di apertura animata. Copre l'INTERO
-   schermo (sopra tutto il resto, z-index massimo) mentre l'app
-   verifica se esiste già una sessione salvata — un'attesa che
-   c'è comunque, non un ritardo aggiunto apposta. Sfuma via da
-   sola quando quel controllo finisce, stile Hinge.
+   SPLASH — schermata di apertura animata.
    ============================================================ */
 .pl-splash{
   position:fixed; inset:0; z-index:9999;

@@ -48,11 +48,39 @@ export default function ProfileFullScreen({ userId, arenaSessionId, currentUserI
       const data = await res.json();
       if (data.success) {
         setActionState(type === 'like' ? 'liked' : 'superliked');
+      } else if (data.reason === 'superlike_balance_exhausted') {
+        setActionState(null);
+        offerSuperlikePurchase();
       } else {
         setActionState(null);
       }
     } catch {
       setActionState(null);
+    }
+  }
+
+  async function offerSuperlikePurchase() {
+    const confirmed = window.confirm('Superlike esauriti per questa settimana. Vuoi acquistarne altri 5?');
+    if (!confirmed) return;
+
+    try {
+      const catalogRes = await apiFetch('/api/products');
+      const catalogData = await catalogRes.json();
+      const product = catalogData.products?.find((p) => p.product_type === 'superlike_credits');
+      if (!product) return;
+
+      const purchaseRes = await apiFetch('/api/purchases/initiate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId: product.id, arenaSessionId }),
+      });
+      const purchaseData = await purchaseRes.json();
+
+      if (purchaseData.requiresPayment) {
+        window.location.href = purchaseData.checkoutUrl;
+      }
+    } catch (err) {
+      console.error('Errore nella proposta di acquisto Superlike:', err);
     }
   }
 

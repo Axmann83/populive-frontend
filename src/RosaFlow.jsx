@@ -2,19 +2,6 @@ import { useState, useEffect, useCallback } from 'react';
 
 import { apiFetch } from './apiClient';
 
-/**
- * ============================================================
- * POPULIVE — CICLO ROSA COMPLETO (componenti reali)
- * ============================================================
- * Quattro pezzi, ognuno collegato a un endpoint vero:
- *   1) RosaSend       → POST /api/roses/send
- *   2) RosaNotification → POST /api/roses/:id/respond
- *   3) RosaGuessGame   → POST /api/roses/:id/guess
- *   4) RosaRedeemSeal  → POST /api/roses/:id/redeem
- * ============================================================
- */
-
-
 export function RosaSend({ senderId, receiverId, arenaSessionId, venueId, onSent, onCancel }) {
   const [drinks, setDrinks] = useState([]);
   const [selectedDrink, setSelectedDrink] = useState(null);
@@ -53,6 +40,12 @@ export function RosaSend({ senderId, receiverId, arenaSessionId, venueId, onSent
         setError(reasonToMessage(data.reason));
         return;
       }
+
+      if (data.requiresPayment) {
+        window.location.href = data.checkoutUrl;
+        return;
+      }
+
       onSent(data.rosaId);
     } catch {
       setError('Non siamo riusciti a raggiungere il server — riprova.');
@@ -136,7 +129,6 @@ function reasonToMessage(reason) {
   return messages[reason] || 'Invio non riuscito — riprova.';
 }
 
-
 export function RosaNotification({ rosa, currentUserId, arenaSessionId, onResolved }) {
   const [loading, setLoading] = useState(false);
   const [showGuessGame, setShowGuessGame] = useState(false);
@@ -219,7 +211,6 @@ export function RosaNotification({ rosa, currentUserId, arenaSessionId, onResolv
   );
 }
 
-
 export function RosaGuessGame({ rosaId, currentUserId, candidates, onFinished, redeemCode }) {
   const [message, setMessage] = useState('Hai tot tentativi per provare a scoprire chi è.');
 
@@ -264,7 +255,6 @@ export function RosaGuessGame({ rosaId, currentUserId, candidates, onFinished, r
     </div>
   );
 }
-
 
 export function RosaRedeemSeal({ rosaId, redeemCode, onDone }) {
   const [state, setState] = useState('idle');

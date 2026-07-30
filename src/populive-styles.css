@@ -252,7 +252,7 @@ button{ font-family:inherit; }
   background:var(--cyan);
   box-shadow:0 0 10px 2px rgba(47,211,232,0.65);
   left:50%; top:-3px;
-  transform:translateX(calc(-50% - 3px));
+  transform:translateX(calc(-50% + 1px));
   animation:pl-splash-node-pulse 2.8s ease-in-out infinite;
 }
 @keyframes pl-splash-node-pulse{
@@ -262,7 +262,7 @@ button{ font-family:inherit; }
 
 .pl-splash-waves{
   position:absolute;
-  bottom:100%; left:calc(50% - 3px);
+  bottom:100%; left:calc(50% + 1px);
   width:1px; height:1px;
   transform:translateY(4px);
 }

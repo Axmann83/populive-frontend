@@ -252,9 +252,11 @@ function RadarCard({ personId, arenaSessionId, viewerId, onClick }) {
     return () => { cancelled = true; };
   }, [personId, arenaSessionId]);
 
+  const badgeColors = getBadgeRingColors(preview);
+
   return (
     <div className="pl-radar-card" onClick={onClick} style={{ cursor: 'pointer' }}>
-      <span className="pl-radar-card-avatar">
+      <span className="pl-radar-card-avatar" style={ringStyleFor(badgeColors)}>
         {preview?.photoUrl
           ? <img src={preview.photoUrl} alt={preview.displayName} />
           : (preview?.avatarEmoji || '🙂')}
@@ -262,4 +264,26 @@ function RadarCard({ personId, arenaSessionId, viewerId, onClick }) {
       <span className="pl-radar-card-id">{preview?.displayName || 'Caricamento…'}</span>
     </div>
   );
+}
+
+function getBadgeRingColors(preview) {
+  if (!preview) return [];
+  const colors = [];
+  if (preview.isTopConnector) colors.push('#C7C9CC');            // argento
+  if (preview.isTopSpender) colors.push('#E8C77E');              // oro (stesso di --gold-medal)
+  if (preview.instantInfluencerCategory) colors.push('#E83E8C'); // magenta
+  return colors;
+}
+
+function ringStyleFor(colors) {
+  if (colors.length === 0) return {};
+  if (colors.length === 1) {
+    return { border: `2.5px solid ${colors[0]}` };
+  }
+  const slice = 100 / colors.length;
+  const stops = colors.map((c, i) => `${c} ${i * slice}% ${(i + 1) * slice}%`).join(', ');
+  return {
+    border: '2.5px solid transparent',
+    background: `linear-gradient(var(--surface-2), var(--surface-2)) padding-box, conic-gradient(${stops}) border-box`,
+  };
 }

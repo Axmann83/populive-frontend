@@ -2,6 +2,13 @@
  * ============================================================
  * POPULIVE — SCHERMATA DI APERTURA (splash)
  * ============================================================
+ * Traduzione ESATTA in React del file HTML che avevamo confermato
+ * e salvato insieme (populive-splash-animation.html) — stessi
+ * identici valori, nessuna variazione. Sfuma via quando l'app è
+ * DAVVERO pronta, non dopo un timer finto: App.jsx passa
+ * `fadingOut` quando il controllo della sessione è finito, e
+ * questo componente avvisa (onExited) quando può essere rimosso.
+ * ============================================================
  */
 export default function SplashScreen({ fadingOut, onExited }) {
   return (
@@ -18,7 +25,7 @@ export default function SplashScreen({ fadingOut, onExited }) {
               <span className="pl-splash-wave-arc"></span>
               <span className="pl-splash-wave-arc"></span>
             </span>
-          </span><span style={{ marginLeft: 3 }}>ve</span></span>
+          </span><span style={{ marginLeft: 1 }}>ve</span></span>
         </div>
       </div>
     </div>

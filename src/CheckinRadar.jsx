@@ -165,18 +165,25 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
       {arenaActive ? (
         <>
           <h2>Il radar è live</h2>
-          <p>{radarPeople.length} persone connesse ora</p>
-          <div className="pl-radar-list">
-            {radarPeople.map((p) => (
-              <RadarCard
-                key={p.userId}
-                personId={p.userId}
-                arenaSessionId={arenaSessionId}
-                viewerId={userId}
-                onClick={() => setSelectedProfileUserId(p.userId)}
-              />
-            ))}
-          </div>
+          {(() => {
+            const othersOnly = radarPeople.filter((p) => p.userId !== userId);
+            return (
+              <>
+                <p>{othersOnly.length} persone connesse ora</p>
+                <div className="pl-radar-list">
+                  {othersOnly.map((p) => (
+                    <RadarCard
+                      key={p.userId}
+                      personId={p.userId}
+                      arenaSessionId={arenaSessionId}
+                      viewerId={userId}
+                      onClick={() => setSelectedProfileUserId(p.userId)}
+                    />
+                  ))}
+                </div>
+              </>
+            );
+          })()}
         </>
       ) : (
         <>

@@ -125,9 +125,11 @@ function reasonToMessage(reason) {
     blocked_by_receiver: 'Non puoi inviare nulla a questo profilo.',
     receiver_requires_verified: 'Questo profilo accetta contatti solo da utenti verificati.',
     receiver_requires_premium: 'Questo profilo accetta contatti solo da utenti premium.',
+    cannot_interact_with_self: 'Non puoi inviare una Rosa a te stesso.',
   };
   return messages[reason] || 'Invio non riuscito — riprova.';
 }
+
 
 export function RosaNotification({ rosa, currentUserId, arenaSessionId, onResolved }) {
   const [loading, setLoading] = useState(false);
@@ -211,6 +213,7 @@ export function RosaNotification({ rosa, currentUserId, arenaSessionId, onResolv
   );
 }
 
+
 export function RosaGuessGame({ rosaId, currentUserId, candidates, onFinished, redeemCode }) {
   const [message, setMessage] = useState('Hai tot tentativi per provare a scoprire chi è.');
 
@@ -255,6 +258,7 @@ export function RosaGuessGame({ rosaId, currentUserId, candidates, onFinished, r
     </div>
   );
 }
+
 
 export function RosaRedeemSeal({ rosaId, redeemCode, onDone }) {
   const [state, setState] = useState('idle');

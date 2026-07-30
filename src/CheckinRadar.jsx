@@ -59,6 +59,8 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
     });
 
     socket.on('presence_update', (payload) => {
+      if (payload.userId === userId) return;
+
       setRadarPeople((prev) => {
         if (payload.type === 'joined') {
           if (prev.some((p) => p.userId === payload.userId)) return prev;
@@ -75,7 +77,7 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
       setRadarPeople((prev) => {
         const existingIds = new Set(prev.map((p) => p.userId));
         const newEntries = userIds
-          .filter((id) => !existingIds.has(id))
+          .filter((id) => id !== userId && !existingIds.has(id))
           .map((id) => ({ userId: id, joinedAt: Date.now() }));
         return [...prev, ...newEntries];
       });

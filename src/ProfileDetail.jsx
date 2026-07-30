@@ -1,6 +1,18 @@
 import { useState, useEffect } from 'react';
 import { apiFetch } from './apiClient';
 
+/**
+ * ============================================================
+ * POPULIVE — PROFILO COMPLETO (di un'altra persona)
+ * ============================================================
+ * Raggiungibile con la freccetta dalla schermata a tutto schermo
+ * (ProfileFullScreen) — quella è pensata per riconoscere e agire
+ * in fretta, questa per chi vuole vedere qualcosa in più prima di
+ * decidere: bio per intero, e la classifica della persona, SE ha
+ * scelto di mostrarla (rispettiamo sempre show_ranking_on_profile,
+ * stesso principio già costruito per il proprio profilo).
+ * ============================================================
+ */
 export default function ProfileDetail({ userId, arenaSessionId, onClose, onBack }) {
   const [profile, setProfile] = useState(null);
   const [ranking, setRanking] = useState(null);
@@ -22,6 +34,9 @@ export default function ProfileDetail({ userId, arenaSessionId, onClose, onBack 
           if (rankingData.success) setRanking(rankingData.summary);
         }
 
+        // Stessa registrazione della visita di ProfileFullScreen —
+        // il server evita già i doppioni se la visita era già stata
+        // contata lì, quindi è sicuro chiamarlo anche qui.
         if (arenaSessionId) {
           apiFetch('/api/profile-views', {
             method: 'POST',
@@ -42,6 +57,8 @@ export default function ProfileDetail({ userId, arenaSessionId, onClose, onBack 
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'var(--bg, #0D0D0D)', zIndex: 65, overflowY: 'auto' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 18px 6px' }}>
+        {/* Torna alla foto a tutto schermo, non chiude tutto — un
+            passo indietro nello stesso "viaggio", non una fine. */}
         <button onClick={onBack} style={navBtnStyle} aria-label="Indietro">‹</button>
         <button onClick={onClose} style={navBtnStyle} aria-label="Chiudi">✕</button>
       </div>
@@ -69,6 +86,10 @@ export default function ProfileDetail({ userId, arenaSessionId, onClose, onBack 
             )}
           </div>
 
+          {/* Classifica — SOLO se la persona ha scelto di mostrarla.
+              "hidden: true" arriva già così dal server, non dobbiamo
+              decidere noi qui se nasconderla: la decisione è già
+              presa lato server, in base alla SUA scelta. */}
           {ranking && !ranking.hidden && (
             <div style={{ display: 'flex', gap: 8, margin: '18px 0' }}>
               <RankBox label="Stanotte" rank={ranking.localRank} points={ranking.localPoints} />
@@ -99,12 +120,15 @@ export default function ProfileDetail({ userId, arenaSessionId, onClose, onBack 
             </div>
           )}
 
+          {/* Prodotti sponsorizzati — separata da bio/hashtag,
+              mostrata solo se il profilo è davvero un Instant
+              Influencer con almeno un prodotto collegato. */}
           {profile.sponsoredProducts?.length > 0 && (
             <div style={{ marginTop: 14 }}>
               <div className="pl-section-label">Prodotti sponsorizzati</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {profile.sponsoredProducts.map((p) => (
-                  
+                  <a
                     key={p.url}
                     href={p.url}
                     target="_blank"

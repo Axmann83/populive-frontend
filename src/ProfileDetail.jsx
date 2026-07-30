@@ -62,6 +62,11 @@ export default function ProfileDetail({ userId, arenaSessionId, onClose, onBack 
               {profile.isTopSpender && <span title="Top Spender">💰</span>}
               {profile.isFounder && <span title="Founder">👑</span>}
             </div>
+            {profile.instantInfluencerCategory && (
+              <div style={{ ...influencerPillStyle, marginTop: 8 }}>
+                ✨ Instant Influencer · {profile.instantInfluencerCategory}
+              </div>
+            )}
           </div>
 
           {ranking && !ranking.hidden && (
@@ -93,6 +98,31 @@ export default function ProfileDetail({ userId, arenaSessionId, onClose, onBack 
               </div>
             </div>
           )}
+
+          {profile.sponsoredProducts?.length > 0 && (
+            <div style={{ marginTop: 14 }}>
+              <div className="pl-section-label">Prodotti sponsorizzati</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {profile.sponsoredProducts.map((p) => (
+                  
+                    key={p.url}
+                    href={p.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      background: 'var(--surface-2)', border: '1px solid rgba(228,212,200,0.14)',
+                      borderRadius: 12, padding: '10px 14px', textDecoration: 'none',
+                      color: 'var(--text)', fontSize: 12.5, fontWeight: 600,
+                    }}
+                  >
+                    {p.name}
+                    <span style={{ color: 'var(--gold-medal, #E8C77E)' }}>↗</span>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -119,4 +149,14 @@ const navBtnStyle = {
   color: 'var(--text, #F6F1EC)',
   fontSize: 18,
   cursor: 'pointer',
+};
+
+const influencerPillStyle = {
+  display: 'inline-block',
+  padding: '4px 11px',
+  borderRadius: 999,
+  fontSize: 11,
+  fontWeight: 700,
+  color: '#0D0D0D',
+  background: 'var(--gold-medal, #E8C77E)',
 };

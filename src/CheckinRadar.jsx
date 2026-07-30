@@ -85,6 +85,7 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
 
     setSocketRef(socket);
     return () => socket.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleScanQr = useCallback(async () => {

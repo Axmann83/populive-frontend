@@ -134,6 +134,11 @@ export default function ProfileFullScreen({ userId, arenaSessionId, currentUserI
               </div>
               <button onClick={() => setShowProfileDetail(true)} style={arrowButtonStyle} aria-label="Profilo completo">›</button>
             </div>
+            {profile.instantInfluencerCategory && (
+              <div style={influencerPillStyle}>
+                ✨ Instant Influencer · {profile.instantInfluencerCategory}
+              </div>
+            )}
             {profile.bio && <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '6px 0 0' }}>{profile.bio}</p>}
             {profile.hashtags?.length > 0 && (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
@@ -260,6 +265,17 @@ const arrowButtonStyle = {
   cursor: 'pointer',
   backdropFilter: 'blur(4px)',
   flexShrink: 0,
+};
+
+const influencerPillStyle = {
+  display: 'inline-block',
+  marginTop: 6,
+  padding: '4px 11px',
+  borderRadius: 999,
+  fontSize: 11,
+  fontWeight: 700,
+  color: '#0D0D0D',
+  background: 'var(--gold-medal, #E8C77E)',
 };
 
 const photoContainerStyle = {

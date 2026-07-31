@@ -1,0 +1,317 @@
+/* ============================================================
+   POPULIVE — FOGLIO DI STILE CONDIVISO
+   ============================================================
+   Palette e pattern presi identici dalle demo HTML già validate:
+   nero + teak/beige neutro + ciano elettrico dominante, font Syne
+   per i titoli, Inter per il resto.
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+
+:root{
+  --bg:#0D0D0D; --surface:#171717; --surface-2:#1E1E1E;
+  --teak:#B0AAA4; --cyan:#2FD3E8; --red:#E53935;
+  --gold-medal:#E8C77E;
+  --text:#F6F1EC; --text-muted:#A9A9A9;
+}
+
+*{ box-sizing:border-box; }
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  font-family:'Inter',system-ui,sans-serif;
+}
+
+.pl-app-shell{
+  max-width:420px; margin:0 auto; min-height:100vh;
+  display:flex; flex-direction:column;
+  background:radial-gradient(120% 90% at 50% 0%, #161616 0%, #0D0D0D 60%);
+}
+
+/* --- Barra superiore --- */
+.pl-top-bar{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:20px 18px 10px;
+}
+.pl-brand{
+  display:flex; align-items:center; gap:2px;
+  font-family:'Syne',sans-serif; font-weight:800; font-size:16px;
+}
+.pl-brand-live{ color:var(--cyan); }
+.pl-arena-pill{
+  display:flex; align-items:center; gap:5px;
+  background:rgba(229,57,53,0.14); border:1px solid rgba(229,57,53,0.4); color:var(--red);
+  font-size:9.5px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase;
+  padding:4px 10px; border-radius:999px;
+}
+.pl-live-dot{
+  width:6px; height:6px; border-radius:50%; background:var(--red); flex-shrink:0;
+  animation:pl-live-dot-pulse 1.6s ease-in-out infinite;
+}
+@keyframes pl-live-dot-pulse{
+  0%,100%{ opacity:1; }
+  50%{ opacity:0.4; }
+}
+
+/* --- Contenuto centrale, scorrevole --- */
+.pl-content{ flex:1; overflow-y:auto; padding:6px 18px 90px; }
+
+/* --- Bottom nav --- */
+.pl-bottom-nav{
+  position:fixed; bottom:0; left:50%; transform:translateX(-50%);
+  width:100%; max-width:420px;
+  display:flex; justify-content:space-around; align-items:center;
+  padding:10px 10px calc(14px + env(safe-area-inset-bottom, 0px));
+  border-top:1px solid rgba(228,212,200,0.1);
+  background:rgba(13,13,13,0.95);
+  backdrop-filter:blur(8px);
+}
+.pl-nav-item{
+  display:flex; flex-direction:column; align-items:center; gap:3px;
+  color:var(--text-muted); cursor:pointer; background:none; border:none;
+  font-family:inherit; padding:4px 8px; position:relative;
+}
+.pl-nav-item.active{ color:var(--cyan); }
+.pl-nav-ic{ display:block; }
+.pl-nav-label{ font-size:8.5px; font-weight:600; }
+.pl-nav-badge{
+  position:absolute; top:-2px; right:-2px;
+  background:var(--red); color:#fff; font-size:8.5px; font-weight:700;
+  width:15px; height:15px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+}
+
+/* --- Elementi generici riusati ovunque --- */
+.pl-screen{ display:flex; flex-direction:column; gap:12px; }
+.pl-hint{ font-size:11.5px; color:var(--text-muted); line-height:1.5; }
+.pl-error{ font-size:11.5px; color:var(--red); }
+.pl-section-label{ font-size:10.5px; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-muted); margin:10px 0 8px; }
+
+.pl-send-btn, .pl-retry-btn{
+  width:100%; padding:14px; border-radius:16px; border:none;
+  background:var(--cyan); color:#0D0D0D; font-weight:700; font-size:13.5px; cursor:pointer;
+}
+.pl-send-btn:disabled{ opacity:0.4; cursor:not-allowed; }
+
+input, textarea, select{
+  width:100%; background:var(--surface); border:1px solid rgba(228,212,200,0.14);
+  border-radius:12px; padding:12px 14px; color:var(--text); font-size:13px;
+  font-family:inherit; outline:none; margin-bottom:10px;
+}
+input::placeholder, textarea::placeholder{ color:var(--text-muted); }
+button{ font-family:inherit; }
+
+/* --- Onboarding / creazione profilo --- */
+.pl-onboarding-screen{ display:flex; flex-direction:column; gap:12px; padding-top:10px; }
+.pl-step-indicator{ font-size:10.5px; color:var(--text-muted); text-align:center; margin-bottom:8px; }
+.pl-hashtag-input-row{ display:flex; gap:8px; }
+.pl-hashtag-input-row input{ margin-bottom:0; }
+.pl-hashtag-input-row button{
+  background:var(--surface-2); border:1px solid rgba(228,212,200,0.18); color:var(--teak);
+  border-radius:12px; padding:0 16px; font-size:12px; font-weight:600; cursor:pointer;
+}
+.pl-hashtag-list{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px; }
+.pl-hashtag-pill{
+  display:flex; align-items:center; gap:5px;
+  background:rgba(228,212,200,0.1); border:1px solid rgba(228,212,200,0.2); color:var(--teak);
+  font-size:11px; font-weight:600; padding:5px 10px; border-radius:999px;
+}
+.pl-hashtag-pill button{ background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:11px; padding:0; }
+/* Hashtag "di sola lettura", mostrati sui profili altrui (a tutto
+   schermo e nel profilo completo) — stesso stile della pillola
+   sopra ma senza il bottone di rimozione, che qui non serve. */
+.pl-hashtag{
+  display:inline-block;
+  background:rgba(228,212,200,0.1); border:1px solid rgba(228,212,200,0.2); color:var(--teak);
+  font-size:11px; font-weight:600; padding:5px 10px; border-radius:999px;
+}
+.pl-consent-row{
+  display:flex; align-items:center; justify-content:space-between;
+  background:var(--surface); border:1px solid rgba(228,212,200,0.1);
+  border-radius:14px; padding:12px 14px; margin-bottom:8px;
+}
+.pl-consent-label{ font-size:12.5px; }
+.pl-consent-sub{ font-size:10px; color:var(--text-muted); margin-top:2px; }
+.pl-select-row{ display:flex; flex-direction:column; gap:6px; font-size:11.5px; color:var(--text-muted); margin-bottom:10px; }
+
+/* --- Check-in / Radar --- */
+.pl-venue-tag{ text-align:center; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-muted); margin-bottom:16px; }
+.pl-qr-frame{
+  display:block; margin:0 auto; width:180px; height:180px; border-radius:20px;
+  background:var(--surface); border:1px solid rgba(228,212,200,0.18);
+  font-size:60px; color:var(--teak); cursor:pointer;
+}
+.pl-scan-cta{ text-align:center; font-size:12.5px; color:var(--text-muted); margin-top:16px; }
+.pl-arena-pill{ align-self:center; }
+.pl-counter{ font-family:'Syne',sans-serif; font-weight:800; font-size:32px; text-align:center; color:var(--teak); margin:14px 0; }
+.pl-radar-list{ display:flex; flex-direction:column; gap:8px; }
+.pl-radar-card{
+  display:flex; align-items:center; gap:10px;
+  background:var(--surface); border:1px solid rgba(228,212,200,0.1);
+  border-radius:14px; padding:9px 12px;
+}
+.pl-radar-card-id{ font-size:11px; color:var(--text-muted); }
+.pl-radar-card-avatar{
+  width:32px; height:32px; border-radius:50%; overflow:hidden; flex-shrink:0;
+  background:var(--surface-2); display:flex; align-items:center; justify-content:center; font-size:15px;
+}
+.pl-radar-card-avatar img{ width:100%; height:100%; object-fit:cover; }
+
+/* --- Classifica --- */
+.pl-ranking-list{ display:flex; flex-direction:column; gap:8px; }
+.pl-rank-row{
+  display:flex; align-items:center; gap:10px;
+  background:var(--surface); border:1px solid rgba(228,212,200,0.1);
+  border-radius:14px; padding:9px 12px; position:relative;
+}
+.pl-rank-row-me{ border-color:rgba(47,211,232,0.5); background:linear-gradient(90deg, rgba(47,211,232,0.08), var(--surface) 45%); }
+.pl-rank-num{ width:20px; font-family:'Syne',sans-serif; font-weight:700; font-size:13px; color:var(--text-muted); text-align:center; }
+.pl-rank-avatar-wrap{ position:relative; flex-shrink:0; }
+.pl-rank-avatar{
+  width:38px; height:38px; border-radius:50%; overflow:hidden;
+  background:var(--surface-2); display:flex; align-items:center; justify-content:center; font-size:17px;
+}
+.pl-rank-avatar img{ width:100%; height:100%; object-fit:cover; }
+.pl-badge-stack{ position:absolute; bottom:-3px; right:-3px; display:flex; gap:1px; }
+.pl-badge{ font-size:10px; background:var(--bg); border-radius:50%; padding:1px; }
+.pl-rank-name{ flex:1; font-size:12.5px; font-weight:600; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.pl-rank-points{ font-family:'Syne',sans-serif; font-weight:700; font-size:13px; position:relative; }
+.pl-rank-delta{
+  position:absolute; top:-16px; right:0; font-size:11px; font-weight:700; color:var(--cyan);
+  animation:pl-float-up 1.8s ease-out forwards;
+}
+@keyframes pl-float-up{ 0%{opacity:0; transform:translateY(4px);} 20%{opacity:1;} 100%{opacity:0; transform:translateY(-14px);} }
+@keyframes pl-toast-in{ 0%{opacity:0; transform:translateY(-10px) scale(0.95);} 100%{opacity:1; transform:translateY(0) scale(1);} }
+.pl-ranking-loading{ text-align:center; color:var(--text-muted); font-size:12px; padding:30px 0; }
+
+/* --- Rosa (invio/ricezione/minigioco/riscatto) --- */
+.pl-sheet{ display:flex; flex-direction:column; gap:6px; }
+.pl-sheet-close{ text-align:right; font-size:11px; color:var(--text-muted); cursor:pointer; margin-bottom:6px; }
+.pl-rosa-option{
+  display:flex; flex-direction:column; gap:2px;
+  background:var(--surface-2); border:1.5px solid rgba(228,212,200,0.12);
+  border-radius:14px; padding:11px 14px; cursor:pointer; margin-bottom:8px;
+}
+.pl-rosa-option.selected{ border-color:var(--cyan); background:rgba(47,211,232,0.08); }
+.pl-rosa-title{ font-size:12.5px; font-weight:600; }
+.pl-rosa-price{ font-size:10.5px; color:var(--text-muted); }
+.pl-sponsor-tag{ color:var(--teak); }
+.pl-redeem-actions{ display:flex; gap:8px; margin:6px 0; }
+.pl-redeem-actions button{
+  flex:1; padding:11px; border-radius:12px; font-size:11.5px; font-weight:600; cursor:pointer;
+  background:var(--surface-2); border:1px solid rgba(228,212,200,0.16); color:var(--text-muted);
+}
+.pl-btn-reject{ color:var(--red); border-color:rgba(229,57,53,0.3); }
+.pl-guess-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:10px 0; }
+.pl-guess-candidate{
+  display:flex; flex-direction:column; align-items:center; gap:6px;
+  background:var(--surface); border:1px solid rgba(228,212,200,0.14);
+  border-radius:14px; padding:14px 10px; cursor:pointer;
+}
+.pl-guess-candidate img{ width:40px; height:40px; border-radius:50%; object-fit:cover; }
+.pl-abandon-btn{
+  width:100%; margin-top:10px; padding:11px; border-radius:12px;
+  border:1px dashed rgba(228,212,200,0.3); background:transparent; color:var(--text-muted);
+  font-size:11.5px; font-weight:600; cursor:pointer;
+}
+.pl-redeem-card{ align-items:center; text-align:center; }
+.pl-seal{
+  width:150px; height:150px; border-radius:50%; margin:16px auto;
+  background:var(--surface-2); border:2px solid var(--teak); color:var(--text);
+  font-family:'Syne',sans-serif; font-weight:700; font-size:16px; cursor:pointer; display:block;
+}
+.pl-seal-live{ border-color:var(--cyan); color:var(--cyan); font-size:36px; box-shadow:0 0 30px -8px var(--cyan); }
+
+/* --- Chat --- */
+.pl-chat-window{ display:flex; flex-direction:column; height:60vh; }
+.pl-chat-header{ display:flex; align-items:center; justify-content:space-between; padding-bottom:10px; border-bottom:1px solid rgba(228,212,200,0.1); font-family:'Syne',sans-serif; font-weight:700; font-size:14px; }
+.pl-keep-toggle{
+  padding:7px 12px; border-radius:999px; border:1px solid rgba(228,212,200,0.2);
+  background:var(--surface-2); color:var(--text-muted); font-size:10px; font-weight:700; cursor:pointer;
+}
+.pl-keep-toggle.pl-keep-on{ background:rgba(47,211,232,0.14); border-color:var(--cyan); color:var(--cyan); }
+.pl-chat-hint{ font-size:10.5px; color:var(--text-muted); background:var(--surface); border:1px solid rgba(228,212,200,0.1); border-radius:10px; padding:8px 10px; margin-top:8px; }
+.pl-chat-hint-success{ background:rgba(47,211,232,0.08); border-color:rgba(47,211,232,0.3); color:var(--cyan); }
+.pl-chat-messages{ flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:8px; padding:12px 0; }
+.pl-chat-bubble{ max-width:75%; padding:10px 14px; border-radius:16px; font-size:12.5px; line-height:1.4; }
+.pl-chat-theirs{ align-self:flex-start; background:var(--surface); border:1px solid rgba(228,212,200,0.1); border-bottom-left-radius:4px; }
+.pl-chat-mine{ align-self:flex-end; background:rgba(47,211,232,0.16); border:1px solid rgba(47,211,232,0.3); border-bottom-right-radius:4px; }
+.pl-chat-input-row{ display:flex; gap:8px; padding-top:10px; border-top:1px solid rgba(228,212,200,0.1); }
+.pl-chat-input-row input{ margin-bottom:0; border-radius:999px; }
+.pl-chat-input-row button{ background:var(--cyan); color:#0D0D0D; border:none; border-radius:999px; padding:0 18px; font-weight:700; font-size:12px; cursor:pointer; }
+.pl-chat-closed-notice{ text-align:center; font-size:11.5px; color:var(--text-muted); padding:14px; background:var(--surface); border-radius:12px; margin-top:10px; }
+.pl-chat-loading{ text-align:center; color:var(--text-muted); padding:30px 0; font-size:12px; }
+
+/* ============================================================
+   SPLASH — schermata di apertura animata. Copre l'INTERO
+   schermo (sopra tutto il resto, z-index massimo) mentre l'app
+   verifica se esiste già una sessione salvata — un'attesa che
+   c'è comunque, non un ritardo aggiunto apposta. Sfuma via da
+   sola quando quel controllo finisce, stile Hinge.
+   ============================================================ */
+.pl-splash{
+  position:fixed; inset:0; z-index:9999;
+  background:radial-gradient(120% 90% at 50% 42%, #131313 0%, #0A0A0A 65%);
+  display:flex; align-items:center; justify-content:center;
+  opacity:1;
+  transition:opacity 0.5s ease;
+}
+.pl-splash-out{ opacity:0; pointer-events:none; }
+
+.pl-splash-wordmark-wrap{
+  position:relative;
+  display:flex; align-items:flex-end; justify-content:center;
+  animation:pl-splash-wordmark-in 0.9s cubic-bezier(0.16,1,0.3,1) 0.3s both;
+}
+@keyframes pl-splash-wordmark-in{
+  from{ opacity:0; transform:translateY(10px); }
+  to{ opacity:1; transform:translateY(0); }
+}
+
+.pl-splash-wordmark{
+  font-family:'Syne',sans-serif;
+  font-size:44px; font-weight:800; letter-spacing:-0.02em;
+  color:var(--text); white-space:nowrap; position:relative;
+}
+.pl-splash-live{ color:var(--cyan); position:relative; }
+
+.pl-splash-antenna-node{
+  position:absolute;
+  width:7px; height:7px; aspect-ratio:1/1;
+  border-radius:50%;
+  background:var(--cyan);
+  box-shadow:0 0 10px 2px rgba(47,211,232,0.65);
+  left:50%; top:-3px;
+  transform:translateX(calc(-50% + 1px));
+  animation:pl-splash-node-pulse 2.8s ease-in-out infinite;
+}
+@keyframes pl-splash-node-pulse{
+  0%,100%{ box-shadow:0 0 10px 2px rgba(47,211,232,0.65); }
+  50%{ box-shadow:0 0 16px 4px rgba(47,211,232,0.95); }
+}
+
+.pl-splash-waves{
+  position:absolute;
+  bottom:100%; left:calc(50% + 1px);
+  width:1px; height:1px;
+  transform:translateY(4px);
+}
+.pl-splash-wave-arc{
+  position:absolute;
+  bottom:0; left:50%;
+  transform:translateX(-50%);
+  border:1.6px solid var(--cyan);
+  border-bottom:none;
+  border-radius:999px 999px 0 0;
+  opacity:0;
+  filter:drop-shadow(0 0 3px rgba(47,211,232,0.7));
+  animation:pl-splash-wave-pulse 2.8s ease-out infinite;
+}
+.pl-splash-wave-arc:nth-child(1){ width:16px; height:8px; animation-delay:0.1s; }
+.pl-splash-wave-arc:nth-child(2){ width:28px; height:14px; animation-delay:0.35s; }
+.pl-splash-wave-arc:nth-child(3){ width:40px; height:20px; animation-delay:0.6s; }
+
+@keyframes pl-splash-wave-pulse{
+  0%{ opacity:0; transform:translateX(-50%) translateY(2px) scale(0.85); }
+  18%{ opacity:0.9; transform:translateX(-50%) translateY(0) scale(1); }
+  55%{ opacity:0.4; }
+  100%{ opacity:0; transform:translateX(-50%) translateY(-3px) scale(1.06); }
+}

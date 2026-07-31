@@ -1,11 +1,28 @@
 import { useState, useEffect, useCallback } from 'react';
+import { PartyPopper } from './PopuLiveIcons';
 
 import { apiFetch } from './apiClient';
 
+/**
+ * ============================================================
+ * POPULIVE — CICLO ROSA COMPLETO (componenti reali)
+ * ============================================================
+ * Quattro pezzi, ognuno collegato a un endpoint vero:
+ *   1) RosaSend       → POST /api/roses/send
+ *   2) RosaNotification → POST /api/roses/:id/respond
+ *   3) RosaGuessGame   → POST /api/roses/:id/guess
+ *   4) RosaRedeemSeal  → POST /api/roses/:id/redeem
+ * ============================================================
+ */
+
+
+// ------------------------------------------------------------
+// 1) INVIO
+// ------------------------------------------------------------
 export function RosaSend({ senderId, receiverId, arenaSessionId, venueId, onSent, onCancel }) {
   const [drinks, setDrinks] = useState([]);
   const [selectedDrink, setSelectedDrink] = useState(null);
-  const [tier, setTier] = useState('standalone');
+  const [tier, setTier] = useState('standalone'); // 'standalone' | 'like' | 'super'
   const [sending, setSending] = useState(false);
   const [error, setError] = useState(null);
 
@@ -15,6 +32,11 @@ export function RosaSend({ senderId, receiverId, arenaSessionId, venueId, onSent
       .then((data) => {
         if (data.success) {
           setDrinks(data.drinks);
+          // Se il locale offre UN SOLO drink per la Rosa (scelta
+          // comune per chi preferisce una consumazione fissa,
+          // invece di un catalogo), lo selezioniamo da soli —
+          // niente da "scegliere" quando c'è una sola opzione,
+          // un passaggio in meno per chi invia.
           if (data.drinks.length === 1) {
             setSelectedDrink(data.drinks[0]);
           }
@@ -41,9 +63,13 @@ export function RosaSend({ senderId, receiverId, arenaSessionId, venueId, onSent
         return;
       }
 
+      // Due esiti possibili: la Rosa nasce SUBITO (Rosa gratis
+      // settimanale, o account di prova) — oppure serve prima
+      // pagare davvero, e Stripe ci dà un indirizzo a cui mandare
+      // il cliente per completare il pagamento con la sua carta.
       if (data.requiresPayment) {
         window.location.href = data.checkoutUrl;
-        return;
+        return; // usciamo dall'app per andare su Stripe — non c'è altro da fare qui
       }
 
       onSent(data.rosaId);
@@ -86,6 +112,8 @@ export function RosaSend({ senderId, receiverId, arenaSessionId, venueId, onSent
         </>
       )}
 
+      {/* Locale con un'unica Rosa fissa — niente da scegliere, solo
+          una conferma di cosa si sta per inviare. */}
       {drinks.length === 1 && (
         <div className="pl-rosa-option selected" style={{ cursor: 'default' }}>
           <div className="pl-rosa-title">
@@ -131,6 +159,9 @@ function reasonToMessage(reason) {
 }
 
 
+// ------------------------------------------------------------
+// 2) NOTIFICA DI RICEZIONE — le tre varianti
+// ------------------------------------------------------------
 export function RosaNotification({ rosa, currentUserId, arenaSessionId, onResolved }) {
   const [loading, setLoading] = useState(false);
   const [showGuessGame, setShowGuessGame] = useState(false);
@@ -214,8 +245,12 @@ export function RosaNotification({ rosa, currentUserId, arenaSessionId, onResolv
 }
 
 
+// ------------------------------------------------------------
+// 3) MINIGIOCO — indovina chi ti ha inviato la Rosa+Like
+// ------------------------------------------------------------
 export function RosaGuessGame({ rosaId, currentUserId, candidates, onFinished, redeemCode }) {
   const [message, setMessage] = useState('Hai tot tentativi per provare a scoprire chi è.');
+  const [justMatched, setJustMatched] = useState(false);
 
   async function guess(guessedUserId) {
     const res = await apiFetch(`/api/roses/${rosaId}/guess`, {
@@ -230,7 +265,8 @@ export function RosaGuessGame({ rosaId, currentUserId, candidates, onFinished, r
       return;
     }
     if (data.matched) {
-      setMessage('🎉 Match! La chat si sblocca.');
+      setJustMatched(true);
+      setMessage('Match! La chat si sblocca.');
       setTimeout(() => onFinished({ matched: true }), 1200);
     } else if (data.attemptsExhausted) {
       setMessage('Tentativi esauriti — la Rosa resta tua, il mittente rimane un mistero.');
@@ -243,7 +279,9 @@ export function RosaGuessGame({ rosaId, currentUserId, candidates, onFinished, r
   return (
     <div className="pl-sheet">
       <h3>Indovina chi ti ha inviato la Rosa</h3>
-      <p className="pl-hint">{message}</p>
+      <p className="pl-hint" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        {justMatched && <PartyPopper size={15} color="var(--cyan)" />} {message}
+      </p>
       <div className="pl-guess-grid">
         {candidates.map((c) => (
           <div key={c.userId} className="pl-guess-candidate" onClick={() => guess(c.userId)}>
@@ -252,6 +290,11 @@ export function RosaGuessGame({ rosaId, currentUserId, candidates, onFinished, r
           </div>
         ))}
       </div>
+      {/* Nessuno dei candidati mostrati interessa davvero? Nessun
+          problema: un tentativo sbagliato manda comunque un Like
+          vero a quella persona (v. attemptGuess lato server) — chi
+          non vuole rischiare un match indesiderato può uscire senza
+          giocare, la Rosa resta comunque sua. */}
       <button className="pl-abandon-btn" onClick={() => onFinished({ matched: false, abandoned: true })}>
         Nessuno mi interessa — abbandona e riscatta la Rosa
       </button>
@@ -260,8 +303,11 @@ export function RosaGuessGame({ rosaId, currentUserId, candidates, onFinished, r
 }
 
 
+// ------------------------------------------------------------
+// 4) RISCATTO AL BANCONE — sigillo con timer, mostrato al bartender
+// ------------------------------------------------------------
 export function RosaRedeemSeal({ rosaId, redeemCode, onDone }) {
-  const [state, setState] = useState('idle');
+  const [state, setState] = useState('idle'); // idle | live | expired | confirmed
   const [secondsLeft, setSecondsLeft] = useState(30);
   const [flash, setFlash] = useState(false);
 
@@ -277,6 +323,14 @@ export function RosaRedeemSeal({ rosaId, redeemCode, onDone }) {
     setSecondsLeft(30);
   }
 
+  // QUESTO è il gesto chiave: il bartender stesso, guardando il
+  // sigillo attivo, tocca lo schermo del telefono del cliente.
+  // Un solo tocco fa DUE cose insieme, senza bisogno di alcun
+  // dispositivo o account separato per lo staff:
+  //   1) il flash istantaneo dimostra che il codice è "vivo" ora,
+  //      non un video mostrato in differita (un video non reagisce)
+  //   2) lo stesso tocco chiama l'API di riscatto — il gesto DI
+  //      VERIFICA e la CONFERMA sono la stessa identica azione.
   async function handleSealTap() {
     if (state !== 'live') return;
     setFlash(true);

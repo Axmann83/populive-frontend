@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { apiFetch } from './apiClient';
+import { Link2, Coins, Crown, Sparkles } from './PopuLiveIcons';
 
 /**
  * ============================================================
@@ -75,13 +76,13 @@ export default function ProfileDetail({ userId, arenaSessionId, onClose, onBack 
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 10 }}>
               <span style={{ fontFamily: "'Syne',sans-serif", fontWeight: 700, fontSize: 18 }}>{profile.displayName}</span>
-              {profile.isTopConnector && <span title="Top Connector">🔗</span>}
-              {profile.isTopSpender && <span title="Top Spender">💰</span>}
-              {profile.isFounder && <span title="Founder">👑</span>}
+              {profile.isTopConnector && <Link2 size={13} color="#C7C9CC" title="Top Connector" />}
+              {profile.isTopSpender && <Coins size={13} color="#E8C77E" title="Top Spender" />}
+              {profile.isFounder && <Crown size={13} color="#E8C77E" title="Founder" />}
             </div>
             {profile.instantInfluencerCategory && (
               <div style={{ ...influencerPillStyle, marginTop: 8 }}>
-                ✨ Instant Influencer · {profile.instantInfluencerCategory}
+                <Sparkles size={12} style={{ verticalAlign: 'middle', marginRight: 4 }} /> Instant Influencer · {profile.instantInfluencerCategory}
               </div>
             )}
           </div>

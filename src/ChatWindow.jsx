@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { io } from 'socket.io-client';
+import { BookmarkCheck, Sparkles } from './PopuLiveIcons';
 
 import { API_BASE, apiFetch } from './apiClient';
 
@@ -84,7 +85,7 @@ export default function ChatWindow({ conversationId, currentUserId, otherUserNam
 
   const toggleKeep = useCallback(async () => {
     const newValue = !myWantsKeep;
-    setMyWantsKeep(newValue);
+    setMyWantsKeep(newValue); // ottimistico
     const res = await apiFetch(`/api/chat/${conversationId}/keep-preference`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -100,12 +101,20 @@ export default function ChatWindow({ conversationId, currentUserId, otherUserNam
     <div className="pl-chat-window">
       <div className="pl-chat-header">
         <span>{otherUserName}</span>
+        {/* Il toggle "conserva" è sempre visibile e sempre cambiabile,
+            non solo a fine serata — così l'utente può decidere fin
+            da subito se vuole provare a "giocarsela" per i giorni
+            successivi. Mostriamo anche se l'altra parte ha già scelto
+            "conserva", per trasparenza (ma mai finché non lo sceglie
+            anche lui/lei stesso/a: nessun modo di vedere la scelta
+            altrui prima di aver fatto la propria). */}
         <button
           className={`pl-keep-toggle ${myWantsKeep ? 'pl-keep-on' : ''}`}
           onClick={toggleKeep}
           disabled={isClosed}
+          style={{ display: 'flex', alignItems: 'center', gap: 5 }}
         >
-          {myWantsKeep ? '💾 Vuoi conservarla' : 'Conserva la chat'}
+          {myWantsKeep && <BookmarkCheck size={12} />} {myWantsKeep ? 'Vuoi conservarla' : 'Conserva la chat'}
         </button>
       </div>
 
@@ -115,8 +124,8 @@ export default function ChatWindow({ conversationId, currentUserId, otherUserNam
         </div>
       )}
       {myWantsKeep && theirWantsKeep && !isClosed && (
-        <div className="pl-chat-hint pl-chat-hint-success">
-          Anche {otherUserName} ha scelto di conservarla — questa chat resterà vostra anche dopo stasera. 💫
+        <div className="pl-chat-hint pl-chat-hint-success" style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+          Anche {otherUserName} ha scelto di conservarla — questa chat resterà vostra anche dopo stasera. <Sparkles size={12} />
         </div>
       )}
 

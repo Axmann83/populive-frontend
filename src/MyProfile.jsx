@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Settings as SettingsIcon } from './PopuLiveIcons';
 
 import { apiFetch } from './apiClient';
 
@@ -28,6 +29,9 @@ export default function MyProfile({ userId, arenaSessionId, onOpenSettings }) {
           setRanking(rankingData.summary);
         }
       } catch (err) {
+        // Se qualcosa va storto (server, rete, ecc.), non restiamo
+        // bloccati su "Caricamento" per sempre — mostriamo la
+        // schermata comunque, semplicemente senza i contatori.
         console.error('Errore nel caricamento della classifica personale:', err);
       } finally {
         if (!cancelled) setLoading(false);
@@ -44,10 +48,10 @@ export default function MyProfile({ userId, arenaSessionId, onOpenSettings }) {
       <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
         <button
           onClick={onOpenSettings}
-          style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: 'var(--text-muted)' }}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex' }}
           aria-label="Impostazioni"
         >
-          ⚙️
+          <SettingsIcon size={20} />
         </button>
       </div>
 

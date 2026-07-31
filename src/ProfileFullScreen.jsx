@@ -2,12 +2,25 @@ import { useState, useEffect } from 'react';
 import { apiFetch } from './apiClient';
 import { RosaSend } from './RosaFlow';
 import ProfileDetail from './ProfileDetail';
-import { Heart, Star, KohaFlowerIcon } from './PopuLiveIcons';
+import { Heart, Star, KohaFlowerIcon, Link2, Coins, Crown, Sparkles } from './PopuLiveIcons';
 
+/**
+ * ============================================================
+ * POPULIVE — PROFILO A TUTTO SCHERMO (dal radar)
+ * ============================================================
+ * Pensata apposta per l'uso reale in un locale buio e affollato:
+ * una sola schermata, foto grande per riconoscere subito la
+ * persona, e i tre bottoni di interazione già lì — niente menu
+ * intermedi, niente passaggi in più. Come deciso insieme: se
+ * tocchi "Rosa", si apre il riquadro di scelta (drink + variante)
+ * SOPRA questa stessa schermata, stesso principio "un tocco, una
+ * schermata".
+ * ============================================================
+ */
 export default function ProfileFullScreen({ userId, arenaSessionId, currentUserId, venueId, onClose }) {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [actionState, setActionState] = useState(null);
+  const [actionState, setActionState] = useState(null); // null | 'liked' | 'superliked' | 'sending'
   const [showRosaSend, setShowRosaSend] = useState(false);
   const [rosaSentConfirmation, setRosaSentConfirmation] = useState(false);
   const [showProfileDetail, setShowProfileDetail] = useState(false);
@@ -21,12 +34,16 @@ export default function ProfileFullScreen({ userId, arenaSessionId, currentUserI
         const data = await res.json();
         if (!cancelled && data.success) setProfile(data.profile);
 
+        // Registra la visita — genera punti (a te e a chi guardi),
+        // ma solo se sei davvero dentro un'Arena: guardare un
+        // profilo senza un contesto di locale/serata non rientra
+        // nella logica "punti legati a un luogo e un momento reali".
         if (arenaSessionId) {
           apiFetch('/api/profile-views', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ viewedUserId: userId, arenaSessionId }),
-          }).catch(() => {});
+          }).catch(() => {}); // non blocchiamo la visualizzazione del profilo per questo
         }
       } catch (err) {
         console.error('Errore nel caricamento del profilo:', err);
@@ -39,6 +56,7 @@ export default function ProfileFullScreen({ userId, arenaSessionId, currentUserI
   }, [userId, arenaSessionId]);
 
   async function sendQuickInteraction(type) {
+    // type: 'like' | 'superlike'
     setActionState('sending');
     try {
       const res = await apiFetch('/api/interactions/send', {
@@ -60,6 +78,10 @@ export default function ProfileFullScreen({ userId, arenaSessionId, currentUserI
     }
   }
 
+  // Saldo Superlike a zero — proponiamo subito l'acquisto di un
+  // nuovo pacchetto, invece di lasciare l'utente con un bottone che
+  // non fa nulla. Il prodotto si cerca per SKU nel catalogo (l'id
+  // vero è generato dal database, non lo conosciamo in anticipo).
   async function offerSuperlikePurchase() {
     const confirmed = window.confirm('Superlike esauriti per questa settimana. Vuoi acquistarne altri 5?');
     if (!confirmed) return;
@@ -80,6 +102,8 @@ export default function ProfileFullScreen({ userId, arenaSessionId, currentUserI
       if (purchaseData.requiresPayment) {
         window.location.href = purchaseData.checkoutUrl;
       }
+      // Se freeOrTest (account di prova), il saldo è già ricaricato
+      // lato server — nessun'altra azione necessaria qui.
     } catch (err) {
       console.error('Errore nella proposta di acquisto Superlike:', err);
     }
@@ -106,6 +130,7 @@ export default function ProfileFullScreen({ userId, arenaSessionId, currentUserI
 
   return (
     <div style={fullScreenStyle}>
+      {/* X per chiudere — sempre in alto, sempre raggiungibile */}
       <button onClick={onClose} style={closeButtonStyle} aria-label="Chiudi">✕</button>
 
       {loading || !profile ? (
@@ -114,6 +139,9 @@ export default function ProfileFullScreen({ userId, arenaSessionId, currentUserI
         </div>
       ) : (
         <>
+          {/* Foto grande sullo sfondo — il pezzo chiave per
+              riconoscere qualcuno al buio, in un locale affollato.
+              Se non ha una foto, un grande sfondo con l'emoji. */}
           <div style={photoContainerStyle}>
             {profile.photoUrl ? (
               <img src={profile.photoUrl} alt={profile.displayName} style={photoImgStyle} />
@@ -122,22 +150,36 @@ export default function ProfileFullScreen({ userId, arenaSessionId, currentUserI
                 {profile.avatarEmoji}
               </div>
             )}
+            {/* Sfumatura scura in basso, per leggere nome/hashtag
+                sopra la foto senza doverli mettere in un riquadro
+                separato che coprirebbe troppo. */}
             <div style={gradientOverlayStyle} />
           </div>
 
+          {/* Nome, badge, hashtag — sovrapposti in basso */}
           <div style={infoOverlayStyle}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={{ fontFamily: "'Syne',sans-serif", fontWeight: 700, fontSize: 22 }}>{profile.displayName}</span>
-                {profile.isTopConnector && <span title="Top Connector">🔗</span>}
-                {profile.isTopSpender && <span title="Top Spender">💰</span>}
-                {profile.isFounder && <span title="Founder">👑</span>}
+                {profile.isTopConnector && <Link2 size={14} color="#C7C9CC" title="Top Connector" />}
+                {profile.isTopSpender && <Coins size={14} color="#E8C77E" title="Top Spender" />}
+                {profile.isFounder && <Crown size={14} color="#E8C77E" title="Founder" />}
               </div>
+              {/* La freccetta verso il profilo completo — bio per
+                  intero e la sua posizione in classifica, se ha
+                  scelto di mostrarla. */}
               <button onClick={() => setShowProfileDetail(true)} style={arrowButtonStyle} aria-label="Profilo completo">›</button>
             </div>
+            {/* Status Instant Influencer — un accordo commerciale
+                vero (impostato solo dai founder, mai auto-dichiarato
+                come gli hashtag liberi), quindi merita un trattamento
+                visivo diverso dai badge guadagnati sopra: una pillola
+                ben visibile, non una piccola icona nello stesso
+                angolino, altrimenti si confonderebbe con gli altri
+                e perderebbe peso. */}
             {profile.instantInfluencerCategory && (
               <div style={influencerPillStyle}>
-                ✨ Instant Influencer · {profile.instantInfluencerCategory}
+                <Sparkles size={12} style={{ verticalAlign: 'middle', marginRight: 4 }} /> Instant Influencer · {profile.instantInfluencerCategory}
               </div>
             )}
             {profile.bio && <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '6px 0 0' }}>{profile.bio}</p>}
@@ -149,6 +191,7 @@ export default function ProfileFullScreen({ userId, arenaSessionId, currentUserI
               </div>
             )}
 
+            {/* I tre bottoni — direttamente qui, nessun menu in più */}
             <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
               <ActionButton
                 icon={Heart}
@@ -176,7 +219,9 @@ export default function ProfileFullScreen({ userId, arenaSessionId, currentUserI
       )}
 
       {rosaSentConfirmation && (
-        <div style={toastStyle}>Rosa inviata 🌹</div>
+        <div style={{ ...toastStyle, display: 'flex', alignItems: 'center', gap: 6 }}>
+          <KohaFlowerIcon size={14} /> Rosa inviata
+        </div>
       )}
 
       {showProfileDetail && (

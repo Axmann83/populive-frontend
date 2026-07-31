@@ -12,6 +12,7 @@ import MyRoses from './MyRoses';
 import MyProfile from './MyProfile';
 import ExploreMap from './ExploreMap';
 import SplashScreen from './SplashScreen';
+import { Radar as RadarIcon, Trophy, Globe, User, KohaFlowerIcon } from './PopuLiveIcons';
 import WelcomeBack from './WelcomeBack';
 import { API_BASE, apiFetch, getToken, getStoredUserId, clearSession } from './apiClient';
 
@@ -268,11 +269,11 @@ export default function App() {
       </div>
 
       <div className="pl-bottom-nav">
-        <NavItem icon="📡" label="Radar" active={activeTab === 'radar'} onClick={() => setActiveTab('radar')} />
-        <NavItem icon="🏆" label="Stanotte" active={activeTab === 'locale'} onClick={() => setActiveTab('locale')} />
-        <NavItem icon="🌍" label="Globale" active={activeTab === 'globale'} onClick={() => setActiveTab('globale')} />
-        <NavItem icon="🌹" label="Rose" active={activeTab === 'rose'} onClick={() => setActiveTab('rose')} badge={roseBadgeCount} />
-        <NavItem icon="🙂" label="Profilo" active={activeTab === 'profilo'} onClick={() => setActiveTab('profilo')} />
+        <NavItem icon={RadarIcon} label="Radar" active={activeTab === 'radar'} onClick={() => setActiveTab('radar')} />
+        <NavItem icon={Trophy} label="Stanotte" active={activeTab === 'locale'} onClick={() => setActiveTab('locale')} />
+        <NavItem icon={Globe} label="Globale" active={activeTab === 'globale'} onClick={() => setActiveTab('globale')} />
+        <NavItem icon={KohaFlowerIcon} label="Rose" active={activeTab === 'rose'} onClick={() => setActiveTab('rose')} badge={roseBadgeCount} />
+        <NavItem icon={User} label="Profilo" active={activeTab === 'profilo'} onClick={() => setActiveTab('profilo')} />
       </div>
 
       {showWelcomeBack && (
@@ -346,10 +347,10 @@ export default function App() {
   return mainContent;
 }
 
-function NavItem({ icon, label, active, onClick, badge }) {
+function NavItem({ icon: Icon, label, active, onClick, badge }) {
   return (
     <button className={`pl-nav-item ${active ? 'active' : ''}`} onClick={onClick}>
-      <span className="pl-nav-ic">{icon}</span>
+      <Icon size={20} strokeWidth={2} className="pl-nav-ic" />
       <span className="pl-nav-label">{label}</span>
       {!!badge && <span className="pl-nav-badge">{badge}</span>}
     </button>

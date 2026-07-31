@@ -1,6 +1,21 @@
 import { useState, useEffect } from 'react';
 import { apiFetch } from './apiClient';
 
+/**
+ * ============================================================
+ * POPULIVE — ESPLORA LOCALI (dati veri)
+ * ============================================================
+ * Prima mostrava dati di esempio fissi. Ora recupera i veri
+ * numeri di check-in di stasera dal server — SOLO dati aggregati
+ * per locale, mai profili individuali, stessa regola di sempre.
+ *
+ * Il rapporto uomini/donne è tornato, ma ora è VERO — calcolato
+ * solo su chi ha scelto di condividere il proprio genere in fase
+ * di registrazione (facoltativo). Se nessuno lo ha condiviso per
+ * un locale, quella parte semplicemente non compare — mai un dato
+ * inventato al suo posto.
+ * ============================================================
+ */
 export default function ExploreMap({ onClose }) {
   const [venues, setVenues] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -40,7 +55,7 @@ function VenueCard({ venue, maxCheckins }) {
     <div style={{ background: 'var(--surface)', border: '1px solid rgba(228,212,200,0.12)', borderRadius: 16, padding: 14, marginBottom: 12 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 700, fontSize: 13 }}>{venue.name}</div>
-        {venue.arenaActive && <span className="pl-arena-pill" style={{ fontSize: 8 }}>🔴 Attiva</span>}
+        {venue.arenaActive && <span className="pl-arena-pill" style={{ fontSize: 8 }}><span className="pl-live-dot"></span> Attiva</span>}
       </div>
       {venue.category && <div style={{ fontSize: 9.5, color: 'var(--text-muted)', textTransform: 'capitalize' }}>{venue.category}</div>}
 
@@ -50,6 +65,8 @@ function VenueCard({ venue, maxCheckins }) {
         {g && <Stat num={`${g.malePct}%`} label="uomini" />}
       </div>
 
+      {/* Barra uomini/donne — solo se almeno una persona ha
+          condiviso il dato per questo locale stasera. */}
       {g && (
         <div style={{ display: 'flex', height: 5, borderRadius: 999, overflow: 'hidden', marginBottom: 10 }}>
           <div style={{ background: 'var(--teak)', width: `${g.femalePct}%` }} />

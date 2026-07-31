@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { apiFetch } from './apiClient';
 import { RosaSend } from './RosaFlow';
 import ProfileDetail from './ProfileDetail';
+import { Heart, Star, KohaFlowerIcon } from './PopuLiveIcons';
 
 export default function ProfileFullScreen({ userId, arenaSessionId, currentUserId, venueId, onClose }) {
   const [profile, setProfile] = useState(null);
@@ -150,21 +151,21 @@ export default function ProfileFullScreen({ userId, arenaSessionId, currentUserI
 
             <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
               <ActionButton
-                icon="♥"
+                icon={Heart}
                 label={actionState === 'liked' ? 'Inviato' : 'Like'}
                 onClick={() => sendQuickInteraction('like')}
                 disabled={actionState !== null}
                 active={actionState === 'liked'}
               />
               <ActionButton
-                icon="★"
+                icon={Star}
                 label={actionState === 'superliked' ? 'Inviato' : 'Superlike'}
                 onClick={() => sendQuickInteraction('superlike')}
                 disabled={actionState !== null}
                 active={actionState === 'superliked'}
               />
               <ActionButton
-                icon="🌹"
+                icon={KohaFlowerIcon}
                 label="Rosa"
                 onClick={() => setShowRosaSend(true)}
                 disabled={actionState === 'sending'}
@@ -190,7 +191,7 @@ export default function ProfileFullScreen({ userId, arenaSessionId, currentUserI
   );
 }
 
-function ActionButton({ icon, label, onClick, disabled, active }) {
+function ActionButton({ icon: Icon, label, onClick, disabled, active }) {
   return (
     <button
       onClick={onClick}
@@ -206,13 +207,12 @@ function ActionButton({ icon, label, onClick, disabled, active }) {
         border: active ? '1.5px solid var(--cyan)' : '1px solid rgba(228,212,200,0.25)',
         background: active ? 'rgba(47,211,232,0.15)' : 'rgba(23,23,23,0.7)',
         color: active ? 'var(--cyan)' : 'var(--text)',
-        fontSize: 20,
         cursor: disabled ? 'default' : 'pointer',
         opacity: disabled && !active ? 0.5 : 1,
         backdropFilter: 'blur(4px)',
       }}
     >
-      <span>{icon}</span>
+      <Icon size={22} strokeWidth={2} fill={active ? 'currentColor' : 'none'} />
       <span style={{ fontSize: 10.5, fontWeight: 600 }}>{label}</span>
     </button>
   );

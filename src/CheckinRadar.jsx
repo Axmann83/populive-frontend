@@ -269,9 +269,9 @@ function RadarCard({ personId, arenaSessionId, viewerId, onClick }) {
 function getBadgeRingColors(preview) {
   if (!preview) return [];
   const colors = [];
-  if (preview.isTopConnector) colors.push('#C7C9CC');            // argento
-  if (preview.isTopSpender) colors.push('#E8C77E');              // oro (stesso di --gold-medal)
-  if (preview.instantInfluencerCategory) colors.push('#E83E8C'); // magenta
+  if (preview.isTopConnector) colors.push('#C7C9CC');
+  if (preview.isTopSpender) colors.push('#E8C77E');
+  if (preview.instantInfluencerCategory) colors.push('#E83E8C');
   return colors;
 }
 

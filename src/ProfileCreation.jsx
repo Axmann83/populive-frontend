@@ -1,27 +1,13 @@
 import { useState } from 'react';
 import { apiFetch } from './apiClient';
 
-/**
- * ============================================================
- * POPULIVE — CREAZIONE PROFILO (componente reale)
- * ============================================================
- * Tre passaggi, nell'ordine deciso insieme:
- *   1) Dati base: nome, bio, hashtag
- *   2) Foto (upload verso storage esterno, qui solo l'URL risultante)
- *   3) Schermata di consenso — MAI saltabile, mai un malus per chi
- *      sceglie il minimo, solo bonus per chi condivide di più
- * L'identità dell'utente arriva dal token (v. apiClient.js), non
- * più da un ID passato a mano — l'account esiste già dal momento
- * della verifica del codice SMS.
- * ============================================================
- */
-
 const MAX_HASHTAGS = 5;
 
 export default function ProfileCreation({ onComplete }) {
   const [step, setStep] = useState(1);
   const [displayName, setDisplayName] = useState('');
   const [bio, setBio] = useState('');
+  const [genderForStats, setGenderForStats] = useState(null);
   const [hashtagInput, setHashtagInput] = useState('');
   const [hashtags, setHashtags] = useState([]);
   const [photoFile, setPhotoFile] = useState(null);
@@ -46,7 +32,7 @@ export default function ProfileCreation({ onComplete }) {
       const res = await apiFetch('/api/profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ displayName, bio, hashtagNames: hashtags }),
+        body: JSON.stringify({ displayName, bio, hashtagNames: hashtags, genderForStats }),
       });
       const data = await res.json();
 
@@ -143,6 +129,37 @@ export default function ProfileCreation({ onComplete }) {
             placeholder="Una breve bio (facoltativa)"
             maxLength={280}
           />
+
+          <div style={{ margin: '4px 0 10px' }}>
+            <div className="pl-consent-label" style={{ marginBottom: 2 }}>
+              Genere <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(facoltativo)</span>
+            </div>
+            <div className="pl-consent-sub" style={{ marginBottom: 8 }}>
+              Serve solo per mostrare quante persone ci sono in un locale, in forma aggregata — mai sul tuo profilo
+            </div>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              {[
+                { value: 'female', label: 'Donna' },
+                { value: 'male', label: 'Uomo' },
+                { value: 'other', label: 'Altro' },
+                { value: null, label: 'Preferisco non dirlo' },
+              ].map((opt) => (
+                <button
+                  key={opt.label}
+                  type="button"
+                  onClick={() => setGenderForStats(opt.value)}
+                  style={{
+                    padding: '7px 12px', borderRadius: 999, fontSize: 11, fontWeight: 600, cursor: 'pointer',
+                    border: genderForStats === opt.value ? '1px solid var(--cyan)' : '1px solid rgba(228,212,200,0.16)',
+                    background: genderForStats === opt.value ? 'rgba(47,211,232,0.14)' : 'var(--surface-2)',
+                    color: genderForStats === opt.value ? 'var(--cyan)' : 'var(--text-muted)',
+                  }}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
 
           <div className="pl-hashtag-input-row">
             <input

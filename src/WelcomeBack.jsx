@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { apiFetch } from './apiClient';
+import { Heart, Star, KohaFlowerIcon, Hand } from './PopuLiveIcons';
 
 /**
  * ============================================================
@@ -36,14 +37,14 @@ export default function WelcomeBack({ userId, onDone }) {
   if (!summary) return null;
 
   const items = [];
-  if (summary.newLikes > 0) items.push({ icon: '❤️', label: `${summary.newLikes} nuovi Like` });
-  if (summary.newSuperlikes > 0) items.push({ icon: '⭐', label: `${summary.newSuperlikes} nuovi Superlike` });
-  if (summary.newRoses > 0) items.push({ icon: '🌹', label: `${summary.newRoses} nuove Rose` });
+  if (summary.newLikes > 0) items.push({ icon: Heart, label: `${summary.newLikes} nuovi Like` });
+  if (summary.newSuperlikes > 0) items.push({ icon: Star, label: `${summary.newSuperlikes} nuovi Superlike` });
+  if (summary.newRoses > 0) items.push({ icon: KohaFlowerIcon, label: `${summary.newRoses} nuove Rose` });
 
   return (
     <div style={overlayStyle}>
       <div style={cardStyle}>
-        <div style={{ fontSize: 34, marginBottom: 6 }}>👋</div>
+        <Hand size={32} color="var(--cyan)" style={{ marginBottom: 6 }} />
         <h2 style={{ fontFamily: "'Syne',sans-serif", fontSize: 20, margin: '0 0 6px' }}>Bentornato</h2>
         <p className="pl-hint" style={{ marginBottom: 16 }}>Ecco cosa ti sei perso dall'ultima volta</p>
 
@@ -57,7 +58,7 @@ export default function WelcomeBack({ userId, onDone }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 14, textAlign: 'left' }}>
             {items.map((it) => (
               <div key={it.label} style={itemRowStyle}>
-                <span style={{ fontSize: 16 }}>{it.icon}</span>
+                <it.icon size={16} />
                 <span style={{ fontSize: 12.5, fontWeight: 600 }}>{it.label}</span>
               </div>
             ))}

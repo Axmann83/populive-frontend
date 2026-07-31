@@ -12,6 +12,7 @@ import MyRoses from './MyRoses';
 import MyProfile from './MyProfile';
 import ExploreMap from './ExploreMap';
 import SplashScreen from './SplashScreen';
+import WelcomeBack from './WelcomeBack';
 import { API_BASE, apiFetch, getToken, getStoredUserId, clearSession } from './apiClient';
 
 import './populive-styles.css';
@@ -57,6 +58,7 @@ export default function App() {
   const [roseBadgeCount, setRoseBadgeCount] = useState(0);
   const [showSettings, setShowSettings] = useState(false);
   const [showExploreMap, setShowExploreMap] = useState(false);
+  const [showWelcomeBack, setShowWelcomeBack] = useState(true);
   const [pointsToasts, setPointsToasts] = useState([]);
 
   const showPointsToast = useCallback((icon, points) => {
@@ -272,6 +274,16 @@ export default function App() {
         <NavItem icon="🌹" label="Rose" active={activeTab === 'rose'} onClick={() => setActiveTab('rose')} badge={roseBadgeCount} />
         <NavItem icon="🙂" label="Profilo" active={activeTab === 'profilo'} onClick={() => setActiveTab('profilo')} />
       </div>
+
+      {showWelcomeBack && (
+        <WelcomeBack
+          userId={userId}
+          onDone={() => {
+            setShowWelcomeBack(false);
+            setShowExploreMap(true);
+          }}
+        />
+      )}
 
       {showExploreMap && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 50 }}>

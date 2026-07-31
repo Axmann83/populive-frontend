@@ -1,4 +1,8 @@
-import { Radar, Trophy, Globe, User, Heart, Star } from 'lucide-react';
+import {
+  Radar, Trophy, Globe, User, Heart, Star,
+  Link2, Coins, Crown, Sparkles, Eye, PartyPopper, Target,
+  Map, Armchair, History, Wallet, Settings, Hand, BookmarkCheck,
+} from 'lucide-react';
 
 /**
  * ============================================================
@@ -15,7 +19,11 @@ import { Radar, Trophy, Globe, User, Heart, Star } from 'lucide-react';
  * ============================================================
  */
 
-export { Radar, Trophy, Globe, User, Heart, Star };
+export {
+  Radar, Trophy, Globe, User, Heart, Star,
+  Link2, Coins, Crown, Sparkles, Eye, PartyPopper, Target,
+  Map, Armchair, History, Wallet, Settings, Hand, BookmarkCheck,
+};
 
 export function KohaFlowerIcon({ size = 20, color = 'currentColor', strokeWidth = 2, fill = 'none', ...props }) {
   return (

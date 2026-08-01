@@ -54,7 +54,7 @@ function VenueCard({ venue, maxCheckins }) {
   return (
     <div style={{ background: 'var(--surface)', border: '1px solid rgba(228,212,200,0.12)', borderRadius: 16, padding: 14, marginBottom: 12, boxShadow: 'var(--shadow-md)' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 700, fontSize: 13 }}>{venue.name}</div>
+        <div style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, fontSize: 13 }}>{venue.name}</div>
         {venue.arenaActive && <span className="pl-arena-pill" style={{ fontSize: 8 }}><span className="pl-live-dot"></span> Attiva</span>}
       </div>
       {venue.category && <div style={{ fontSize: 9.5, color: 'var(--text-muted)', textTransform: 'capitalize' }}>{venue.category}</div>}
@@ -88,7 +88,7 @@ function VenueCard({ venue, maxCheckins }) {
 function Stat({ num, label }) {
   return (
     <div style={{ textAlign: 'left' }}>
-      <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 800, fontSize: 18 }}>{num}</div>
+      <div style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 800, fontSize: 18 }}>{num}</div>
       <div style={{ fontSize: 8, color: 'var(--text-muted)' }}>{label}</div>
     </div>
   );

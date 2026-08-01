@@ -477,7 +477,7 @@ function ComingSoonSection() {
     <div style={{ marginTop: 16 }}>
       <div className="pl-section-label">In arrivo</div>
       {items.map((item) => (
-        <div key={item.title} style={{ background: 'var(--surface)', border: '1px solid rgba(228,212,200,0.12)', borderRadius: 16, padding: 14, marginBottom: 10, boxShadow: 'var(--shadow-sm)' }}>
+        <div key={item.title} style={{ background: 'var(--surface)', border: '1px solid rgba(228,212,200,0.12)', borderRadius: 16, padding: 14, marginBottom: 12, boxShadow: 'var(--shadow-sm)' }}>
           <span style={{ fontSize: 8.5, fontWeight: 700, textTransform: 'uppercase', color: 'var(--teak)', background: 'rgba(228,212,200,0.14)', padding: '2px 8px', borderRadius: 6 }}>
             Coming Soon
           </span>

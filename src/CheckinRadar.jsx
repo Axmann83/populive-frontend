@@ -187,7 +187,7 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
   if (status === 'idle' || status === 'checking_in') {
     return (
       <div className="pl-screen">
-        <div className="pl-venue-tag">Arena non ancora attiva</div>
+        <div className="pl-venue-tag">In attesa che l'Arena si accenda</div>
         <button
           className="pl-qr-frame"
           onClick={handleScanQr}
@@ -198,7 +198,7 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
         <p className="pl-scan-cta">
           {status === 'checking_in'
             ? 'Verifica in corso…'
-            : "Inquadra il QR code all'ingresso dell'Arena"}
+            : "Inquadra il QR all'ingresso per entrare nell'Arena"}
         </p>
       </div>
     );
@@ -277,7 +277,7 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
           <input
             value={tableCode}
             onChange={(e) => setTableCode(e.target.value)}
-            placeholder="Codice QR del tavolo (demo: scrivilo qui)"
+            placeholder="Codice del tavolo"
           />
           <div className="pl-consent-row">
             <div>

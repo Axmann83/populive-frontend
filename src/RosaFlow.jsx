@@ -359,7 +359,7 @@ export function RosaRedeemSeal({ rosaId, redeemCode, onDone }) {
           <div className={`pl-seal pl-seal-live ${flash ? 'pl-seal-flash' : ''}`} onClick={handleSealTap}>
             {secondsLeft}
           </div>
-          <p className="pl-hint">Mostra il telefono al bartender: un suo tocco sul cerchio conferma ed erogare la consumazione.</p>
+          <p className="pl-hint">Mostra il telefono al bartender: un suo tocco sul cerchio conferma ed eroga la consumazione.</p>
         </>
       )}
       {state === 'expired' && (

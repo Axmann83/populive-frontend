@@ -92,6 +92,7 @@ const cardStyle = {
   borderRadius: 20,
   padding: '28px 24px',
   textAlign: 'center',
+  boxShadow: 'var(--shadow-lg)',
 };
 
 const pointsBadgeStyle = {
@@ -114,4 +115,5 @@ const itemRowStyle = {
   border: '1px solid rgba(228,212,200,0.1)',
   borderRadius: 12,
   padding: '9px 12px',
+  boxShadow: 'var(--shadow-sm)',
 };

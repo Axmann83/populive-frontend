@@ -10,10 +10,15 @@ import { apiFetch, setSession } from './apiClient';
  *   2) Codice → se corretto, il server risponde con un token di
  *      sessione (JWT) che salviamo e useremo per tutte le
  *      richieste successive (v. apiClient.js)
+ *
+ * Alla fine, chiama onLoggedIn(userId, isNewUser, onboardingCompleted)
+ * — il componente padre (App.jsx) decide se mandare l'utente alla
+ * creazione del profilo (nuovo utente) o dritto all'app (chi
+ * torna e ha già completato tutto in passato).
  * ============================================================
  */
 export default function Login({ onLoggedIn }) {
-  const [step, setStep] = useState('phone');
+  const [step, setStep] = useState('phone'); // 'phone' | 'code'
   const [phoneNumber, setPhoneNumber] = useState('');
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
@@ -76,7 +81,7 @@ export default function Login({ onLoggedIn }) {
       {step === 'phone' && (
         <form onSubmit={submitPhone}>
           <h2>Accedi a PopuLive</h2>
-          <p className="pl-hint">Ti mandiamo un codice via SMS per verificare che sei tu.</p>
+          <p className="pl-hint">Ti mandiamo un codice via SMS per verificare il tuo numero.</p>
           <input
             type="tel"
             value={phoneNumber}

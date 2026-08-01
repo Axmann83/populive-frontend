@@ -333,7 +333,7 @@ export default function App() {
         )}
         {activeTab === 'locale' && !arenaSessionId && (
           <div className="pl-hint" style={{ textAlign: 'center', marginTop: 40 }}>
-            Fai check-in in un'Arena per vedere la classifica di stanotte.
+            Fai check-in in un'Arena per sbloccare la classifica di stanotte.
           </div>
         )}
 

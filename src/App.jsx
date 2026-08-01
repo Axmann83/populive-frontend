@@ -386,7 +386,7 @@ export default function App() {
 
       {showExploreMap && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 50 }}>
-          <div style={{ width: '100%', maxWidth: 420, background: 'var(--surface)', borderRadius: '24px 24px 0 0', padding: 20, maxHeight: '85vh', overflowY: 'auto' }}>
+          <div style={{ width: '100%', maxWidth: 420, background: 'var(--surface)', borderRadius: '24px 24px 0 0', padding: 20, maxHeight: '85vh', overflowY: 'auto', boxShadow: 'var(--shadow-lg)' }}>
             <ExploreMap onClose={() => setShowExploreMap(false)} />
           </div>
         </div>
@@ -394,7 +394,7 @@ export default function App() {
 
       {showSettings && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 50 }}>
-          <div style={{ width: '100%', maxWidth: 420, background: 'var(--surface)', borderRadius: '24px 24px 0 0', padding: 20 }}>
+          <div style={{ width: '100%', maxWidth: 420, background: 'var(--surface)', borderRadius: '24px 24px 0 0', padding: 20, boxShadow: 'var(--shadow-lg)' }}>
             <Settings userId={userId} onClose={() => setShowSettings(false)} />
           </div>
         </div>
@@ -402,7 +402,7 @@ export default function App() {
 
       {pendingRosaNotification && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 50 }}>
-          <div style={{ width: '100%', maxWidth: 420, background: 'var(--surface)', borderRadius: '24px 24px 0 0', padding: 20 }}>
+          <div style={{ width: '100%', maxWidth: 420, background: 'var(--surface)', borderRadius: '24px 24px 0 0', padding: 20, boxShadow: 'var(--shadow-lg)' }}>
             <RosaNotification
               rosa={pendingRosaNotification}
               currentUserId={userId}
@@ -427,7 +427,7 @@ export default function App() {
               background: 'var(--surface-2)', border: '1px solid rgba(47,211,232,0.4)',
               borderRadius: 999, padding: '9px 16px',
               fontSize: 13, fontWeight: 700, color: 'var(--text)',
-              boxShadow: '0 8px 24px -8px rgba(0,0,0,0.5)',
+              boxShadow: 'var(--shadow-lg)',
               animation: 'pl-toast-in 0.25s ease-out',
             }}
           >
@@ -477,7 +477,7 @@ function ComingSoonSection() {
     <div style={{ marginTop: 16 }}>
       <div className="pl-section-label">In arrivo</div>
       {items.map((item) => (
-        <div key={item.title} style={{ background: 'var(--surface)', border: '1px solid rgba(228,212,200,0.12)', borderRadius: 16, padding: 14, marginBottom: 10 }}>
+        <div key={item.title} style={{ background: 'var(--surface)', border: '1px solid rgba(228,212,200,0.12)', borderRadius: 16, padding: 14, marginBottom: 10, boxShadow: 'var(--shadow-sm)' }}>
           <span style={{ fontSize: 8.5, fontWeight: 700, textTransform: 'uppercase', color: 'var(--teak)', background: 'rgba(228,212,200,0.14)', padding: '2px 8px', borderRadius: 6 }}>
             Coming Soon
           </span>

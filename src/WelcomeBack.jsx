@@ -45,7 +45,7 @@ export default function WelcomeBack({ userId, onDone }) {
     <div style={overlayStyle}>
       <div style={cardStyle}>
         <Hand size={32} color="var(--cyan)" style={{ marginBottom: 6 }} />
-        <h2 style={{ fontFamily: "'Syne',sans-serif", fontSize: 20, margin: '0 0 6px' }}>Bentornato</h2>
+        <h2 style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: 20, margin: '0 0 6px' }}>Bentornato</h2>
         <p className="pl-hint" style={{ marginBottom: 16 }}>Ecco cosa ti sei perso dall'ultima volta</p>
 
         {summary.pointsEarned > 0 && (
@@ -102,7 +102,7 @@ const pointsBadgeStyle = {
   background: 'rgba(47,211,232,0.14)',
   border: '1px solid rgba(47,211,232,0.4)',
   color: 'var(--cyan)',
-  fontFamily: "'Syne',sans-serif",
+  fontFamily: "'Space Grotesk',sans-serif",
   fontWeight: 700,
   fontSize: 14,
 };

@@ -35,7 +35,7 @@ export default function MyRoses({ userId, onOpenRosa }) {
   if (loading) return <div className="pl-hint" style={{ textAlign: 'center', marginTop: 30 }}>Caricamento…</div>;
 
   if (roses.length === 0) {
-    return <div className="pl-hint" style={{ textAlign: 'center', marginTop: 40 }}>Nessuna Rosa ricevuta ancora stasera.</div>;
+    return <div className="pl-hint" style={{ textAlign: 'center', marginTop: 40 }}>Ancora nessuna Rosa stasera.</div>;
   }
 
   return (

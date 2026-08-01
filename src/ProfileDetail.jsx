@@ -69,7 +69,7 @@ export default function ProfileDetail({ userId, arenaSessionId, onClose, onBack 
       ) : (
         <div style={{ padding: '10px 20px 40px' }}>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
-            <div style={{ width: 96, height: 96, borderRadius: '50%', overflow: 'hidden', border: '2px solid var(--teak)', background: 'var(--surface-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 42 }}>
+            <div style={{ width: 96, height: 96, borderRadius: '50%', overflow: 'hidden', border: '2px solid var(--teak)', background: 'var(--surface-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 42, boxShadow: 'var(--shadow-md)' }}>
               {profile.photoUrl
                 ? <img src={profile.photoUrl} alt={profile.displayName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 : profile.avatarEmoji}
@@ -156,7 +156,7 @@ export default function ProfileDetail({ userId, arenaSessionId, onClose, onBack 
 
 function RankBox({ label, rank, points, accent }) {
   return (
-    <div style={{ flex: 1, background: 'var(--surface-2)', border: '1px solid rgba(228,212,200,0.1)', borderRadius: 12, padding: 10, textAlign: 'center' }}>
+    <div style={{ flex: 1, background: 'var(--surface-2)', border: '1px solid rgba(228,212,200,0.1)', borderRadius: 12, padding: 10, textAlign: 'center', boxShadow: 'var(--shadow-sm)' }}>
       <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 800, fontSize: 17, color: accent || 'var(--text)' }}>
         {rank ? `#${rank}` : '—'}
       </div>

@@ -323,7 +323,7 @@ const influencerPillStyle = {
   fontSize: 11,
   fontWeight: 700,
   color: '#0D0D0D',
-  background: 'var(--gold-medal, #E8C77E)',
+  background: 'linear-gradient(135deg, #F4DFA0 0%, #E8C77E 60%, #C9A15C 100%)',
 };
 
 const photoContainerStyle = {

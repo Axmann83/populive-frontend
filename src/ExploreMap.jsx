@@ -32,7 +32,7 @@ export default function ExploreMap({ onClose }) {
   return (
     <div className="pl-sheet">
       <div className="pl-sheet-close" onClick={onClose}>Chiudi ✕</div>
-      <h3>Esplora i locali</h3>
+      <h3>I locali stanotte</h3>
       <p className="pl-hint" style={{ marginBottom: 12 }}>
         I locali più caldi di stasera, in tempo reale
       </p>

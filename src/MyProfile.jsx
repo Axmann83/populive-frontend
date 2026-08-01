@@ -3,6 +3,8 @@ import { Settings as SettingsIcon } from './PopuLiveIcons';
 
 import { apiFetch } from './apiClient';
 
+const MAX_HASHTAGS = 5;
+
 /**
  * ============================================================
  * POPULIVE — IL TUO PROFILO (componente reale)
@@ -12,27 +14,38 @@ import { apiFetch } from './apiClient';
  * prescindere dal toggle show_ranking_on_profile — quel toggle
  * riguarda solo cosa vedono gli ALTRI (v. Settings.jsx e la
  * discussione già fatta su questo punto).
+ *
+ * Bio e hashtag — prima si potevano scrivere SOLO una volta, in
+ * fase di registrazione, senza nessun modo di cambiarli dopo.
+ * Ora si vedono qui, con un vero tasto "Modifica".
  * ============================================================
  */
 export default function MyProfile({ userId, arenaSessionId, onOpenSettings }) {
   const [ranking, setRanking] = useState(null);
+  const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     async function load() {
       setLoading(true);
       try {
-        const rankingRes = await apiFetch(`/api/users/${userId}/ranking-summary?arenaSessionId=${arenaSessionId || ''}`);
+        const [rankingRes, profileRes] = await Promise.all([
+          apiFetch(`/api/users/${userId}/ranking-summary?arenaSessionId=${arenaSessionId || ''}`),
+          apiFetch(`/api/users/${userId}/public-profile?arenaSessionId=${arenaSessionId || ''}`),
+        ]);
         const rankingData = await rankingRes.json();
-        if (!cancelled && rankingData.success) {
-          setRanking(rankingData.summary);
+        const profileData = await profileRes.json();
+        if (!cancelled) {
+          if (rankingData.success) setRanking(rankingData.summary);
+          if (profileData.success) setProfile(profileData.profile);
         }
       } catch (err) {
         // Se qualcosa va storto (server, rete, ecc.), non restiamo
         // bloccati su "Caricamento" per sempre — mostriamo la
         // schermata comunque, semplicemente senza i contatori.
-        console.error('Errore nel caricamento della classifica personale:', err);
+        console.error('Errore nel caricamento del profilo personale:', err);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -42,6 +55,21 @@ export default function MyProfile({ userId, arenaSessionId, onOpenSettings }) {
   }, [userId, arenaSessionId]);
 
   if (loading) return <div className="pl-hint" style={{ textAlign: 'center', marginTop: 30 }}>Caricamento…</div>;
+
+  if (editing) {
+    return (
+      <EditProfileForm
+        userId={userId}
+        initialBio={profile?.bio || ''}
+        initialHashtags={profile?.hashtags?.map((h) => h.replace(/^#/, '')) || []}
+        onSaved={(newBio, newHashtags) => {
+          setProfile({ ...profile, bio: newBio, hashtags: newHashtags.map((h) => `#${h}`) });
+          setEditing(false);
+        }}
+        onCancel={() => setEditing(false)}
+      />
+    );
+  }
 
   return (
     <div className="pl-screen">
@@ -70,6 +98,111 @@ export default function MyProfile({ userId, arenaSessionId, onOpenSettings }) {
           <RankCounter label="Globale" rank={ranking.globalRank} points={ranking.globalPoints} accent="var(--teak)" />
         </div>
       )}
+
+      {/* Bio e hashtag — finalmente visibili e modificabili anche
+          dopo la registrazione, non solo quella prima volta. */}
+      <div style={{ marginTop: 6 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div className="pl-section-label" style={{ margin: 0 }}>Bio e hashtag</div>
+          <button
+            onClick={() => setEditing(true)}
+            style={{ background: 'none', border: 'none', color: 'var(--cyan)', fontSize: 11, fontWeight: 700, cursor: 'pointer', padding: 0 }}
+          >
+            Modifica
+          </button>
+        </div>
+
+        {profile?.bio ? (
+          <p style={{ fontSize: 12.5, lineHeight: 1.5, color: 'var(--text)', marginTop: 8 }}>{profile.bio}</p>
+        ) : (
+          <p className="pl-hint" style={{ marginTop: 8 }}>Non hai ancora scritto una bio.</p>
+        )}
+
+        {profile?.hashtags?.length > 0 ? (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
+            {profile.hashtags.map((h) => (
+              <span key={h} className="pl-hashtag">{h}</span>
+            ))}
+          </div>
+        ) : (
+          <p className="pl-hint" style={{ marginTop: 4 }}>Nessun hashtag ancora — aiutano i brand della tua categoria a trovarti.</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function EditProfileForm({ userId, initialBio, initialHashtags, onSaved, onCancel }) {
+  const [bio, setBio] = useState(initialBio);
+  const [hashtagInput, setHashtagInput] = useState('');
+  const [hashtags, setHashtags] = useState(initialHashtags);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(null);
+
+  function addHashtag() {
+    const clean = hashtagInput.trim().replace(/^#/, '').toLowerCase();
+    if (!clean || hashtags.length >= MAX_HASHTAGS || hashtags.includes(clean)) return;
+    setHashtags([...hashtags, clean]);
+    setHashtagInput('');
+  }
+
+  async function save() {
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await apiFetch(`/api/profile/${userId}/edit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bio, hashtagNames: hashtags }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        onSaved(bio, hashtags);
+      } else {
+        setError(data.reason === 'too_many_hashtags' ? `Massimo ${MAX_HASHTAGS} hashtag` : 'Qualcosa è andato storto.');
+      }
+    } catch {
+      setError('Non siamo riusciti a raggiungere il server — riprova.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="pl-screen">
+      <div className="pl-sheet-close" onClick={onCancel}>Annulla ✕</div>
+      <h3>Modifica bio e hashtag</h3>
+
+      <textarea
+        value={bio}
+        onChange={(e) => setBio(e.target.value)}
+        placeholder="Una breve bio (facoltativa)"
+        maxLength={280}
+      />
+
+      <div className="pl-hashtag-input-row">
+        <input
+          value={hashtagInput}
+          onChange={(e) => setHashtagInput(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addHashtag())}
+          placeholder="#fitness, #nightlife..."
+        />
+        <button type="button" onClick={addHashtag}>Aggiungi</button>
+      </div>
+      <div className="pl-hashtag-list">
+        {hashtags.map((h) => (
+          <span key={h} className="pl-hashtag-pill">
+            #{h}
+            <button type="button" onClick={() => setHashtags(hashtags.filter((x) => x !== h))}>✕</button>
+          </span>
+        ))}
+      </div>
+      <p className="pl-hint">Gli hashtag ti rendono trovabile dai brand della tua categoria — max {MAX_HASHTAGS}.</p>
+
+      {error && <p className="pl-error">{error}</p>}
+      <button className="pl-send-btn" onClick={save} disabled={saving}>
+        {saving ? 'Salvataggio…' : 'Salva modifiche'}
+      </button>
     </div>
   );
 }

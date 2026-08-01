@@ -481,7 +481,7 @@ function ComingSoonSection() {
           <span style={{ fontSize: 8.5, fontWeight: 700, textTransform: 'uppercase', color: 'var(--teak)', background: 'rgba(228,212,200,0.14)', padding: '2px 8px', borderRadius: 6 }}>
             Coming Soon
           </span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: "'Syne',sans-serif", fontWeight: 700, fontSize: 13, margin: '6px 0 3px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, fontSize: 13, margin: '6px 0 3px' }}>
             <item.icon size={14} /> {item.title}
           </div>
           <div style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.4 }}>{item.sub}</div>

@@ -49,7 +49,11 @@ body{
   font-family:'Space Grotesk',sans-serif; font-weight:800; font-size:16px;
   text-shadow:0 2px 4px rgba(0,0,0,0.4);
 }
-.pl-brand-live{ color:var(--cyan); text-shadow:0 0 12px rgba(47,211,232,0.5), 0 2px 4px rgba(0,0,0,0.4); }
+.pl-brand-live{
+  background:linear-gradient(135deg, #6FF0FF 0%, #2FD3E8 60%, #1D96AF 100%);
+  -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 0 12px rgba(47,211,232,0.5)) drop-shadow(0 2px 4px rgba(0,0,0,0.4));
+}
 .pl-arena-pill{
   display:flex; align-items:center; gap:5px;
   background:rgba(229,57,53,0.14); border:1px solid rgba(229,57,53,0.4); color:var(--red);
@@ -102,7 +106,8 @@ body{
 
 .pl-send-btn, .pl-retry-btn{
   width:100%; padding:14px; border-radius:16px; border:none;
-  background:var(--cyan); color:#0D0D0D; font-weight:700; font-size:13.5px; cursor:pointer;
+  background:linear-gradient(135deg, #4FE3F5 0%, #2FD3E8 45%, #1BA8C4 100%);
+  color:#0D0D0D; font-weight:700; font-size:13.5px; cursor:pointer;
   box-shadow:var(--shadow-glow-cyan);
 }
 .pl-send-btn:disabled{ opacity:0.4; cursor:not-allowed; box-shadow:none; }
@@ -183,7 +188,7 @@ button{ font-family:inherit; }
   border-radius:14px; padding:9px 12px; position:relative;
   box-shadow:var(--shadow-sm);
 }
-.pl-rank-row-me{ border-color:rgba(47,211,232,0.5); background:linear-gradient(90deg, rgba(47,211,232,0.08), var(--surface) 45%); box-shadow:var(--shadow-glow-cyan); }
+.pl-rank-row-me{ border-color:rgba(47,211,232,0.5); background:linear-gradient(90deg, rgba(47,211,232,0.16), var(--surface) 55%); box-shadow:var(--shadow-glow-cyan); }
 .pl-rank-num{ width:20px; font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:13px; color:var(--text-muted); text-align:center; }
 .pl-rank-avatar-wrap{ position:relative; flex-shrink:0; }
 .pl-rank-avatar{
@@ -296,7 +301,12 @@ button{ font-family:inherit; }
   color:var(--text); white-space:nowrap; position:relative;
   text-shadow:0 4px 10px rgba(0,0,0,0.5);
 }
-.pl-splash-live{ color:var(--cyan); position:relative; text-shadow:0 0 22px rgba(47,211,232,0.6), 0 4px 10px rgba(0,0,0,0.5); }
+.pl-splash-live{
+  position:relative;
+  background:linear-gradient(135deg, #6FF0FF 0%, #2FD3E8 60%, #1D96AF 100%);
+  -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 0 14px rgba(47,211,232,0.5)) drop-shadow(0 4px 10px rgba(0,0,0,0.5));
+}
 
 .pl-splash-antenna-node{
   position:absolute;

@@ -47,8 +47,9 @@ body{
 .pl-brand{
   display:flex; align-items:center; gap:2px;
   font-family:'Syne',sans-serif; font-weight:800; font-size:16px;
+  text-shadow:0 2px 4px rgba(0,0,0,0.4);
 }
-.pl-brand-live{ color:var(--cyan); }
+.pl-brand-live{ color:var(--cyan); text-shadow:0 0 12px rgba(47,211,232,0.5), 0 2px 4px rgba(0,0,0,0.4); }
 .pl-arena-pill{
   display:flex; align-items:center; gap:5px;
   background:rgba(229,57,53,0.14); border:1px solid rgba(229,57,53,0.4); color:var(--red);
@@ -293,8 +294,9 @@ button{ font-family:inherit; }
   font-family:'Syne',sans-serif;
   font-size:44px; font-weight:800; letter-spacing:-0.02em;
   color:var(--text); white-space:nowrap; position:relative;
+  text-shadow:0 4px 10px rgba(0,0,0,0.5);
 }
-.pl-splash-live{ color:var(--cyan); position:relative; }
+.pl-splash-live{ color:var(--cyan); position:relative; text-shadow:0 0 22px rgba(47,211,232,0.6), 0 4px 10px rgba(0,0,0,0.5); }
 
 .pl-splash-antenna-node{
   position:absolute;

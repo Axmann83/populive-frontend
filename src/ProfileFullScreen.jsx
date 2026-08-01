@@ -255,6 +255,7 @@ function ActionButton({ icon: Icon, label, onClick, disabled, active }) {
         cursor: disabled ? 'default' : 'pointer',
         opacity: disabled && !active ? 0.5 : 1,
         backdropFilter: 'blur(4px)',
+        boxShadow: active ? 'var(--shadow-glow-cyan)' : 'var(--shadow-sm)',
       }}
     >
       <Icon size={22} strokeWidth={2} fill={active ? 'currentColor' : 'none'} />
@@ -295,6 +296,7 @@ const closeButtonStyle = {
   color: '#fff',
   fontSize: 16,
   cursor: 'pointer',
+  boxShadow: '0 4px 12px -2px rgba(0,0,0,0.5)',
   backdropFilter: 'blur(4px)',
 };
 
@@ -310,6 +312,7 @@ const arrowButtonStyle = {
   cursor: 'pointer',
   backdropFilter: 'blur(4px)',
   flexShrink: 0,
+  boxShadow: '0 4px 12px -2px rgba(0,0,0,0.4)',
 };
 
 const influencerPillStyle = {
@@ -366,4 +369,5 @@ const toastStyle = {
   padding: '9px 18px',
   borderRadius: 999,
   zIndex: 10,
+  boxShadow: 'var(--shadow-lg)',
 };

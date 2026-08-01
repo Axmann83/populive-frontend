@@ -256,6 +256,7 @@ function ActionButton({ icon: Icon, label, onClick, disabled, active }) {
         opacity: disabled && !active ? 0.5 : 1,
         backdropFilter: 'blur(4px)',
         boxShadow: active ? 'var(--shadow-glow-cyan)' : 'var(--shadow-sm)',
+        animation: active ? 'pl-pop 0.4s ease' : 'none',
       }}
     >
       <Icon size={22} strokeWidth={2} fill={active ? 'currentColor' : 'none'} />

@@ -76,7 +76,7 @@ export default function MyProfile({ userId, arenaSessionId, onOpenSettings }) {
 
 function RankCounter({ label, rank, points, accent }) {
   return (
-    <div style={{ flex: 1, background: 'var(--surface-2)', border: '1px solid rgba(228,212,200,0.1)', borderRadius: 12, padding: 10, textAlign: 'center' }}>
+    <div style={{ flex: 1, background: 'var(--surface-2)', border: '1px solid rgba(228,212,200,0.1)', borderRadius: 12, padding: 10, textAlign: 'center', boxShadow: 'var(--shadow-sm)' }}>
       <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 800, fontSize: 17, color: accent || 'var(--text)' }}>
         {rank ? `#${rank}` : '—'}
       </div>

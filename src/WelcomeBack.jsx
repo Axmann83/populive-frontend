@@ -114,6 +114,6 @@ const itemRowStyle = {
   background: 'var(--surface-2)',
   border: '1px solid rgba(228,212,200,0.1)',
   borderRadius: 12,
-  padding: '9px 12px',
+  padding: '10px 14px',
   boxShadow: 'var(--shadow-sm)',
 };

@@ -304,7 +304,7 @@ button{ font-family:inherit; }
   border-radius:50%;
   background:var(--cyan);
   box-shadow:0 0 10px 2px rgba(47,211,232,0.65);
-  left:50%; top:-3px;
+  left:50%; top:0px;
   transform:translateX(calc(-50% + 1px));
   animation:pl-splash-node-pulse 2.8s ease-in-out infinite;
 }
@@ -317,7 +317,7 @@ button{ font-family:inherit; }
   position:absolute;
   bottom:100%; left:calc(50% + 1px);
   width:1px; height:1px;
-  transform:translateY(4px);
+  transform:translateY(7px);
 }
 .pl-splash-wave-arc{
   position:absolute;

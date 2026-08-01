@@ -28,6 +28,24 @@
 }
 
 *{ box-sizing:border-box; }
+
+/* Micro-animazione al tocco — una leggera "compressione" quando si
+   preme, come fanno le app curate, invece di un cambio di stato
+   secco e immediato. Applicata di base a bottoni e a tutto ciò che
+   ha una classe "cliccabile" più sotto — niente da aggiungere per
+   i normali elementi <button>, arriva già così. */
+button, .pl-tap{
+  transition:transform 0.12s ease, opacity 0.12s ease;
+}
+button:active:not(:disabled), .pl-tap:active{
+  transform:scale(0.96);
+}
+.pl-radar-card, .pl-rank-row, .pl-rosa-option, .pl-guess-candidate, .pl-seal, .pl-sheet-close{
+  transition:transform 0.12s ease;
+}
+.pl-radar-card:active, .pl-rank-row:active, .pl-rosa-option:active, .pl-guess-candidate:active, .pl-seal:active{
+  transform:scale(0.97);
+}
 body{
   margin:0; background:var(--bg); color:var(--text);
   font-family:'Inter',system-ui,sans-serif;
@@ -207,6 +225,9 @@ button{ font-family:inherit; }
 }
 @keyframes pl-float-up{ 0%{opacity:0; transform:translateY(4px);} 20%{opacity:1;} 100%{opacity:0; transform:translateY(-14px);} }
 @keyframes pl-toast-in{ 0%{opacity:0; transform:translateY(-10px) scale(0.95);} 100%{opacity:1; transform:translateY(0) scale(1);} }
+@keyframes pl-pop{ 0%{transform:scale(1);} 35%{transform:scale(1.14);} 60%{transform:scale(0.96);} 100%{transform:scale(1);} }
+@keyframes pl-seal-flash-anim{ 0%{box-shadow:0 0 30px -8px var(--cyan);} 40%{box-shadow:0 0 55px 10px rgba(47,211,232,0.9); background:rgba(47,211,232,0.35);} 100%{box-shadow:0 0 30px -8px var(--cyan);} }
+.pl-seal-flash{ animation:pl-seal-flash-anim 0.35s ease; }
 .pl-ranking-loading{ text-align:center; color:var(--text-muted); font-size:12px; padding:30px 0; }
 
 /* --- Rosa (invio/ricezione/minigioco/riscatto) --- */

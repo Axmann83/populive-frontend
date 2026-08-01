@@ -160,7 +160,7 @@ export default function ProfileFullScreen({ userId, arenaSessionId, currentUserI
           <div style={infoOverlayStyle}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontFamily: "'Syne',sans-serif", fontWeight: 700, fontSize: 22 }}>{profile.displayName}</span>
+                <span style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, fontSize: 22 }}>{profile.displayName}</span>
                 {profile.isTopConnector && <Link2 size={14} color="#C7C9CC" title="Top Connector" />}
                 {profile.isTopSpender && <Coins size={14} color="#E8C77E" title="Top Spender" />}
                 {profile.isFounder && <Crown size={14} color="#E8C77E" title="Founder" />}

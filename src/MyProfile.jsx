@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Settings as SettingsIcon } from './PopuLiveIcons';
+import { useState, useEffect, useCallback } from 'react';
+import { Settings as SettingsIcon, Zap, BadgeCheck } from './PopuLiveIcons';
 
 import { apiFetch } from './apiClient';
 
@@ -128,6 +128,136 @@ export default function MyProfile({ userId, arenaSessionId, onOpenSettings }) {
           <p className="pl-hint" style={{ marginTop: 4 }}>Nessun hashtag ancora — aiutano i brand della tua categoria a trovarti.</p>
         )}
       </div>
+
+      {/* Premium e Verificato — i pagamenti esistevano già dietro le
+          quinte da settimane, mancava solo un modo per l'utente di
+          vederli e comprarli davvero. */}
+      <PremiumVerifiedSection
+        profile={profile}
+        arenaSessionId={arenaSessionId}
+        onProfileRefresh={(updated) => setProfile({ ...profile, ...updated })}
+      />
+    </div>
+  );
+}
+
+function PremiumVerifiedSection({ profile, arenaSessionId, onProfileRefresh }) {
+  const [purchasing, setPurchasing] = useState(null); // 'premium' | 'verified' | null
+  const [error, setError] = useState(null);
+
+  const buy = useCallback(async (productType, key) => {
+    setPurchasing(key);
+    setError(null);
+    try {
+      const catalogRes = await apiFetch('/api/products');
+      const catalogData = await catalogRes.json();
+      const product = catalogData.products?.find((p) => p.product_type === productType);
+      if (!product) {
+        setError('Prodotto non disponibile al momento.');
+        return;
+      }
+
+      const purchaseRes = await apiFetch('/api/purchases/initiate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId: product.id, arenaSessionId }),
+      });
+      const purchaseData = await purchaseRes.json();
+
+      if (purchaseData.requiresPayment) {
+        window.location.href = purchaseData.checkoutUrl;
+        return; // usciamo dall'app per andare su Stripe
+      }
+
+      // Account di prova/gratis: l'effetto è già stato applicato sul
+      // server, aggiorniamo la vista senza dover ricaricare la pagina.
+      if (purchaseData.success) {
+        if (productType === 'premium_subscription') {
+          onProfileRefresh({ isPremium: true });
+        } else if (productType === 'verified_badge') {
+          onProfileRefresh({ verificationPending: true });
+        }
+      } else {
+        setError('Qualcosa è andato storto — riprova.');
+      }
+    } catch {
+      setError('Non siamo riusciti a raggiungere il server — riprova.');
+    } finally {
+      setPurchasing(null);
+    }
+  }, [arenaSessionId, onProfileRefresh]);
+
+  return (
+    <div style={{ marginTop: 18 }}>
+      <div className="pl-section-label">Stato profilo</div>
+
+      {/* Premium */}
+      {profile?.isPremium ? (
+        <StatusBadgeCard
+          icon={Zap}
+          color="var(--cyan)"
+          title="Premium attivo"
+          sub={profile.premiumExpiresAt ? `Fino al ${new Date(profile.premiumExpiresAt).toLocaleDateString('it-IT')}` : 'Punti moltiplicati 1.2x'}
+        />
+      ) : (
+        <PurchaseCard
+          icon={Zap}
+          title="Diventa Premium"
+          sub="1.2x sui punti guadagnati per 30 giorni"
+          buttonLabel={purchasing === 'premium' ? 'Un attimo…' : 'Attiva'}
+          disabled={purchasing !== null}
+          onClick={() => buy('premium_subscription', 'premium')}
+        />
+      )}
+
+      {/* Verificato */}
+      {profile?.isVerified ? (
+        <StatusBadgeCard icon={BadgeCheck} color="var(--gold-medal, #E8C77E)" title="Profilo Verificato" sub="La tua identità è confermata" />
+      ) : profile?.verificationPending ? (
+        <StatusBadgeCard icon={BadgeCheck} color="var(--text-muted)" title="Verifica in corso" sub="La rivediamo a mano, ci vuole un po'" />
+      ) : (
+        <PurchaseCard
+          icon={BadgeCheck}
+          title="Verifica il profilo"
+          sub="Badge identità confermata, revisione manuale"
+          buttonLabel={purchasing === 'verified' ? 'Un attimo…' : 'Richiedi'}
+          disabled={purchasing !== null}
+          onClick={() => buy('verified_badge', 'verified')}
+        />
+      )}
+
+      {error && <p className="pl-error" style={{ marginTop: 8 }}>{error}</p>}
+    </div>
+  );
+}
+
+function StatusBadgeCard({ icon: Icon, color, title, sub }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'var(--surface)', border: `1px solid ${color}55`, borderRadius: 14, padding: 12, marginBottom: 8, boxShadow: 'var(--shadow-sm)' }}>
+      <Icon size={22} color={color} />
+      <div>
+        <div style={{ fontSize: 12.5, fontWeight: 700, color }}>{title}</div>
+        <div style={{ fontSize: 10.5, color: 'var(--text-muted)' }}>{sub}</div>
+      </div>
+    </div>
+  );
+}
+
+function PurchaseCard({ icon: Icon, title, sub, buttonLabel, disabled, onClick }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'var(--surface)', border: '1px solid rgba(228,212,200,0.12)', borderRadius: 14, padding: 12, marginBottom: 8, boxShadow: 'var(--shadow-sm)' }}>
+      <Icon size={22} color="var(--teak)" />
+      <div style={{ flex: 1 }}>
+        <div style={{ fontSize: 12.5, fontWeight: 700 }}>{title}</div>
+        <div style={{ fontSize: 10.5, color: 'var(--text-muted)' }}>{sub}</div>
+      </div>
+      <button
+        onClick={onClick}
+        disabled={disabled}
+        style={{ background: 'var(--cyan)', color: '#0D0D0D', border: 'none', borderRadius: 10, padding: '8px 14px', fontSize: 11, fontWeight: 700, cursor: disabled ? 'default' : 'pointer', opacity: disabled ? 0.6 : 1, flexShrink: 0 }}
+      >
+        {buttonLabel}
+      </button>
     </div>
   );
 }

@@ -40,10 +40,10 @@ button, .pl-tap{
 button:active:not(:disabled), .pl-tap:active{
   transform:scale(0.96);
 }
-.pl-radar-card, .pl-rank-row, .pl-rosa-option, .pl-guess-candidate, .pl-seal, .pl-sheet-close{
+.pl-radar-card, .pl-rank-row, .pl-pulse-option, .pl-guess-candidate, .pl-seal, .pl-sheet-close{
   transition:transform 0.12s ease;
 }
-.pl-radar-card:active, .pl-rank-row:active, .pl-rosa-option:active, .pl-guess-candidate:active, .pl-seal:active{
+.pl-radar-card:active, .pl-rank-row:active, .pl-pulse-option:active, .pl-guess-candidate:active, .pl-seal:active{
   transform:scale(0.97);
 }
 body{
@@ -230,18 +230,18 @@ button{ font-family:inherit; }
 .pl-seal-flash{ animation:pl-seal-flash-anim 0.35s ease; }
 .pl-ranking-loading{ text-align:center; color:var(--text-muted); font-size:12px; padding:30px 0; }
 
-/* --- Rosa (invio/ricezione/minigioco/riscatto) --- */
+/* --- Pulse (invio/ricezione/minigioco/riscatto) --- */
 .pl-sheet{ display:flex; flex-direction:column; gap:6px; }
 .pl-sheet-close{ text-align:right; font-size:11px; color:var(--text-muted); cursor:pointer; margin-bottom:6px; }
-.pl-rosa-option{
+.pl-pulse-option{
   display:flex; flex-direction:column; gap:2px;
   background:var(--surface-2); border:1.5px solid rgba(228,212,200,0.12);
   border-radius:14px; padding:10px 14px; cursor:pointer; margin-bottom:8px;
   box-shadow:var(--shadow-sm);
 }
-.pl-rosa-option.selected{ border-color:var(--cyan); background:rgba(47,211,232,0.08); box-shadow:var(--shadow-glow-cyan); }
-.pl-rosa-title{ font-size:12.5px; font-weight:600; }
-.pl-rosa-price{ font-size:10.5px; color:var(--text-muted); }
+.pl-pulse-option.selected{ border-color:var(--cyan); background:rgba(47,211,232,0.08); box-shadow:var(--shadow-glow-cyan); }
+.pl-pulse-title{ font-size:12.5px; font-weight:600; }
+.pl-pulse-price{ font-size:10.5px; color:var(--text-muted); }
 .pl-sponsor-tag{ color:var(--teak); }
 .pl-redeem-actions{ display:flex; gap:8px; margin:6px 0; }
 .pl-redeem-actions button{

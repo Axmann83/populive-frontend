@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { apiFetch } from './apiClient';
-import { Heart, Star, KohaFlowerIcon, Hand } from './PopuLiveIcons';
+import { Heart, Star, PulseWaveIcon, Hand } from './PopuLiveIcons';
 
 /**
  * ============================================================
@@ -39,7 +39,7 @@ export default function WelcomeBack({ userId, onDone }) {
   const items = [];
   if (summary.newLikes > 0) items.push({ icon: Heart, label: `${summary.newLikes} nuovi Like` });
   if (summary.newSuperlikes > 0) items.push({ icon: Star, label: `${summary.newSuperlikes} nuovi Superlike` });
-  if (summary.newRoses > 0) items.push({ icon: KohaFlowerIcon, label: `${summary.newRoses} nuove Rose` });
+  if (summary.newPulses > 0) items.push({ icon: PulseWaveIcon, label: `${summary.newPulses} nuovi Pulse` });
 
   return (
     <div style={overlayStyle}>

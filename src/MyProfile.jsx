@@ -25,6 +25,7 @@ export default function MyProfile({ userId, arenaSessionId, onOpenSettings }) {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
+  const [showPhoto, setShowPhoto] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -84,13 +85,41 @@ export default function MyProfile({ userId, arenaSessionId, onOpenSettings }) {
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', marginBottom: 10 }}>
-        <div className="pl-rank-avatar" style={{ width: 64, height: 64, fontSize: 28, border: '2px solid var(--teak)', overflow: 'hidden' }}>
+        <div
+          className="pl-rank-avatar"
+          onClick={() => ranking?.photoUrl && setShowPhoto(true)}
+          style={{ width: 64, height: 64, fontSize: 28, border: '2px solid var(--teak)', overflow: 'hidden', cursor: ranking?.photoUrl ? 'pointer' : 'default' }}
+        >
           {ranking?.photoUrl
             ? <img src={ranking.photoUrl} alt={ranking.displayName || 'Tu'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             : (ranking?.avatarEmoji || '🙂')}
         </div>
         <div style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, fontSize: 15, marginTop: 8 }}>{ranking?.displayName || 'Tu'}</div>
       </div>
+
+      {/* Foto a tutto schermo — per vedere esattamente come ci si
+          presenta a chi ti trova sul radar, non solo il cerchietto
+          piccolo. Compare solo se c'è davvero una foto (niente da
+          ingrandire per chi usa ancora l'emoji come avatar). */}
+      {showPhoto && ranking?.photoUrl && (
+        <div
+          onClick={() => setShowPhoto(false)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.92)', zIndex: 80, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+        >
+          <button
+            onClick={() => setShowPhoto(false)}
+            style={{ position: 'absolute', top: 18, right: 18, width: 38, height: 38, borderRadius: '50%', border: 'none', background: 'rgba(255,255,255,0.12)', color: '#fff', fontSize: 16, cursor: 'pointer', backdropFilter: 'blur(4px)' }}
+            aria-label="Chiudi"
+          >
+            ✕
+          </button>
+          <img
+            src={ranking.photoUrl}
+            alt={ranking.displayName || 'Tu'}
+            style={{ maxWidth: '92%', maxHeight: '80%', borderRadius: 16, objectFit: 'contain', boxShadow: 'var(--shadow-lg)' }}
+          />
+        </div>
+      )}
 
       {ranking && (
         <div style={{ display: 'flex', gap: 8, margin: '14px 0' }}>

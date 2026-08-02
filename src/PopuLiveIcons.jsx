@@ -35,10 +35,10 @@ export function PulseWaveIcon({ size = 20, color = 'currentColor', strokeWidth =
       strokeLinecap="round"
       {...props}
     >
-      <circle cx="12" cy="20" r="1.6" fill={color} stroke="none" />
-      <path d="M8.7 20a3.3 3.3 0 0 1 6.6 0" />
-      <path d="M4.5 20a7.5 7.5 0 0 1 15 0" />
-      <path d="M0.5 20a11.5 11.5 0 0 1 23 0" />
+      <circle cx="12" cy="22" r="1.6" fill={color} stroke="none" />
+      <path d="M8 22a4 4 0 0 1 8 0" />
+      <path d="M4.3 22a7.7 7.7 0 0 1 15.4 0" />
+      <path d="M0.5 22a11.5 11.5 0 0 1 23 0" />
     </svg>
   );
 }

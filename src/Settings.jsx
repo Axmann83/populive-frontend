@@ -82,10 +82,10 @@ export default function Settings({ userId, onClose }) {
         onChange={(v) => setSettings({ ...settings, appearsInHistoricalSearch: v })}
       />
       <ToggleRow
-        label="Ricevi Rose"
+        label="Ricevi Pulse"
         sub="Consumazioni omaggio da altri utenti"
-        checked={settings.receiveRosesEnabled}
-        onChange={(v) => setSettings({ ...settings, receiveRosesEnabled: v })}
+        checked={settings.receivePulsesEnabled}
+        onChange={(v) => setSettings({ ...settings, receivePulsesEnabled: v })}
       />
 
       <label className="pl-select-row" style={{ marginTop: 8 }}>

@@ -5,15 +5,15 @@ import Login from './Login';
 import ProfileCreation from './ProfileCreation';
 import CheckinRadar from './CheckinRadar';
 import LiveRanking from './LiveRanking';
-import { RosaNotification } from './RosaFlow';
+import { PulseNotification } from './RosaFlow';
 import ChatWindow from './ChatWindow';
 import Settings from './Settings';
-import MyRoses from './MyRoses';
+import MyPulses from './MyRoses';
 import MyProfile from './MyProfile';
 import ExploreMap from './ExploreMap';
 import SplashScreen from './SplashScreen';
 import {
-  Radar as RadarIcon, Trophy, Globe, User, KohaFlowerIcon,
+  Radar as RadarIcon, Trophy, Globe, User, PulseWaveIcon,
   Eye, Heart, Star, PartyPopper, Target, Link2, Sparkles,
   Map, History, Wallet,
 } from './PopuLiveIcons';
@@ -79,12 +79,12 @@ export default function App() {
       window.history.replaceState(null, '', '/');
     }
 
-    // Ritorno da Stripe dopo il pagamento di una Rosa (riuscito o
+    // Ritorno da Stripe dopo il pagamento di una Pulse (riuscito o
     // annullato) — non c'è altro da fare qui: se il pagamento è
     // andato a buon fine, il popup punti universale scatterà da
-    // solo appena il webhook avrà creato la Rosa. Ripuliamo solo
+    // solo appena il webhook avrà creato la Pulse. Ripuliamo solo
     // l'indirizzo, che altrimenti resterebbe sporco.
-    if (window.location.search.includes('rosa_sent') || window.location.search.includes('rosa_cancelled')) {
+    if (window.location.search.includes('pulse_sent') || window.location.search.includes('pulse_cancelled')) {
       window.history.replaceState(null, '', '/');
     }
   }, []);
@@ -92,9 +92,9 @@ export default function App() {
   const [arenaSessionId, setArenaSessionId] = useState(null);
 
   const [activeTab, setActiveTab] = useState('radar');
-  const [pendingRosaNotification, setPendingRosaNotification] = useState(null);
+  const [pendingPulseNotification, setPendingPulseNotification] = useState(null);
   const [activeChatConversationId, setActiveChatConversationId] = useState(null);
-  const [roseBadgeCount, setRoseBadgeCount] = useState(0);
+  const [pulseBadgeCount, setPulseBadgeCount] = useState(0);
   const [showSettings, setShowSettings] = useState(false);
   const [showExploreMap, setShowExploreMap] = useState(false);
   // "Bentornato" — mostrata una sola volta appena si entra in app,
@@ -120,7 +120,7 @@ export default function App() {
   // usiamo qui come motore UNICO per tutti i popup, invece di
   // costruirne uno diverso per ogni funzionalità. Copre da solo:
   // visita profilo (ricevuta E inviata), like/superlike (ricevuti
-  // E inviati), ogni variante di Rosa, il bonus del minigioco —
+  // E inviati), ogni variante di Pulse, il bonus del minigioco —
   // tutto, senza bisogno di nuovo codice lato server.
   const pointsIconFor = useCallback((source) => {
     const base = source.replace(/_sent$/, ''); // "like_received_sent" → "like_received"
@@ -128,10 +128,10 @@ export default function App() {
       profile_view: Eye,
       like_received: Heart,
       superlike_received: Star,
-      rosa_standalone: KohaFlowerIcon,
-      rosa_like: KohaFlowerIcon,
-      rosa_super: KohaFlowerIcon,
-      rosa_guess_won: PartyPopper,
+      pulse_standalone: PulseWaveIcon,
+      pulse_like: PulseWaveIcon,
+      pulse_super: PulseWaveIcon,
+      pulse_guess_won: PartyPopper,
       mission_completed: Target,
       connector_discovery_bonus: Link2,
     };
@@ -214,9 +214,9 @@ export default function App() {
     socketRef.current = socket;
     socket.emit('join_private_room', { userId });
 
-    socket.on('rosa_received', (payload) => {
-      setPendingRosaNotification(payload);
-      setRoseBadgeCount((n) => n + 1);
+    socket.on('pulse_received', (payload) => {
+      setPendingPulseNotification(payload);
+      setPulseBadgeCount((n) => n + 1);
     });
 
     // Motore unico dei popup punti — v. pointsIconFor sopra. Il
@@ -341,8 +341,8 @@ export default function App() {
           <LiveRanking arenaSessionId={null} currentUserId={userId} isGlobal onSelectSelf={() => setActiveTab('profilo')} />
         )}
 
-        {activeTab === 'rose' && (
-          <MyRoses userId={userId} onOpenRosa={(rosa) => setPendingRosaNotification(rosa)} />
+        {activeTab === 'pulse' && (
+          <MyPulses userId={userId} onOpenPulse={(pulse) => setPendingPulseNotification(pulse)} />
         )}
 
         {activeTab === 'profilo' && (
@@ -365,7 +365,7 @@ export default function App() {
         <NavItem icon={RadarIcon} label="Radar" active={activeTab === 'radar'} onClick={() => setActiveTab('radar')} />
         <NavItem icon={Trophy} label="Stanotte" active={activeTab === 'locale'} onClick={() => setActiveTab('locale')} />
         <NavItem icon={Globe} label="Globale" active={activeTab === 'globale'} onClick={() => setActiveTab('globale')} />
-        <NavItem icon={KohaFlowerIcon} label="Rose" active={activeTab === 'rose'} onClick={() => setActiveTab('rose')} badge={roseBadgeCount} />
+        <NavItem icon={PulseWaveIcon} label="Pulse" active={activeTab === 'pulse'} onClick={() => setActiveTab('pulse')} badge={pulseBadgeCount} />
         <NavItem icon={User} label="Profilo" active={activeTab === 'profilo'} onClick={() => setActiveTab('profilo')} />
       </div>
 
@@ -400,16 +400,16 @@ export default function App() {
         </div>
       )}
 
-      {pendingRosaNotification && (
+      {pendingPulseNotification && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 50 }}>
           <div style={{ width: '100%', maxWidth: 420, background: 'var(--surface)', borderRadius: '24px 24px 0 0', padding: 20, maxHeight: '85vh', overflowY: 'auto', boxShadow: 'var(--shadow-lg)' }}>
-            <RosaNotification
-              rosa={pendingRosaNotification}
+            <PulseNotification
+              pulse={pendingPulseNotification}
               currentUserId={userId}
               arenaSessionId={arenaSessionId}
               onResolved={() => {
-                setPendingRosaNotification(null);
-                setRoseBadgeCount((n) => Math.max(0, n - 1));
+                setPendingPulseNotification(null);
+                setPulseBadgeCount((n) => Math.max(0, n - 1));
               }}
             />
           </div>

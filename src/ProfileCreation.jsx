@@ -35,7 +35,7 @@ export default function ProfileCreation({ onComplete }) {
   const [consent, setConsent] = useState({
     sponsoredMissionsEnabled: false,
     appearsInHistoricalSearch: true,
-    receiveRosesEnabled: true,
+    receivePulsesEnabled: true,
     contactFilter: 'everyone',
   });
   // Consenso legale OBBLIGATORIO (Privacy Policy + Termini) — separato
@@ -272,10 +272,10 @@ export default function ProfileCreation({ onComplete }) {
             onChange={(v) => setConsent({ ...consent, appearsInHistoricalSearch: v })}
           />
           <ConsentToggle
-            label="Ricevi Rose"
+            label="Ricevi Pulse"
             sub="Consumazioni omaggio da altri utenti"
-            checked={consent.receiveRosesEnabled}
-            onChange={(v) => setConsent({ ...consent, receiveRosesEnabled: v })}
+            checked={consent.receivePulsesEnabled}
+            onChange={(v) => setConsent({ ...consent, receivePulsesEnabled: v })}
           />
 
           <label className="pl-select-row">

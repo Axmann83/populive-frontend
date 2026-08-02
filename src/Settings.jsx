@@ -6,7 +6,14 @@ import { apiFetch } from './apiClient';
  * ============================================================
  * POPULIVE — IMPOSTAZIONI (componente reale)
  * ============================================================
- * Richiamabile in ogni momento dal profilo (icona rotella ⚙️).
+ * A differenza della schermata di consenso dell'onboarding (che si
+ * vede UNA volta, obbligatoria prima di usare l'app), questa è
+ * richiamabile in ogni momento dal profilo (icona rotella ⚙️) e
+ * permette di cambiare idea liberamente, tutte le volte che si vuole.
+ * Stessi campi dell'onboarding + il nuovo toggle di autopresentazione
+ * (show_ranking_on_profile), che invece non fa parte del consenso
+ * privacy — è una preferenza estetica, coerente col fatto che vive
+ * qui insieme alle altre impostazioni modificabili in ogni momento.
  * ============================================================
  */
 export default function Settings({ userId, onClose }) {
@@ -59,8 +66,8 @@ export default function Settings({ userId, onClose }) {
 
       <div className="pl-section-label" style={{ marginTop: 16 }}>Consenso e privacy</div>
       <p className="pl-hint">
-        Queste opzioni restano tutte facoltative — l'app funziona al 100% anche se le lasci disattivate,
-        mai una penalità per averle spente.
+        Queste opzioni restano tutte facoltative — ognuna attiva ti dà +5% sui punti che guadagni
+        (fino a +15% con tutte e tre), mai una penalità per averle spente.
       </p>
       <ToggleRow
         label="Ricevi missioni sponsorizzate"
@@ -97,6 +104,9 @@ export default function Settings({ userId, onClose }) {
         {saving ? 'Salvataggio…' : 'Salva impostazioni'}
       </button>
 
+      {/* Sezione legale — link ai testi veri (placeholder finché non
+          arrivano dallo studio) + richiesta di cancellazione account,
+          un diritto GDPR a sé che non passa dai toggle sopra. */}
       <div className="pl-section-label" style={{ marginTop: 20 }}>Legale</div>
       <a href="/privacy-policy" target="_blank" rel="noopener noreferrer" className="pl-hint" style={{ display: 'block', marginBottom: 4 }}>
         Privacy Policy →

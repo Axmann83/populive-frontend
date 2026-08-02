@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { apiFetch } from './apiClient';
-import { RosaSend } from './RosaFlow';
+import { PulseSend } from './RosaFlow';
 import ProfileDetail from './ProfileDetail';
-import { Heart, Star, KohaFlowerIcon, Link2, Coins, Crown, Sparkles } from './PopuLiveIcons';
+import { Heart, Star, PulseWaveIcon, Link2, Coins, Crown, Sparkles } from './PopuLiveIcons';
 
 /**
  * ============================================================
@@ -12,7 +12,7 @@ import { Heart, Star, KohaFlowerIcon, Link2, Coins, Crown, Sparkles } from './Po
  * una sola schermata, foto grande per riconoscere subito la
  * persona, e i tre bottoni di interazione già lì — niente menu
  * intermedi, niente passaggi in più. Come deciso insieme: se
- * tocchi "Rosa", si apre il riquadro di scelta (drink + variante)
+ * tocchi "Pulse", si apre il riquadro di scelta (drink + variante)
  * SOPRA questa stessa schermata, stesso principio "un tocco, una
  * schermata".
  * ============================================================
@@ -21,8 +21,8 @@ export default function ProfileFullScreen({ userId, arenaSessionId, currentUserI
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [actionState, setActionState] = useState(null); // null | 'liked' | 'superliked' | 'sending'
-  const [showRosaSend, setShowRosaSend] = useState(false);
-  const [rosaSentConfirmation, setRosaSentConfirmation] = useState(false);
+  const [showPulseSend, setShowPulseSend] = useState(false);
+  const [pulseSentConfirmation, setPulseSentConfirmation] = useState(false);
   const [showProfileDetail, setShowProfileDetail] = useState(false);
 
   useEffect(() => {
@@ -109,19 +109,19 @@ export default function ProfileFullScreen({ userId, arenaSessionId, currentUserI
     }
   }
 
-  if (showRosaSend) {
+  if (showPulseSend) {
     return (
       <div style={overlayStyle}>
-        <RosaSend
+        <PulseSend
           senderId={currentUserId}
           receiverId={userId}
           arenaSessionId={arenaSessionId}
           venueId={venueId}
-          onCancel={() => setShowRosaSend(false)}
+          onCancel={() => setShowPulseSend(false)}
           onSent={() => {
-            setShowRosaSend(false);
-            setRosaSentConfirmation(true);
-            setTimeout(() => setRosaSentConfirmation(false), 2500);
+            setShowPulseSend(false);
+            setPulseSentConfirmation(true);
+            setTimeout(() => setPulseSentConfirmation(false), 2500);
           }}
         />
       </div>
@@ -208,9 +208,9 @@ export default function ProfileFullScreen({ userId, arenaSessionId, currentUserI
                 active={actionState === 'superliked'}
               />
               <ActionButton
-                icon={KohaFlowerIcon}
-                label="Rosa"
-                onClick={() => setShowRosaSend(true)}
+                icon={PulseWaveIcon}
+                label="Pulse"
+                onClick={() => setShowPulseSend(true)}
                 disabled={actionState === 'sending'}
               />
             </div>
@@ -218,9 +218,9 @@ export default function ProfileFullScreen({ userId, arenaSessionId, currentUserI
         </>
       )}
 
-      {rosaSentConfirmation && (
+      {pulseSentConfirmation && (
         <div style={{ ...toastStyle, display: 'flex', alignItems: 'center', gap: 6 }}>
-          <KohaFlowerIcon size={14} /> Rosa inviata
+          <PulseWaveIcon size={14} /> Pulse inviato
         </div>
       )}
 

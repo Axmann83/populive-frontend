@@ -1,12 +1,33 @@
 import { useState } from 'react';
 import { apiFetch } from './apiClient';
 
+/**
+ * ============================================================
+ * POPULIVE — CREAZIONE PROFILO (componente reale)
+ * ============================================================
+ * Tre passaggi, nell'ordine deciso insieme:
+ *   1) Dati base: nome, bio, hashtag
+ *   2) Foto (upload verso storage esterno, qui solo l'URL risultante)
+ *   3) Schermata di consenso — MAI saltabile, mai un malus per chi
+ *      sceglie il minimo, solo bonus per chi condivide di più
+ * Solo dopo il passaggio 3 l'utente può usare il resto dell'app
+ * (il "cancello" requireOnboarded lato server blocca tutto prima).
+ * L'identità dell'utente arriva dal token (v. apiClient.js), non
+ * più da un ID passato a mano — l'account esiste già dal momento
+ * della verifica del codice SMS.
+ * ============================================================
+ */
+
 const MAX_HASHTAGS = 5;
 
 export default function ProfileCreation({ onComplete }) {
   const [step, setStep] = useState(1);
   const [displayName, setDisplayName] = useState('');
   const [bio, setBio] = useState('');
+  // Facoltativo per davvero — resta null finché la persona non
+  // sceglie attivamente un'opzione. Usato SOLO per mostrare quanti
+  // uomini/donne sono in un locale in forma aggregata, mai su un
+  // profilo individuale.
   const [genderForStats, setGenderForStats] = useState(null);
   const [hashtagInput, setHashtagInput] = useState('');
   const [hashtags, setHashtags] = useState([]);
@@ -17,12 +38,21 @@ export default function ProfileCreation({ onComplete }) {
     receiveRosesEnabled: true,
     contactFilter: 'everyone',
   });
+  // Consenso legale OBBLIGATORIO (Privacy Policy + Termini) — separato
+  // dai consensi opzionali sopra: qui non c'è bonus/malus, è la base
+  // minima per legge per poter usare l'app. TESTI VERI da inserire
+  // non appena arrivano dallo studio legale — per ora placeholder,
+  // ma il meccanismo di blocco (non puoi continuare senza spuntarlo)
+  // è già quello definitivo.
   const [legalAccepted, setLegalAccepted] = useState(false);
   const PRIVACY_POLICY_VERSION = 'v1.0-placeholder';
   const TERMS_VERSION = 'v1.0-placeholder';
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // --------------------------------------------------------
+  // Step 1 → crea il profilo base sul server
+  // --------------------------------------------------------
   async function submitBaseProfile(e) {
     e.preventDefault();
     setLoading(true);
@@ -59,6 +89,9 @@ export default function ProfileCreation({ onComplete }) {
     setHashtagInput('');
   }
 
+  // --------------------------------------------------------
+  // Step 2 → foto (upload verso storage esterno + salvataggio URL)
+  // --------------------------------------------------------
   async function submitPhoto() {
     setLoading(true);
     setError(null);
@@ -66,6 +99,10 @@ export default function ProfileCreation({ onComplete }) {
     try {
       let photoUrl = null;
       if (photoFile) {
+        // In produzione: upload reale verso S3/Cloudinary che
+        // restituisce l'URL. Qui il punto di innesto è pronto,
+        // la funzione uploadToStorage va scritta quando scegliamo
+        // il provider di storage definitivo.
         photoUrl = await uploadToStorage(photoFile);
         await apiFetch('/api/profile/me/photo', {
           method: 'POST',
@@ -82,6 +119,10 @@ export default function ProfileCreation({ onComplete }) {
     }
   }
 
+  // --------------------------------------------------------
+  // Step 3 → consenso — l'unico passaggio davvero obbligatorio
+  // per poter usare l'app
+  // --------------------------------------------------------
   async function submitConsent() {
     setLoading(true);
     setError(null);
@@ -110,6 +151,9 @@ export default function ProfileCreation({ onComplete }) {
     }
   }
 
+  // --------------------------------------------------------
+  // RENDER
+  // --------------------------------------------------------
   return (
     <div className="pl-onboarding-screen">
       <div className="pl-step-indicator">Passo {step} di 3</div>
@@ -130,6 +174,11 @@ export default function ProfileCreation({ onComplete }) {
             maxLength={280}
           />
 
+          {/* Domanda facoltativa — mai obbligatoria, nessun vantaggio
+              né svantaggio nel rispondere o meno. Usata SOLO per
+              mostrare quante persone di ciascun genere sono in un
+              locale in questo momento, in forma aggregata — mai sul
+              tuo profilo, mai visibile a nessun altro utente. */}
           <div style={{ margin: '4px 0 10px' }}>
             <div className="pl-consent-label" style={{ marginBottom: 2 }}>
               Genere <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(facoltativo)</span>
@@ -207,7 +256,7 @@ export default function ProfileCreation({ onComplete }) {
           <h2>Le tue preferenze</h2>
           <p className="pl-hint">
             Queste opzioni sono tutte facoltative — l'app funziona comunque al 100% se le lasci disattivate.
-            Attivarle ti dà un piccolo bonus di punti, mai una penalità se non lo fai.
+            Ognuna attiva ti dà +5% sui punti che guadagni (fino a +15% con tutte e tre) — mai una penalità se non lo fai.
           </p>
 
           <ConsentToggle
@@ -241,6 +290,11 @@ export default function ProfileCreation({ onComplete }) {
             </select>
           </label>
 
+          {/* Consenso legale OBBLIGATORIO — separato dai toggle sopra
+              (quelli sono bonus opzionali, questo no). Non saltabile:
+              il bottone finale resta disabilitato finché non è spuntato.
+              TODO: sostituire i link placeholder con quelli veri non
+              appena lo studio legale consegna i testi definitivi. */}
           <div className="pl-consent-row" style={{ marginTop: 12 }}>
             <div>
               <div className="pl-consent-label">
@@ -276,6 +330,9 @@ function ConsentToggle({ label, sub, checked, onChange }) {
   );
 }
 
+// Upload reale verso Cloudinary tramite "unsigned upload preset" —
+// non serve mai l'API Secret lato client, solo cloud name + preset
+// (entrambi pubblici, sicuri da avere nel codice frontend).
 const CLOUDINARY_CLOUD_NAME = 'rjkegdrp';
 const CLOUDINARY_UPLOAD_PRESET = 'populive_profile_photos';
 
@@ -294,5 +351,5 @@ async function uploadToStorage(file) {
   }
 
   const data = await res.json();
-  return data.secure_url;
+  return data.secure_url; // questo è l'URL da salvare in photo_url
 }

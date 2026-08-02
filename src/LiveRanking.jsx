@@ -11,7 +11,7 @@ import { Link2, Coins, Crown } from './PopuLiveIcons';
  * Come per CheckinRadar, nessun dato finto: la classifica arriva
  * davvero da /api/arenas/:id/ranking, e si aggiorna in tempo reale
  * grazie all'evento 'points_update' che ogni azione del backend
- * (like, superlike, Rosa, Connector, spesa al tavolo) già manda
+ * (like, superlike, Pulse, Connector, spesa al tavolo) già manda
  * alla stanza dell'Arena — non serve nessun codice nuovo lato
  * server per questo, era già tutto pronto.
  * ============================================================
@@ -110,7 +110,7 @@ export default function LiveRanking({ arenaSessionId, currentUserId, isGlobal, v
           delta={recentDeltas[entry.userId]}
           onClick={() => {
             // Toccare la PROPRIA riga non apre i bottoni Like/Superlike/
-            // Rosa puntati verso se stessi (non avrebbe senso) — ti
+            // Pulse puntati verso se stessi (non avrebbe senso) — ti
             // portiamo invece dritti alla tua tab Profilo, dove hai
             // già foto, punti e impostazioni. Un tocco a vuoto sarebbe
             // un'esperienza povera, anche se "corretta" a modo suo.
@@ -123,11 +123,11 @@ export default function LiveRanking({ arenaSessionId, currentUserId, isGlobal, v
         />
       ))}
 
-      {/* Locale: schermata completa con Like/Superlike/Rosa —
+      {/* Locale: schermata completa con Like/Superlike/Pulse —
           stesso identico strumento del radar, riusato senza
           duplicare nulla. Globale: solo il profilo di dettaglio,
           niente bottoni di interazione — non ha senso "mandare
-          una Rosa" a chi potrebbe essere in un'altra città in
+          un Pulse" a chi potrebbe essere in un'altra città in
           questo momento, l'intera meccanica presuppone di essere
           nello stesso locale, nella stessa serata. */}
       {selectedProfileUserId && !isGlobal && (

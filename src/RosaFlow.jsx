@@ -5,13 +5,13 @@ import { apiFetch } from './apiClient';
 
 /**
  * ============================================================
- * POPULIVE — CICLO ROSA COMPLETO (componenti reali)
+ * POPULIVE — CICLO PULSE COMPLETO (componenti reali)
  * ============================================================
  * Quattro pezzi, ognuno collegato a un endpoint vero:
- *   1) RosaSend       → POST /api/roses/send
- *   2) RosaNotification → POST /api/roses/:id/respond
- *   3) RosaGuessGame   → POST /api/roses/:id/guess
- *   4) RosaRedeemSeal  → POST /api/roses/:id/redeem
+ *   1) PulseSend       → POST /api/pulses/send
+ *   2) PulseNotification → POST /api/pulses/:id/respond
+ *   3) PulseGuessGame   → POST /api/pulses/:id/guess
+ *   4) PulseRedeemSeal  → POST /api/pulses/:id/redeem
  * ============================================================
  */
 
@@ -19,7 +19,7 @@ import { apiFetch } from './apiClient';
 // ------------------------------------------------------------
 // 1) INVIO
 // ------------------------------------------------------------
-export function RosaSend({ senderId, receiverId, arenaSessionId, venueId, onSent, onCancel }) {
+export function PulseSend({ senderId, receiverId, arenaSessionId, venueId, onSent, onCancel }) {
   const [drinks, setDrinks] = useState([]);
   const [selectedDrink, setSelectedDrink] = useState(null);
   const [tier, setTier] = useState('standalone'); // 'standalone' | 'like' | 'super'
@@ -32,7 +32,7 @@ export function RosaSend({ senderId, receiverId, arenaSessionId, venueId, onSent
       .then((data) => {
         if (data.success) {
           setDrinks(data.drinks);
-          // Se il locale offre UN SOLO drink per la Rosa (scelta
+          // Se il locale offre UN SOLO drink per la Pulse (scelta
           // comune per chi preferisce una consumazione fissa,
           // invece di un catalogo), lo selezioniamo da soli —
           // niente da "scegliere" quando c'è una sola opzione,
@@ -50,7 +50,7 @@ export function RosaSend({ senderId, receiverId, arenaSessionId, venueId, onSent
     setError(null);
 
     try {
-      const res = await apiFetch(`/api/roses/send`, {
+      const res = await apiFetch(`/api/pulses/send`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -63,7 +63,7 @@ export function RosaSend({ senderId, receiverId, arenaSessionId, venueId, onSent
         return;
       }
 
-      // Due esiti possibili: la Rosa nasce SUBITO (Rosa gratis
+      // Due esiti possibili: il Pulse nasce SUBITO (Pulse gratis
       // settimanale, o account di prova) — oppure serve prima
       // pagare davvero, e Stripe ci dà un indirizzo a cui mandare
       // il cliente per completare il pagamento con la sua carta.
@@ -72,7 +72,7 @@ export function RosaSend({ senderId, receiverId, arenaSessionId, venueId, onSent
         return; // usciamo dall'app per andare su Stripe — non c'è altro da fare qui
       }
 
-      onSent(data.rosaId);
+      onSent(data.pulseId);
     } catch {
       setError('Non siamo riusciti a raggiungere il server — riprova.');
     } finally {
@@ -81,30 +81,30 @@ export function RosaSend({ senderId, receiverId, arenaSessionId, venueId, onSent
   }, [selectedDrink, tier, receiverId, arenaSessionId, onSent]);
 
   const tiers = [
-    { id: 'standalone', label: 'Solo Rosa', sub: 'Anonima al 100% — nessun contatto' },
-    { id: 'like', label: 'Rosa + Like', sub: 'Mistero — si svela solo con reciprocità' },
-    { id: 'super', label: 'Rosa + Superlike', sub: 'Il tuo profilo sarà subito visibile' },
+    { id: 'standalone', label: 'Solo Pulse', sub: 'Anonima al 100% — nessun contatto' },
+    { id: 'like', label: 'Pulse + Like', sub: 'Mistero — si svela solo con reciprocità' },
+    { id: 'super', label: 'Pulse + Superlike', sub: 'Il tuo profilo sarà subito visibile' },
   ];
 
   return (
     <div className="pl-sheet">
       <div className="pl-sheet-close" onClick={onCancel}>Chiudi ✕</div>
-      <h3>Invia una Rosa</h3>
+      <h3>Invia un Pulse</h3>
 
       {drinks.length > 1 && (
         <>
-          <div className="pl-section-label">Scegli la Rosa</div>
+          <div className="pl-section-label">Scegli il Pulse</div>
           {drinks.map((d) => (
             <div
               key={d.id}
-              className={`pl-rosa-option ${selectedDrink?.id === d.id ? 'selected' : ''}`}
+              className={`pl-pulse-option ${selectedDrink?.id === d.id ? 'selected' : ''}`}
               onClick={() => setSelectedDrink(d)}
             >
-              <div className="pl-rosa-title">
+              <div className="pl-pulse-title">
                 {d.name}
                 {d.sponsor_name && <span className="pl-sponsor-tag"> · {d.sponsor_name}</span>}
               </div>
-              <div className="pl-rosa-price">
+              <div className="pl-pulse-price">
                 {((d.base_price_cents - (d.sponsor_discount_cents || 0)) / 100).toFixed(2)}€
               </div>
             </div>
@@ -112,15 +112,15 @@ export function RosaSend({ senderId, receiverId, arenaSessionId, venueId, onSent
         </>
       )}
 
-      {/* Locale con un'unica Rosa fissa — niente da scegliere, solo
+      {/* Locale con un unico Pulse fisso — niente da scegliere, solo
           una conferma di cosa si sta per inviare. */}
       {drinks.length === 1 && (
-        <div className="pl-rosa-option selected" style={{ cursor: 'default' }}>
-          <div className="pl-rosa-title">
+        <div className="pl-pulse-option selected" style={{ cursor: 'default' }}>
+          <div className="pl-pulse-title">
             {drinks[0].name}
             {drinks[0].sponsor_name && <span className="pl-sponsor-tag"> · {drinks[0].sponsor_name}</span>}
           </div>
-          <div className="pl-rosa-price">
+          <div className="pl-pulse-price">
             {((drinks[0].base_price_cents - (drinks[0].sponsor_discount_cents || 0)) / 100).toFixed(2)}€
           </div>
         </div>
@@ -132,17 +132,17 @@ export function RosaSend({ senderId, receiverId, arenaSessionId, venueId, onSent
       {tiers.map((t) => (
         <div
           key={t.id}
-          className={`pl-rosa-option ${tier === t.id ? 'selected' : ''}`}
+          className={`pl-pulse-option ${tier === t.id ? 'selected' : ''}`}
           onClick={() => setTier(t.id)}
         >
-          <div className="pl-rosa-title">{t.label}</div>
-          <div className="pl-rosa-price">{t.sub}</div>
+          <div className="pl-pulse-title">{t.label}</div>
+          <div className="pl-pulse-price">{t.sub}</div>
         </div>
       ))}
 
       {error && <p className="pl-error">{error}</p>}
       <button className="pl-send-btn" onClick={handleSend} disabled={!selectedDrink || sending}>
-        {sending ? 'Invio…' : 'Invia Rosa'}
+        {sending ? 'Invio…' : 'Invia Pulse'}
       </button>
     </div>
   );
@@ -153,7 +153,7 @@ function reasonToMessage(reason) {
     blocked_by_receiver: 'Non puoi inviare nulla a questo profilo.',
     receiver_requires_verified: 'Questo profilo accetta contatti solo da utenti verificati.',
     receiver_requires_premium: 'Questo profilo accetta contatti solo da utenti premium.',
-    cannot_interact_with_self: 'Non puoi inviare una Rosa a te stesso.',
+    cannot_interact_with_self: 'Non puoi inviare un Pulse a te stesso.',
   };
   return messages[reason] || 'Invio non riuscito — riprova.';
 }
@@ -162,7 +162,7 @@ function reasonToMessage(reason) {
 // ------------------------------------------------------------
 // 2) NOTIFICA DI RICEZIONE — le tre varianti
 // ------------------------------------------------------------
-export function RosaNotification({ rosa, currentUserId, arenaSessionId, onResolved }) {
+export function PulseNotification({ pulse, currentUserId, arenaSessionId, onResolved }) {
   const [loading, setLoading] = useState(false);
   const [showGuessGame, setShowGuessGame] = useState(false);
   const [guessCandidates, setGuessCandidates] = useState([]);
@@ -172,7 +172,7 @@ export function RosaNotification({ rosa, currentUserId, arenaSessionId, onResolv
   async function respond(action) {
     setLoading(true);
     try {
-      const res = await apiFetch(`/api/roses/${rosa.rosaId}/respond`, {
+      const res = await apiFetch(`/api/pulses/${pulse.pulseId}/respond`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action }),
@@ -181,7 +181,7 @@ export function RosaNotification({ rosa, currentUserId, arenaSessionId, onResolv
       if (!data.success) return;
 
       if (action === 'accept') {
-        if (rosa.tier === 'like' && data.canStillPlayGuessGame) {
+        if (pulse.tier === 'like' && data.canStillPlayGuessGame) {
           setPendingRedeemCode(data.redeemCode);
           const candRes = await apiFetch(`/api/arenas/${arenaSessionId}/guess-candidates`);
           const candData = await candRes.json();
@@ -199,13 +199,13 @@ export function RosaNotification({ rosa, currentUserId, arenaSessionId, onResolv
   }
 
   if (redeemInfo) {
-    return <RosaRedeemSeal rosaId={rosa.rosaId} redeemCode={redeemInfo.redeemCode} onDone={() => onResolved({ action: 'redeemed' })} />;
+    return <PulseRedeemSeal pulseId={pulse.pulseId} redeemCode={redeemInfo.redeemCode} onDone={() => onResolved({ action: 'redeemed' })} />;
   }
 
   if (showGuessGame) {
     return (
-      <RosaGuessGame
-        rosaId={rosa.rosaId}
+      <PulseGuessGame
+        pulseId={pulse.pulseId}
         currentUserId={currentUserId}
         candidates={guessCandidates}
         onFinished={() => setRedeemInfo({ redeemCode: pendingRedeemCode })}
@@ -215,18 +215,18 @@ export function RosaNotification({ rosa, currentUserId, arenaSessionId, onResolv
 
   const copy = {
     standalone: {
-      title: 'Un ammiratore misterioso ti ha inviato una Rosa',
+      title: 'Un ammiratore misterioso ti ha inviato un Pulse',
       sub: `Vuoi accettarla? Riscattabile al bancone.`,
     },
     like: {
-      title: 'Un ammiratore misterioso ti ha inviato una Rosa + Like',
-      sub: 'Se accetti, la Rosa è comunque tua — poi potrai provare a indovinare chi è per sbloccare la chat.',
+      title: 'Un ammiratore misterioso ti ha inviato una Pulse + Like',
+      sub: 'Se accetti, il Pulse è comunque tuo — poi potrai provare a indovinare chi è per sbloccare la chat.',
     },
     super: {
-      title: `${rosa.senderName || 'Qualcuno'} ti ha inviato una Rosa`,
+      title: `${pulse.senderName || 'Qualcuno'} ti ha inviato un Pulse`,
       sub: `Ha anche inviato un Superlike: il suo profilo è visibile. Se non accetti, non potrà più contattarti.`,
     },
-  }[rosa.tier];
+  }[pulse.tier];
 
   return (
     <div className="pl-sheet">
@@ -238,7 +238,7 @@ export function RosaNotification({ rosa, currentUserId, arenaSessionId, onResolv
         <button disabled={loading} onClick={() => respond('reject')} className="pl-btn-reject">Rifiuta</button>
       </div>
       <button className="pl-send-btn" disabled={loading} onClick={() => respond('accept')}>
-        {rosa.tier === 'super' ? 'Apri la chat' : 'Accetta la Rosa'}
+        {pulse.tier === 'super' ? 'Apri la chat' : 'Accetta il Pulse'}
       </button>
     </div>
   );
@@ -246,14 +246,14 @@ export function RosaNotification({ rosa, currentUserId, arenaSessionId, onResolv
 
 
 // ------------------------------------------------------------
-// 3) MINIGIOCO — indovina chi ti ha inviato la Rosa+Like
+// 3) MINIGIOCO — indovina chi ti ha inviato il Pulse+Like
 // ------------------------------------------------------------
-export function RosaGuessGame({ rosaId, currentUserId, candidates, onFinished, redeemCode }) {
+export function PulseGuessGame({ pulseId, currentUserId, candidates, onFinished, redeemCode }) {
   const [message, setMessage] = useState('Hai tot tentativi per provare a scoprire chi è.');
   const [justMatched, setJustMatched] = useState(false);
 
   async function guess(guessedUserId) {
-    const res = await apiFetch(`/api/roses/${rosaId}/guess`, {
+    const res = await apiFetch(`/api/pulses/${pulseId}/guess`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ guessedUserId }),
@@ -269,7 +269,7 @@ export function RosaGuessGame({ rosaId, currentUserId, candidates, onFinished, r
       setMessage('Match! La chat si sblocca.');
       setTimeout(() => onFinished({ matched: true }), 1200);
     } else if (data.attemptsExhausted) {
-      setMessage('Tentativi esauriti — la Rosa resta tua, il mittente rimane un mistero.');
+      setMessage('Tentativi esauriti — il Pulse resta tuo, il mittente rimane un mistero.');
       setTimeout(() => onFinished({ matched: false }), 1500);
     } else {
       setMessage(`Non era lui/lei — ${data.attemptsRemaining} tentativi rimasti.`);
@@ -278,7 +278,7 @@ export function RosaGuessGame({ rosaId, currentUserId, candidates, onFinished, r
 
   return (
     <div className="pl-sheet">
-      <h3>Indovina chi ti ha inviato la Rosa</h3>
+      <h3>Indovina chi ti ha inviato il Pulse</h3>
       <p className="pl-hint" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
         {justMatched && <PartyPopper size={15} color="var(--cyan)" />} {message}
       </p>
@@ -294,9 +294,9 @@ export function RosaGuessGame({ rosaId, currentUserId, candidates, onFinished, r
           problema: un tentativo sbagliato manda comunque un Like
           vero a quella persona (v. attemptGuess lato server) — chi
           non vuole rischiare un match indesiderato può uscire senza
-          giocare, la Rosa resta comunque sua. */}
+          giocare, il Pulse resta comunque suo. */}
       <button className="pl-abandon-btn" onClick={() => onFinished({ matched: false, abandoned: true })}>
-        Nessuno mi interessa — abbandona e riscatta la Rosa
+        Nessuno mi interessa — abbandona e riscatta il Pulse
       </button>
     </div>
   );
@@ -306,7 +306,7 @@ export function RosaGuessGame({ rosaId, currentUserId, candidates, onFinished, r
 // ------------------------------------------------------------
 // 4) RISCATTO AL BANCONE — sigillo con timer, mostrato al bartender
 // ------------------------------------------------------------
-export function RosaRedeemSeal({ rosaId, redeemCode, onDone }) {
+export function PulseRedeemSeal({ pulseId, redeemCode, onDone }) {
   const [state, setState] = useState('idle'); // idle | live | expired | confirmed
   const [secondsLeft, setSecondsLeft] = useState(30);
   const [flash, setFlash] = useState(false);
@@ -336,7 +336,7 @@ export function RosaRedeemSeal({ rosaId, redeemCode, onDone }) {
     setFlash(true);
     setTimeout(() => setFlash(false), 350);
 
-    const res = await apiFetch(`/api/roses/${rosaId}/redeem`, {
+    const res = await apiFetch(`/api/pulses/${pulseId}/redeem`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ redeemCode }),
@@ -350,7 +350,7 @@ export function RosaRedeemSeal({ rosaId, redeemCode, onDone }) {
 
   return (
     <div className="pl-sheet pl-redeem-card">
-      <h3>Riscatta la tua Rosa</h3>
+      <h3>Riscatta il tuo Pulse</h3>
       {state === 'idle' && (
         <button className="pl-seal" onClick={activate}>Tieni premuto per attivare</button>
       )}

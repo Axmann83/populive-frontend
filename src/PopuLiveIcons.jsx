@@ -12,10 +12,12 @@ import {
  * di ripetere lo stesso import lucide-react ovunque — se domani
  * cambiamo un'icona, la cambiamo qui una volta sola.
  *
- * "Koha" (ex "Rosa") non ha un equivalente esatto nella libreria
- * Lucide, quindi resta un'icona disegnata su misura — lo stesso
- * fiore già mostrato e approvato in anteprima, non una versione
- * diversa presa al volo da un'altra libreria.
+ * "Pulse" non ha un equivalente esatto nella libreria Lucide,
+ * quindi resta un'icona disegnata su misura — le stesse tre onde
+ * concentriche che salgono sopra un punto, identiche a quelle
+ * dell'animazione di apertura sopra la "i" di Live (prima qui
+ * c'era un fiore stilizzato, tolto per usare lo stesso linguaggio
+ * visivo del logo invece di un simbolo scollegato).
  * ============================================================
  */
 
@@ -25,18 +27,18 @@ export {
   Map, Armchair, History, Wallet, Settings, Hand, BookmarkCheck,
 };
 
-export function KohaFlowerIcon({ size = 20, color = 'currentColor', strokeWidth = 2, fill = 'none', ...props }) {
+export function PulseWaveIcon({ size = 20, color = 'currentColor', strokeWidth = 2, ...props }) {
   return (
     <svg
       width={size} height={size} viewBox="0 0 24 24"
-      fill={fill} stroke={color} strokeWidth={strokeWidth}
-      strokeLinecap="round" strokeLinejoin="round"
+      fill="none" stroke={color} strokeWidth={strokeWidth}
+      strokeLinecap="round"
       {...props}
     >
-      <path d="M12 7.5a4.5 4.5 0 1 1 4.5 4.5H12V7.5Z" />
-      <path d="M12 7.5A4.5 4.5 0 1 0 7.5 12H12V7.5Z" />
-      <path d="M12 12a4.5 4.5 0 1 0 4.5 4.5V12Z" />
-      <path d="M12 12a4.5 4.5 0 1 1-4.5 4.5V12Z" />
+      <circle cx="12" cy="18.5" r="1.6" fill={color} stroke="none" />
+      <path d="M8.5 18.5a3.5 3.5 0 0 1 7 0" />
+      <path d="M5.5 18.5a6.5 6.5 0 0 1 13 0" />
+      <path d="M2.5 18.5a9.5 9.5 0 0 1 19 0" />
     </svg>
   );
 }

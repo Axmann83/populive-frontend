@@ -9,7 +9,7 @@ import { API_BASE, apiFetch } from './apiClient';
  * POPULIVE — CHAT 1-A-1 (componente reale)
  * ============================================================
  * Si apre quando arriva l'evento 'chat_unlocked' (v. i tre punti
- * di sblocco lato server: Rosa+Superlike, match nel minigioco,
+ * di sblocco lato server: Pulse+Superlike, match nel minigioco,
  * Superlike semplice accettato). Chiusa a fine sessione: se
  * isClosed è true, il campo di scrittura si disabilita, ma la
  * cronologia resta leggibile finché la schermata è aperta.

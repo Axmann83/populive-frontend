@@ -1,30 +1,30 @@
 import { useState, useEffect, useCallback } from 'react';
-import { KohaFlowerIcon } from './PopuLiveIcons';
+import { PulseWaveIcon } from './PopuLiveIcons';
 
 import { apiFetch } from './apiClient';
 
 /**
  * ============================================================
- * POPULIVE — LE TUE ROSE (componente reale)
+ * POPULIVE — I TUOI PULSE (componente reale)
  * ============================================================
- * Lista di tutte le Rose ricevute. Quelle ancora "pending" si
+ * Lista di tutti i Pulse ricevuti. Quelli ancora "pending" si
  * possono toccare per riaprire la stessa schermata di decisione
- * (RosaNotification) che si vede quando arrivano in tempo reale —
- * utile per chi non le ha gestite subito e vuole tornarci sopra.
+ * (PulseNotification) che si vede quando arrivano in tempo reale —
+ * utile per chi non li ha gestiti subito e vuole tornarci sopra.
  * ============================================================
  */
-export default function MyRoses({ userId, onOpenRosa }) {
-  const [roses, setRoses] = useState([]);
+export default function MyPulses({ userId, onOpenPulse }) {
+  const [pulses, setPulses] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await apiFetch(`/api/users/${userId}/roses`);
+      const res = await apiFetch(`/api/users/${userId}/pulses`);
       const data = await res.json();
-      if (data.success) setRoses(data.roses);
+      if (data.success) setPulses(data.pulses);
     } catch (err) {
-      console.error('Errore nel caricamento delle Rose:', err);
+      console.error('Errore nel caricamento dei Pulse:', err);
     } finally {
       setLoading(false);
     }
@@ -34,25 +34,25 @@ export default function MyRoses({ userId, onOpenRosa }) {
 
   if (loading) return <div className="pl-hint" style={{ textAlign: 'center', marginTop: 30 }}>Caricamento…</div>;
 
-  if (roses.length === 0) {
-    return <div className="pl-hint" style={{ textAlign: 'center', marginTop: 40 }}>Ancora nessuna Rosa stasera.</div>;
+  if (pulses.length === 0) {
+    return <div className="pl-hint" style={{ textAlign: 'center', marginTop: 40 }}>Ancora nessun Pulse stasera.</div>;
   }
 
   return (
     <div className="pl-screen">
-      {roses.map((r) => (
+      {pulses.map((r) => (
         <div
-          key={r.rosaId}
-          className="pl-rosa-option"
+          key={r.pulseId}
+          className="pl-pulse-option"
           style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12 }}
           onClick={() => {
-            if (r.status === 'pending') onOpenRosa(r);
+            if (r.status === 'pending') onOpenPulse(r);
           }}
         >
-          <KohaFlowerIcon size={22} color="var(--cyan)" />
+          <PulseWaveIcon size={22} color="var(--cyan)" />
           <div style={{ flex: 1 }}>
-            <div className="pl-rosa-title">{r.drinkType}</div>
-            <div className="pl-rosa-price">
+            <div className="pl-pulse-title">{r.drinkType}</div>
+            <div className="pl-pulse-price">
               {r.senderName ? r.senderName : 'Ammiratore misterioso'} · {r.venueName}
             </div>
           </div>

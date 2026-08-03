@@ -19,6 +19,7 @@ import {
 } from './PopuLiveIcons';
 import WelcomeBack from './WelcomeBack';
 import MissionClaim from './MissionClaim';
+import HistoricalBoard from './HistoricalBoard';
 import { API_BASE, apiFetch, getToken, getStoredUserId, clearSession, requestAndSendLocation } from './apiClient';
 
 import './populive-styles.css';
@@ -108,6 +109,7 @@ export default function App() {
   const [pulseBadgeCount, setPulseBadgeCount] = useState(0);
   const [showSettings, setShowSettings] = useState(false);
   const [showExploreMap, setShowExploreMap] = useState(false);
+  const [showHistoricalBoard, setShowHistoricalBoard] = useState(false);
   // "Bentornato" — mostrata una sola volta appena si entra in app,
   // vero solo finché non sappiamo ancora se c'è qualcosa di nuovo
   // da mostrare (il componente stesso decide, chiamando onDone
@@ -353,6 +355,12 @@ export default function App() {
             >
               <Map size={14} /> Esplora altri locali nella zona
             </button>
+            <button
+              onClick={() => setShowHistoricalBoard(true)}
+              style={{ marginTop: 8, width: '100%', padding: 12, borderRadius: 14, border: '1px solid rgba(228,212,200,0.2)', background: 'var(--surface)', color: 'var(--teak)', fontSize: 11.5, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}
+            >
+              <History size={14} /> Chi era qui negli ultimi giorni
+            </button>
           </>
         )}
 
@@ -427,6 +435,14 @@ export default function App() {
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 50 }}>
           <div style={{ width: '100%', maxWidth: 420, background: 'var(--surface)', borderRadius: '24px 24px 0 0', padding: 20, maxHeight: '85vh', overflowY: 'auto', boxShadow: 'var(--shadow-lg)' }}>
             <ExploreMap onClose={() => setShowExploreMap(false)} />
+          </div>
+        </div>
+      )}
+
+      {showHistoricalBoard && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 50 }}>
+          <div style={{ width: '100%', maxWidth: 420, background: 'var(--surface)', borderRadius: '24px 24px 0 0', padding: 20, maxHeight: '85vh', overflowY: 'auto', boxShadow: 'var(--shadow-lg)' }}>
+            <HistoricalBoard venueId={venueId} currentUserId={userId} onClose={() => setShowHistoricalBoard(false)} />
           </div>
         </div>
       )}
@@ -509,7 +525,6 @@ function NavItem({ icon: Icon, label, active, onClick, badge }) {
 function ComingSoonSection() {
   const items = [
     { icon: Target, title: 'Missioni Sponsorizzate', sub: 'I brand potranno invitarti, con una notifica geolocalizzata, a visitare un loro punto vendita per ottenere punti bonus — sempre con il tuo consenso esplicito.' },
-    { icon: History, title: 'Bacheca Storica', sub: 'Hai visto qualcuno in un locale ma non hai fatto in tempo a interagire? Potrai cercarlo tra chi ha fatto check-in lì nei giorni scorsi — il tuo profilo resta sempre visibile a chi cerchi.' },
     { icon: Wallet, title: 'Wallet PopuLive', sub: 'Mance libere P2P e PopuLive Card, in arrivo con la fintech.' },
   ];
   return (

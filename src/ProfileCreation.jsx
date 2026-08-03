@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { apiFetch } from './apiClient';
+import { apiFetch, requestAndSendLocation } from './apiClient';
 
 /**
  * ============================================================
@@ -263,7 +263,10 @@ export default function ProfileCreation({ onComplete }) {
             label="Ricevi missioni sponsorizzate"
             sub="Notifiche geolocalizzate da brand partner"
             checked={consent.sponsoredMissionsEnabled}
-            onChange={(v) => setConsent({ ...consent, sponsoredMissionsEnabled: v })}
+            onChange={(v) => {
+              setConsent({ ...consent, sponsoredMissionsEnabled: v });
+              if (v) requestAndSendLocation('me');
+            }}
           />
           <ConsentToggle
             label="Comparire nella bacheca storica"

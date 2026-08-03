@@ -26,7 +26,8 @@ function setSession(token, userId) {
   try {
     localStorage.setItem(TOKEN_KEY, token);
     localStorage.setItem(USER_ID_KEY, userId);
-  } catch { /* ignorato */ }
+  } catch { /* ignorato — se localStorage non è disponibile, la sessione
+                semplicemente non sopravvive a un refresh, ma l'app non crasha */ }
 }
 
 function getStoredUserId() {
@@ -40,6 +41,13 @@ function clearSession() {
   } catch { /* ignorato */ }
 }
 
+/**
+ * Sostituto di fetch() che aggiunge da solo il token, se presente.
+ * Se il server risponde 401 (token scaduto/non valido), ripuliamo
+ * la sessione salvata — così l'app sa di dover tornare al login
+ * invece di restare bloccata a ripetere richieste che falliranno
+ * sempre.
+ */
 async function apiFetch(path, options = {}) {
   const token = getToken();
   const headers = { ...(options.headers || {}) };
@@ -55,3 +63,43 @@ async function apiFetch(path, options = {}) {
 }
 
 export { API_BASE, getToken, getStoredUserId, setSession, clearSession, apiFetch };
+
+/**
+ * ============================================================
+ * POSIZIONE GPS — per le missioni sponsorizzate
+ * ============================================================
+ * Chiede il permesso al browser SOLO quando viene chiamata (mai
+ * all'avvio dell'app senza motivo) — va richiamata unicamente
+ * quando la persona ha già attivato il consenso "Ricevi missioni
+ * sponsorizzate", mai prima. Fallisce in silenzio se il permesso
+ * viene negato o il browser non supporta la geolocalizzazione —
+ * niente di grave, la persona semplicemente non riceverà missioni
+ * finché non concede l'accesso.
+ * ============================================================
+ */
+function requestAndSendLocation(userId) {
+  if (!navigator.geolocation) return;
+
+  navigator.geolocation.getCurrentPosition(
+    async (position) => {
+      try {
+        await apiFetch(`/api/profile/${userId}/location`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+          }),
+        });
+      } catch {
+        // Silenzioso — un aggiornamento di posizione mancato non è
+        // mai un problema grave, semplicemente riproveremo la
+        // prossima occasione utile (prossima apertura dell'app).
+      }
+    },
+    () => { /* permesso negato o errore — nessun blocco per la persona */ },
+    { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 }
+  );
+}
+
+export { requestAndSendLocation };

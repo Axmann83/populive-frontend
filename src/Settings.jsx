@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-import { apiFetch } from './apiClient';
+import { apiFetch, requestAndSendLocation } from './apiClient';
 
 /**
  * ============================================================
@@ -73,7 +73,13 @@ export default function Settings({ userId, onClose }) {
         label="Ricevi missioni sponsorizzate"
         sub="Notifiche geolocalizzate da brand partner"
         checked={settings.sponsoredMissionsEnabled}
-        onChange={(v) => setSettings({ ...settings, sponsoredMissionsEnabled: v })}
+        onChange={(v) => {
+          setSettings({ ...settings, sponsoredMissionsEnabled: v });
+          // Il permesso GPS si chiede PROPRIO in questo momento —
+          // solo quando la persona attiva davvero il consenso, mai
+          // prima. Se lo spegne, semplicemente non richiediamo nulla.
+          if (v) requestAndSendLocation(userId);
+        }}
       />
       <ToggleRow
         label="Comparire nella bacheca storica"

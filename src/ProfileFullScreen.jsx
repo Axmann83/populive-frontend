@@ -17,7 +17,7 @@ import { Heart, Star, PulseWaveIcon, Link2, Coins, Crown, Sparkles } from './Pop
  * schermata".
  * ============================================================
  */
-export default function ProfileFullScreen({ userId, arenaSessionId, currentUserId, venueId, onClose }) {
+export default function ProfileFullScreen({ userId, arenaSessionId, currentUserId, venueId, onClose, viaHistoricalBoard }) {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [actionState, setActionState] = useState(null); // null | 'liked' | 'superliked' | 'sending'
@@ -35,14 +35,15 @@ export default function ProfileFullScreen({ userId, arenaSessionId, currentUserI
         if (!cancelled && data.success) setProfile(data.profile);
 
         // Registra la visita — genera punti (a te e a chi guardi),
-        // ma solo se sei davvero dentro un'Arena: guardare un
-        // profilo senza un contesto di locale/serata non rientra
-        // nella logica "punti legati a un luogo e un momento reali".
-        if (arenaSessionId) {
+        // La visita conta per i punti solo se sei dentro un'Arena
+        // VERA, oppure se arrivi dalla Bacheca Storica (un contesto
+        // differito apposta, non ha senso pretendere un'Arena attiva
+        // in quel caso — è proprio il punto della funzionalità).
+        if (arenaSessionId || viaHistoricalBoard) {
           apiFetch('/api/profile-views', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ viewedUserId: userId, arenaSessionId }),
+            body: JSON.stringify({ viewedUserId: userId, arenaSessionId, viaHistoricalBoard }),
           }).catch(() => {}); // non blocchiamo la visualizzazione del profilo per questo
         }
       } catch (err) {
@@ -62,11 +63,14 @@ export default function ProfileFullScreen({ userId, arenaSessionId, currentUserI
       const res = await apiFetch('/api/interactions/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ receiverId: userId, arenaSessionId, type }),
+        body: JSON.stringify({ receiverId: userId, arenaSessionId, type, viaHistoricalBoard }),
       });
       const data = await res.json();
       if (data.success) {
         setActionState(type === 'like' ? 'liked' : 'superliked');
+      } else if (data.reason === 'requires_premium_for_historical_board') {
+        setActionState(null);
+        window.alert('Serve Premium per contattare qualcuno dalla Bacheca Storica — puoi attivarlo dal tuo profilo.');
       } else if (data.reason === 'superlike_balance_exhausted') {
         setActionState(null);
         offerSuperlikePurchase();
@@ -191,15 +195,20 @@ export default function ProfileFullScreen({ userId, arenaSessionId, currentUserI
               </div>
             )}
 
-            {/* I tre bottoni — direttamente qui, nessun menu in più */}
+            {/* Dalla Bacheca Storica: SOLO Superlike — niente Like
+                (l'anonimato non protegge nessuno, non è più in
+                tempo reale) né Pulse (non sei fisicamente lì, non
+                potresti mai riscattarlo). */}
             <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
-              <ActionButton
-                icon={Heart}
-                label={actionState === 'liked' ? 'Inviato' : 'Like'}
-                onClick={() => sendQuickInteraction('like')}
-                disabled={actionState !== null}
-                active={actionState === 'liked'}
-              />
+              {!viaHistoricalBoard && (
+                <ActionButton
+                  icon={Heart}
+                  label={actionState === 'liked' ? 'Inviato' : 'Like'}
+                  onClick={() => sendQuickInteraction('like')}
+                  disabled={actionState !== null}
+                  active={actionState === 'liked'}
+                />
+              )}
               <ActionButton
                 icon={Star}
                 label={actionState === 'superliked' ? 'Inviato' : 'Superlike'}
@@ -207,12 +216,14 @@ export default function ProfileFullScreen({ userId, arenaSessionId, currentUserI
                 disabled={actionState !== null}
                 active={actionState === 'superliked'}
               />
-              <ActionButton
-                icon={PulseWaveIcon}
-                label="Pulse"
-                onClick={() => setShowPulseSend(true)}
-                disabled={actionState === 'sending'}
-              />
+              {!viaHistoricalBoard && (
+                <ActionButton
+                  icon={PulseWaveIcon}
+                  label="Pulse"
+                  onClick={() => setShowPulseSend(true)}
+                  disabled={actionState === 'sending'}
+                />
+              )}
             </div>
           </div>
         </>

@@ -18,6 +18,7 @@ import {
   Map, History, Wallet,
 } from './PopuLiveIcons';
 import WelcomeBack from './WelcomeBack';
+import MissionClaim from './MissionClaim';
 import { API_BASE, apiFetch, getToken, getStoredUserId, clearSession, requestAndSendLocation } from './apiClient';
 
 import './populive-styles.css';
@@ -70,12 +71,22 @@ export default function App() {
   // --------------------------------------------------------
   const [venueId, setVenueId] = useState('f923e9c8-c47f-40d6-a4b8-98afe38d43cc'); // "Locale di Prova" come default
   const [arrivedViaQr, setArrivedViaQr] = useState(false);
+  // QR di una missione sponsorizzata (populive-frontend.../mission/<missionId>)
+  // — stesso identico principio del check-in, un link semplice
+  // riconosciuto da qualunque fotocamera di sistema.
+  const [pendingMissionId, setPendingMissionId] = useState(null);
 
   useEffect(() => {
     const match = window.location.pathname.match(/^\/checkin\/([a-zA-Z0-9-]+)/);
     if (match) {
       setVenueId(match[1]);
       setArrivedViaQr(true);
+      window.history.replaceState(null, '', '/');
+    }
+
+    const missionMatch = window.location.pathname.match(/^\/mission\/([a-zA-Z0-9-]+)/);
+    if (missionMatch) {
+      setPendingMissionId(missionMatch[1]);
       window.history.replaceState(null, '', '/');
     }
 
@@ -398,6 +409,17 @@ export default function App() {
             setShowWelcomeBack(false);
             setShowExploreMap(true);
           }}
+        />
+      )}
+
+      {/* Missione sponsorizzata da QR — sopra a tutto il resto (anche
+          sopra "Bentornato", se capitano insieme): chi ha appena
+          scansionato un QR in negozio si aspetta di vedere subito
+          la missione, non doverla aspettare dietro altri popup. */}
+      {pendingMissionId && (
+        <MissionClaim
+          missionId={pendingMissionId}
+          onClose={() => setPendingMissionId(null)}
         />
       )}
 

@@ -54,7 +54,7 @@ export default function ProfileFullScreen({ userId, arenaSessionId, currentUserI
     }
     load();
     return () => { cancelled = true; };
-  }, [userId, arenaSessionId]);
+  }, [userId, arenaSessionId, viaHistoricalBoard]);
 
   async function sendQuickInteraction(type) {
     // type: 'like' | 'superlike'

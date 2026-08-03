@@ -65,6 +65,7 @@ export default function HistoricalBoard({ venueId, currentUserId, onClose }) {
           currentUserId={currentUserId}
           venueId={venueId}
           onClose={() => setSelectedUserId(null)}
+          viaHistoricalBoard
         />
       )}
     </div>

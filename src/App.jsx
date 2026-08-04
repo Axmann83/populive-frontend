@@ -10,7 +10,6 @@ import ChatWindow from './ChatWindow';
 import Settings from './Settings';
 import MyPulses from './MyRoses';
 import MyProfile from './MyProfile';
-import ExploreMap from './ExploreMap';
 import SplashScreen from './SplashScreen';
 import {
   Radar as RadarIcon, Trophy, Globe, User, PulseWaveIcon,
@@ -19,7 +18,6 @@ import {
 } from './PopuLiveIcons';
 import WelcomeBack from './WelcomeBack';
 import MissionClaim from './MissionClaim';
-import HistoricalBoard from './HistoricalBoard';
 import VenuesMap from './VenuesMap';
 import { API_BASE, apiFetch, getToken, getStoredUserId, clearSession, requestAndSendLocation } from './apiClient';
 
@@ -109,9 +107,7 @@ export default function App() {
   const [activeChatConversationId, setActiveChatConversationId] = useState(null);
   const [pulseBadgeCount, setPulseBadgeCount] = useState(0);
   const [showSettings, setShowSettings] = useState(false);
-  const [showExploreMap, setShowExploreMap] = useState(false);
-  const [showHistoricalBoard, setShowHistoricalBoard] = useState(false);
-  const [showVenuesMap, setShowVenuesMap] = useState(false);
+  const [venuesMapMode, setVenuesMapMode] = useState(null); // null | 'browse' | 'historical'
   // "Bentornato" — mostrata una sola volta appena si entra in app,
   // vero solo finché non sappiamo ancora se c'è qualcosa di nuovo
   // da mostrare (il componente stesso decide, chiamando onDone
@@ -352,19 +348,13 @@ export default function App() {
               autoCheckin={arrivedViaQr}
             />
             <button
-              onClick={() => setShowExploreMap(true)}
+              onClick={() => setVenuesMapMode('historical')}
               style={{ marginTop: 12, width: '100%', padding: 12, borderRadius: 14, border: '1px solid rgba(228,212,200,0.2)', background: 'var(--surface)', color: 'var(--teak)', fontSize: 11.5, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}
             >
-              <Map size={14} /> Esplora altri locali nella zona
+              <History size={14} /> Bacheca storica dei locali
             </button>
             <button
-              onClick={() => setShowHistoricalBoard(true)}
-              style={{ marginTop: 8, width: '100%', padding: 12, borderRadius: 14, border: '1px solid rgba(228,212,200,0.2)', background: 'var(--surface)', color: 'var(--teak)', fontSize: 11.5, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}
-            >
-              <History size={14} /> Chi era qui negli ultimi giorni
-            </button>
-            <button
-              onClick={() => setShowVenuesMap(true)}
+              onClick={() => setVenuesMapMode('browse')}
               style={{ marginTop: 8, width: '100%', padding: 12, borderRadius: 14, border: '1px solid rgba(228,212,200,0.2)', background: 'var(--surface)', color: 'var(--teak)', fontSize: 11.5, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}
             >
               <Map size={14} /> Sfoglia tutti i locali sulla mappa
@@ -415,15 +405,14 @@ export default function App() {
 
       {/* "Bentornato" appare per prima, appena entrati in app — e
           quando sparisce (con o senza notizie), apre in automatico
-          i locali più popolari di stasera, come richiesto: la
-          persona vede subito dove conviene andare, non deve
-          cercarlo da sola col bottone "Esplora". */}
+          la mappa dei locali, come richiesto: la persona vede
+          subito dove conviene andare, non deve cercarlo da sola. */}
       {showWelcomeBack && (
         <WelcomeBack
           userId={userId}
           onDone={() => {
             setShowWelcomeBack(false);
-            setShowExploreMap(true);
+            setVenuesMapMode('browse');
           }}
         />
       )}
@@ -439,26 +428,10 @@ export default function App() {
         />
       )}
 
-      {showExploreMap && (
+      {venuesMapMode && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 50 }}>
           <div style={{ width: '100%', maxWidth: 420, background: 'var(--surface)', borderRadius: '24px 24px 0 0', padding: 20, maxHeight: '85vh', overflowY: 'auto', boxShadow: 'var(--shadow-lg)' }}>
-            <ExploreMap onClose={() => setShowExploreMap(false)} currentUserId={userId} />
-          </div>
-        </div>
-      )}
-
-      {showHistoricalBoard && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 50 }}>
-          <div style={{ width: '100%', maxWidth: 420, background: 'var(--surface)', borderRadius: '24px 24px 0 0', padding: 20, maxHeight: '85vh', overflowY: 'auto', boxShadow: 'var(--shadow-lg)' }}>
-            <HistoricalBoard venueId={venueId} currentUserId={userId} onClose={() => setShowHistoricalBoard(false)} />
-          </div>
-        </div>
-      )}
-
-      {showVenuesMap && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 50 }}>
-          <div style={{ width: '100%', maxWidth: 420, background: 'var(--surface)', borderRadius: '24px 24px 0 0', padding: 20, maxHeight: '85vh', overflowY: 'auto', boxShadow: 'var(--shadow-lg)' }}>
-            <VenuesMap currentUserId={userId} onClose={() => setShowVenuesMap(false)} />
+            <VenuesMap currentUserId={userId} onClose={() => setVenuesMapMode(null)} mode={venuesMapMode} />
           </div>
         </div>
       )}

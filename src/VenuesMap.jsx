@@ -108,12 +108,13 @@ export default function VenuesMap({ currentUserId, onClose }) {
       {loading && <p className="pl-hint">Caricamento…</p>}
 
       {!loading && (
-        <div style={{ height: 380, borderRadius: 16, overflow: 'hidden', border: '1px solid rgba(228,212,200,0.14)', marginBottom: 10 }}>
+        <div className="pl-map-dark-wrap" style={{ height: 380, borderRadius: 16, overflow: 'hidden', border: '1px solid rgba(228,212,200,0.14)', marginBottom: 10 }}>
           <MapContainer center={ROME_CENTER} zoom={12} style={{ height: '100%', width: '100%', background: '#171717' }}>
             <TileLayer
-              url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-              attribution='&copy; OpenStreetMap &copy; CARTO'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             />
+            <MapReadyFixer />
 
             {venues.map((v) => (
               <Marker
@@ -160,6 +161,22 @@ export default function VenuesMap({ currentUserId, onClose }) {
       )}
     </div>
   );
+}
+
+function MapReadyFixer() {
+  const map = useMapEvents({});
+  useEffect(() => {
+    // Bug classico di Leaflet: se il contenitore non ha ancora le
+    // sue dimensioni finali nel momento esatto in cui la mappa si
+    // inizializza (capita spesso dentro un foglio che si apre dal
+    // basso, come il nostro), la mappa calcola tutto male e resta
+    // vuota/nera finché qualcosa non la "risveglia". Un piccolo
+    // ritardo e un invalidateSize() risolvono senza bisogno che
+    // l'utente tocchi o ridimensioni nulla lui stesso.
+    const timer = setTimeout(() => map.invalidateSize(), 250);
+    return () => clearTimeout(timer);
+  }, [map]);
+  return null;
 }
 
 function MapClickCatcher({ onPick }) {

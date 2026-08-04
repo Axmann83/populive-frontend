@@ -1,5 +1,4 @@
 import { useState, useCallback } from 'react';
-import { apiFetch } from './apiClient';
 import { Star } from './PopuLiveIcons';
 import ProfileFullScreen from './ProfileFullScreen';
 
@@ -22,7 +21,6 @@ import ProfileFullScreen from './ProfileFullScreen';
 export default function HistoricalStories({ people, currentUserId, onClose }) {
   const [index, setIndex] = useState(0);
   const [openProfile, setOpenProfile] = useState(false);
-  const [sentTo, setSentTo] = useState({}); // { [userId]: true } — per non richiedere il Superlike due volte di fila sulla stessa persona senza motivo
 
   const current = people[index];
 
@@ -90,11 +88,10 @@ export default function HistoricalStories({ people, currentUserId, onClose }) {
           </button>
           <button
             onClick={(e) => { e.stopPropagation(); setOpenProfile(true); }}
-            disabled={sentTo[current.userId]}
-            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '11px', borderRadius: 12, border: 'none', background: sentTo[current.userId] ? 'rgba(47,211,232,0.3)' : 'var(--cyan)', color: '#0D0D0D', fontSize: 12, fontWeight: 700, cursor: sentTo[current.userId] ? 'default' : 'pointer' }}
+            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '11px', borderRadius: 12, border: 'none', background: 'var(--cyan)', color: '#0D0D0D', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
           >
-            <Star size={14} fill={sentTo[current.userId] ? 'currentColor' : 'none'} />
-            {sentTo[current.userId] ? 'Inviato' : 'Superlike'}
+            <Star size={14} />
+            Superlike
           </button>
         </div>
       </div>

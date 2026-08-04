@@ -451,6 +451,7 @@ export default function App() {
               pulse={pendingPulseNotification}
               currentUserId={userId}
               arenaSessionId={arenaSessionId}
+              venueId={venueId}
               onResolved={() => {
                 setPendingPulseNotification(null);
                 setPulseBadgeCount((n) => Math.max(0, n - 1));

@@ -371,3 +371,22 @@ button{ font-family:inherit; }
   55%{ opacity:0.4; }
   100%{ opacity:0; transform:translateX(-50%) translateY(-3px) scale(1.06); }
 }
+
+/* ============================================================
+   MAPPA LOCALI — OpenStreetMap standard scurita con un filtro CSS
+   (fonte gratuita al 100% e senza dubbi sui termini d'uso, a
+   differenza di alcune mattonelle "già scure" che invece
+   richiedono una licenza commerciale oltre un certo utilizzo).
+   Il filtro si applica SOLO alle mattonelle di sfondo — i puntini
+   dei locali restano nei loro colori veri, mai invertiti.
+   ============================================================ */
+.pl-map-dark-wrap .leaflet-tile-pane{
+  filter: invert(1) hue-rotate(180deg) brightness(0.85) contrast(0.9) saturate(0.7);
+}
+.pl-map-dark-wrap .leaflet-control-attribution{
+  background: rgba(13,13,13,0.75) !important;
+  color: var(--text-muted) !important;
+}
+.pl-map-dark-wrap .leaflet-control-attribution a{
+  color: var(--cyan) !important;
+}

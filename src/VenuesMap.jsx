@@ -3,6 +3,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { apiFetch } from './apiClient';
 import HistoricalBoard from './HistoricalBoard';
+import HistoricalStories from './HistoricalStories';
 
 /**
  * ============================================================
@@ -55,10 +56,12 @@ const VERIFIED_ICON = makeDotIcon('#2FD3E8');
 const UNVERIFIED_ICON = makeDotIcon('#B0AAA4');
 const NEW_PIN_ICON = makeDotIcon('#E8C77E');
 
-export default function VenuesMap({ currentUserId, onClose }) {
+export default function VenuesMap({ currentUserId, onClose, mode = 'browse' }) {
   const [venues, setVenues] = useState([]);
   const [loading, setLoading] = useState(true);
   const [historicalVenueId, setHistoricalVenueId] = useState(null);
+  const [storiesPeople, setStoriesPeople] = useState(null); // null = non aperte, [] = aperte ma vuote, [...] = aperte con gente
+  const [loadingStories, setLoadingStories] = useState(false);
   const [placingPin, setPlacingPin] = useState(false);
   const [newPinCoords, setNewPinCoords] = useState(null);
 
@@ -95,6 +98,22 @@ export default function VenuesMap({ currentUserId, onClose }) {
     }
   }, [loadVenues]);
 
+  // In modalità "bacheca storica", toccare un puntino verificato
+  // apre DIRETTAMENTE la sequenza di profili — nessun popup
+  // intermedio, coerente con "una vera e propria schermata" chiesta.
+  const openHistoricalStories = useCallback(async (venue) => {
+    setLoadingStories(true);
+    try {
+      const res = await apiFetch(`/api/venues/${venue.venueId}/historical-checkins`);
+      const data = await res.json();
+      setStoriesPeople(data.success ? data.people : []);
+    } catch {
+      setStoriesPeople([]);
+    } finally {
+      setLoadingStories(false);
+    }
+  }, []);
+
   useEffect(() => {
     loadVenues();
   }, [loadVenues]);
@@ -123,6 +142,23 @@ export default function VenuesMap({ currentUserId, onClose }) {
     }).addTo(map);
 
     markersLayerRef.current = L.layerGroup().addTo(map);
+
+    // Apriamo la mappa già "vicina" a dove si trova la persona in
+    // questo momento — un close-up della zona attorno a lei, che
+    // può comunque allargare a piacere per guardare altre zone.
+    // Richiesta SOLO per centrare la vista qui, una volta sola:
+    // nessun salvataggio sul server, nessun legame con il consenso
+    // delle missioni sponsorizzate (quello è un meccanismo diverso,
+    // pensato per restare attivo nel tempo).
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          map.setView([position.coords.latitude, position.coords.longitude], 15);
+        },
+        () => { /* permesso negato o errore — restiamo sulla vista di Roma di default */ },
+        { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 }
+      );
+    }
 
     map.on('click', (e) => {
       if (placingPinRef.current) {
@@ -165,6 +201,24 @@ export default function VenuesMap({ currentUserId, onClose }) {
           icon: v.isPartner ? VERIFIED_ICON : UNVERIFIED_ICON,
         });
 
+      if (mode === 'historical') {
+        // Modalità bacheca storica — nessun popup intermedio: un
+        // locale verificato apre DIRETTAMENTE la sequenza di
+        // profili, un locale non ancora ufficiale non ha nessuno
+        // storico da mostrare (non c'è nessun check-in reale su cui
+        // basarsi), quindi lo segnaliamo e basta.
+        if (v.isPartner) {
+          marker.on('click', () => openHistoricalStories(v));
+        } else {
+          const notice = document.createElement('div');
+          notice.style.cssText = 'font-size:10.5px;color:#999;max-width:160px;';
+          notice.textContent = `${v.name} non è ancora nel network ufficiale — nessuno storico da mostrare qui.`;
+          marker.bindPopup(notice);
+        }
+        marker.addTo(markersLayerRef.current);
+        return;
+      }
+
       const popupContent = document.createElement('div');
       popupContent.style.minWidth = '160px';
 
@@ -181,13 +235,34 @@ export default function VenuesMap({ currentUserId, onClose }) {
       if (v.isPartner) {
         const badge = document.createElement('div');
         badge.style.cssText = 'font-size:11px;font-weight:700;color:#0EA5C4;margin-bottom:4px;';
-        badge.textContent = '✓ Verificato';
+        badge.textContent = v.arenaActive ? '✓ Verificato · 🔴 Arena attiva' : '✓ Verificato';
         popupContent.appendChild(badge);
 
         const stat = document.createElement('div');
-        stat.style.cssText = 'font-size:11px;margin-bottom:8px;';
+        stat.style.cssText = 'font-size:11px;margin-bottom:6px;';
         stat.textContent = `${v.checkinCount} check-in stasera`;
         popupContent.appendChild(stat);
+
+        // Barra uomini/donne — solo se almeno una persona ha
+        // condiviso il dato per questo locale stasera, stessa
+        // regola già usata in "Esplora" prima di essere unificata
+        // qui dentro il puntino.
+        if (v.genderStats) {
+          const g = v.genderStats;
+          const barRow = document.createElement('div');
+          barRow.style.cssText = 'display:flex;height:5px;border-radius:999px;overflow:hidden;margin-bottom:8px;';
+          barRow.innerHTML = `
+            <div style="background:#B0AAA4;width:${g.femalePct}%;"></div>
+            <div style="background:#2FD3E8;width:${g.malePct}%;"></div>
+            ${g.otherPct > 0 ? `<div style="background:#E8C77E;width:${g.otherPct}%;"></div>` : ''}
+          `;
+          popupContent.appendChild(barRow);
+
+          const genderLabel = document.createElement('div');
+          genderLabel.style.cssText = 'font-size:9.5px;color:#999;margin-bottom:8px;';
+          genderLabel.textContent = `${g.femalePct}% donne · ${g.malePct}% uomini`;
+          popupContent.appendChild(genderLabel);
+        }
 
         const btn = document.createElement('button');
         btn.textContent = "Chi c'era negli ultimi giorni";
@@ -213,7 +288,7 @@ export default function VenuesMap({ currentUserId, onClose }) {
         console.warn('Errore nel disegnare il puntino di', v.name, err);
       }
     });
-  }, [venues, createUnofficialCopy]);
+  }, [venues, createUnofficialCopy, mode, openHistoricalStories]);
 
   // Il puntino provvisorio del nuovo locale che si sta creando.
   useEffect(() => {
@@ -236,6 +311,26 @@ export default function VenuesMap({ currentUserId, onClose }) {
     );
   }
 
+  if (storiesPeople) {
+    if (storiesPeople.length === 0) {
+      return (
+        <div className="pl-sheet">
+          <div className="pl-sheet-close" onClick={() => setStoriesPeople(null)} style={{ marginBottom: 4 }}>‹ Torna alla mappa</div>
+          <p className="pl-hint" style={{ textAlign: 'center', marginTop: 30 }}>
+            Nessuno da mostrare per ora — o nessuno è passato di qui negli ultimi giorni, o non ha attivato questa opzione.
+          </p>
+        </div>
+      );
+    }
+    return (
+      <HistoricalStories
+        people={storiesPeople}
+        currentUserId={currentUserId}
+        onClose={() => setStoriesPeople(null)}
+      />
+    );
+  }
+
   return (
     <div className="pl-sheet">
       <div className="pl-sheet-close" onClick={onClose}>Chiudi ✕</div>
@@ -252,6 +347,12 @@ export default function VenuesMap({ currentUserId, onClose }) {
         ref={mapContainerRef}
         style={{ height: 380, width: '100%', borderRadius: 16, overflow: 'hidden', border: '1px solid rgba(228,212,200,0.14)', marginBottom: 10, background: '#3a3a3a' }}
       />
+
+      {loadingStories && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 82, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ background: 'var(--surface)', borderRadius: 14, padding: '14px 20px', color: 'var(--text)', fontSize: 12.5 }}>Caricamento…</div>
+        </div>
+      )}
 
       {!placingPin && !newPinCoords && (
         <button

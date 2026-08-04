@@ -162,7 +162,7 @@ function reasonToMessage(reason) {
 // ------------------------------------------------------------
 // 2) NOTIFICA DI RICEZIONE — le tre varianti
 // ------------------------------------------------------------
-export function PulseNotification({ pulse, currentUserId, arenaSessionId, onResolved }) {
+export function PulseNotification({ pulse, currentUserId, arenaSessionId, venueId, onResolved }) {
   const [loading, setLoading] = useState(false);
   const [showGuessGame, setShowGuessGame] = useState(false);
   const [guessCandidates, setGuessCandidates] = useState([]);
@@ -199,7 +199,7 @@ export function PulseNotification({ pulse, currentUserId, arenaSessionId, onReso
   }
 
   if (redeemInfo) {
-    return <PulseRedeemSeal pulseId={pulse.pulseId} redeemCode={redeemInfo.redeemCode} onDone={() => onResolved({ action: 'redeemed' })} />;
+    return <PulseRedeemSeal pulseId={pulse.pulseId} redeemCode={redeemInfo.redeemCode} venueId={venueId} onDone={() => onResolved({ action: 'redeemed' })} />;
   }
 
   if (showGuessGame) {
@@ -306,7 +306,7 @@ export function PulseGuessGame({ pulseId, currentUserId, candidates, onFinished,
 // ------------------------------------------------------------
 // 4) RISCATTO AL BANCONE — sigillo con timer, mostrato al bartender
 // ------------------------------------------------------------
-export function PulseRedeemSeal({ pulseId, redeemCode, onDone }) {
+export function PulseRedeemSeal({ pulseId, redeemCode, venueId, onDone }) {
   const [state, setState] = useState('idle'); // idle | live | expired | confirmed
   const [secondsLeft, setSecondsLeft] = useState(30);
   const [flash, setFlash] = useState(false);
@@ -339,7 +339,7 @@ export function PulseRedeemSeal({ pulseId, redeemCode, onDone }) {
     const res = await apiFetch(`/api/pulses/${pulseId}/redeem`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ redeemCode }),
+      body: JSON.stringify({ redeemCode, venueId }),
     });
     const data = await res.json();
     if (data.success) {

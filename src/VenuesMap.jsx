@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { apiFetch } from './apiClient';
@@ -68,9 +68,36 @@ export default function VenuesMap({ currentUserId, onClose }) {
   const newPinMarkerRef = useRef(null);
   const placingPinRef = useRef(false);
 
+  const loadVenues = useCallback(() => {
+    apiFetch('/api/venues/map')
+      .then((r) => r.json())
+      .then((data) => { if (data.success) setVenues(data.venues); })
+      .finally(() => setLoading(false));
+  }, []);
+
+  const createUnofficialCopy = useCallback(async (venue) => {
+    const res = await apiFetch('/api/venues/create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: venue.name,
+        latitude: venue.latitude,
+        longitude: venue.longitude,
+        venueType: venue.venueType,
+      }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      window.alert(`Fatto — "${venue.name}" è ora attivabile su PopuLive. Puoi già farci check-in.`);
+      loadVenues();
+    } else {
+      window.alert('Qualcosa è andato storto — riprova.');
+    }
+  }, [loadVenues]);
+
   useEffect(() => {
     loadVenues();
-  }, []);
+  }, [loadVenues]);
 
   // Teniamo un rif sempre aggiornato di "sto piazzando un puntino
   // nuovo" — l'ascoltatore del click sulla mappa viene creato UNA
@@ -171,7 +198,7 @@ export default function VenuesMap({ currentUserId, onClose }) {
       marker.bindPopup(popupContent);
       marker.addTo(markersLayerRef.current);
     });
-  }, [venues]);
+  }, [venues, createUnofficialCopy]);
 
   // Il puntino provvisorio del nuovo locale che si sta creando.
   useEffect(() => {
@@ -184,33 +211,6 @@ export default function VenuesMap({ currentUserId, onClose }) {
       newPinMarkerRef.current = L.marker(newPinCoords, { icon: NEW_PIN_ICON }).addTo(mapRef.current);
     }
   }, [newPinCoords]);
-
-  function loadVenues() {
-    apiFetch('/api/venues/map')
-      .then((r) => r.json())
-      .then((data) => { if (data.success) setVenues(data.venues); })
-      .finally(() => setLoading(false));
-  }
-
-  async function createUnofficialCopy(venue) {
-    const res = await apiFetch('/api/venues/create', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name: venue.name,
-        latitude: venue.latitude,
-        longitude: venue.longitude,
-        venueType: venue.venueType,
-      }),
-    });
-    const data = await res.json();
-    if (data.success) {
-      window.alert(`Fatto — "${venue.name}" è ora attivabile su PopuLive. Puoi già farci check-in.`);
-      loadVenues();
-    } else {
-      window.alert('Qualcosa è andato storto — riprova.');
-    }
-  }
 
   if (historicalVenueId) {
     return (

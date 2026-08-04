@@ -149,9 +149,21 @@ export default function VenuesMap({ currentUserId, onClose }) {
     markersLayerRef.current.clearLayers();
 
     venues.forEach((v) => {
-      const marker = L.marker([v.latitude, v.longitude], {
-        icon: v.isPartner ? VERIFIED_ICON : UNVERIFIED_ICON,
-      });
+      // Difensivo: con centinaia di locali importati in blocco, è
+      // realistico che qualcuno abbia coordinate mancanti o rotte —
+      // saltarlo qui invece di lasciare che rompa il disegno di
+      // TUTTI gli altri puntini insieme a lui.
+      const lat = Number(v.latitude);
+      const lng = Number(v.longitude);
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+        console.warn('Locale con coordinate non valide, saltato:', v.name);
+        return;
+      }
+
+      try {
+        const marker = L.marker([lat, lng], {
+          icon: v.isPartner ? VERIFIED_ICON : UNVERIFIED_ICON,
+        });
 
       const popupContent = document.createElement('div');
       popupContent.style.minWidth = '160px';
@@ -197,6 +209,9 @@ export default function VenuesMap({ currentUserId, onClose }) {
 
       marker.bindPopup(popupContent);
       marker.addTo(markersLayerRef.current);
+      } catch (err) {
+        console.warn('Errore nel disegnare il puntino di', v.name, err);
+      }
     });
   }, [venues, createUnofficialCopy]);
 

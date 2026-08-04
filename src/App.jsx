@@ -20,6 +20,7 @@ import {
 import WelcomeBack from './WelcomeBack';
 import MissionClaim from './MissionClaim';
 import HistoricalBoard from './HistoricalBoard';
+import VenuesMap from './VenuesMap';
 import { API_BASE, apiFetch, getToken, getStoredUserId, clearSession, requestAndSendLocation } from './apiClient';
 
 import './populive-styles.css';
@@ -110,6 +111,7 @@ export default function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [showExploreMap, setShowExploreMap] = useState(false);
   const [showHistoricalBoard, setShowHistoricalBoard] = useState(false);
+  const [showVenuesMap, setShowVenuesMap] = useState(false);
   // "Bentornato" — mostrata una sola volta appena si entra in app,
   // vero solo finché non sappiamo ancora se c'è qualcosa di nuovo
   // da mostrare (il componente stesso decide, chiamando onDone
@@ -361,6 +363,12 @@ export default function App() {
             >
               <History size={14} /> Chi era qui negli ultimi giorni
             </button>
+            <button
+              onClick={() => setShowVenuesMap(true)}
+              style={{ marginTop: 8, width: '100%', padding: 12, borderRadius: 14, border: '1px solid rgba(228,212,200,0.2)', background: 'var(--surface)', color: 'var(--teak)', fontSize: 11.5, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}
+            >
+              <Map size={14} /> Sfoglia tutti i locali sulla mappa
+            </button>
           </>
         )}
 
@@ -434,7 +442,7 @@ export default function App() {
       {showExploreMap && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 50 }}>
           <div style={{ width: '100%', maxWidth: 420, background: 'var(--surface)', borderRadius: '24px 24px 0 0', padding: 20, maxHeight: '85vh', overflowY: 'auto', boxShadow: 'var(--shadow-lg)' }}>
-            <ExploreMap onClose={() => setShowExploreMap(false)} />
+            <ExploreMap onClose={() => setShowExploreMap(false)} currentUserId={userId} />
           </div>
         </div>
       )}
@@ -443,6 +451,14 @@ export default function App() {
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 50 }}>
           <div style={{ width: '100%', maxWidth: 420, background: 'var(--surface)', borderRadius: '24px 24px 0 0', padding: 20, maxHeight: '85vh', overflowY: 'auto', boxShadow: 'var(--shadow-lg)' }}>
             <HistoricalBoard venueId={venueId} currentUserId={userId} onClose={() => setShowHistoricalBoard(false)} />
+          </div>
+        </div>
+      )}
+
+      {showVenuesMap && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 50 }}>
+          <div style={{ width: '100%', maxWidth: 420, background: 'var(--surface)', borderRadius: '24px 24px 0 0', padding: 20, maxHeight: '85vh', overflowY: 'auto', boxShadow: 'var(--shadow-lg)' }}>
+            <VenuesMap currentUserId={userId} onClose={() => setShowVenuesMap(false)} />
           </div>
         </div>
       )}

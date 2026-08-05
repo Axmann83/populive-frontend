@@ -310,6 +310,7 @@ export function PulseRedeemSeal({ pulseId, redeemCode, venueId, onDone }) {
   const [state, setState] = useState('idle'); // idle | live | expired | confirmed
   const [secondsLeft, setSecondsLeft] = useState(30);
   const [flash, setFlash] = useState(false);
+  const [errorMessage, setErrorMessage] = useState(null);
 
   useEffect(() => {
     if (state !== 'live') return;
@@ -345,6 +346,15 @@ export function PulseRedeemSeal({ pulseId, redeemCode, venueId, onDone }) {
     if (data.success) {
       setState('confirmed');
       setTimeout(onDone, 1000);
+    } else if (data.reason === 'wrong_venue') {
+      setErrorMessage('Questo Pulse è valido solo nel locale in cui è stato ricevuto — qui non può essere riscattato.');
+    } else if (data.reason === 'pulse_expired_changed_venue') {
+      setErrorMessage('Questo Pulse è scaduto — hai fatto check-in in un altro locale nel frattempo.');
+    } else if (data.reason === 'code_expired') {
+      setErrorMessage('Il tempo per confermare è scaduto — tocca di nuovo "Tieni premuto" per riprovare.');
+      setState('idle');
+    } else {
+      setErrorMessage('Qualcosa è andato storto — riprova.');
     }
   }
 
@@ -367,6 +377,7 @@ export function PulseRedeemSeal({ pulseId, redeemCode, venueId, onDone }) {
             {secondsLeft}
           </div>
           <p className="pl-hint">Mostra il telefono al bartender: un suo tocco sul cerchio conferma ed eroga la consumazione.</p>
+          {errorMessage && <p className="pl-error">{errorMessage}</p>}
         </>
       )}
       {state === 'expired' && (

@@ -252,6 +252,7 @@ function ActionButton({ icon: Icon, label, onClick, disabled, active }) {
     <button
       onClick={onClick}
       disabled={disabled}
+      className={active ? 'pl-confirm-wave-wrap' : ''}
       style={{
         flex: 1,
         display: 'flex',
@@ -268,8 +269,16 @@ function ActionButton({ icon: Icon, label, onClick, disabled, active }) {
         backdropFilter: 'blur(4px)',
         boxShadow: active ? 'var(--shadow-glow-cyan)' : 'var(--shadow-sm)',
         animation: active ? 'pl-pop 0.4s ease' : 'none',
+        overflow: 'visible',
       }}
     >
+      {active && (
+        <>
+          <span className="pl-confirm-wave"></span>
+          <span className="pl-confirm-wave"></span>
+          <span className="pl-confirm-wave"></span>
+        </>
+      )}
       <Icon size={22} strokeWidth={2} fill={active ? 'currentColor' : 'none'} />
       <span style={{ fontSize: 10.5, fontWeight: 600 }}>{label}</span>
     </button>

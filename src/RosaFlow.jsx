@@ -356,7 +356,14 @@ export function PulseRedeemSeal({ pulseId, redeemCode, venueId, onDone }) {
       )}
       {state === 'live' && (
         <>
-          <div className={`pl-seal pl-seal-live ${flash ? 'pl-seal-flash' : ''}`} onClick={handleSealTap}>
+          <div className={`pl-seal pl-seal-live pl-confirm-wave-wrap ${flash ? 'pl-seal-flash' : ''}`} onClick={handleSealTap}>
+            {flash && (
+              <>
+                <span className="pl-confirm-wave"></span>
+                <span className="pl-confirm-wave"></span>
+                <span className="pl-confirm-wave"></span>
+              </>
+            )}
             {secondsLeft}
           </div>
           <p className="pl-hint">Mostra il telefono al bartender: un suo tocco sul cerchio conferma ed eroga la consumazione.</p>

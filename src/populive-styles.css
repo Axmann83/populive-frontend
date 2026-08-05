@@ -398,7 +398,7 @@ button{ font-family:inherit; }
    contenuto interno, mai il contenitore intero a schermo pieno
    (altrimenti rischia di sforare in modo strano). */
 .pl-reload-loader > div{
-  transform: scale(1.8);
+  transform: scale(3.2);
 }
 
 /* ============================================================

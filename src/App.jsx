@@ -21,7 +21,7 @@ import WelcomeBack from './WelcomeBack';
 import MissionClaim from './MissionClaim';
 import VenuesMap from './VenuesMap';
 import Dashboard from './Dashboard';
-import { API_BASE, apiFetch, getToken, getStoredUserId, clearSession, requestAndSendLocation } from './apiClient';
+import { API_BASE, apiFetch, getToken, getStoredUserId, clearSession } from './apiClient';
 
 import './populive-styles.css';
 
@@ -225,23 +225,6 @@ export default function App() {
     }
     checkExistingSession();
   }, []);
-
-  // Aggiorna la posizione una volta per apertura dell'app, ma SOLO
-  // per chi ha già attivato "Ricevi missioni sponsorizzate" in
-  // passato — mai una richiesta di permesso a sorpresa per chi non
-  // l'ha mai voluta. Il permesso vero e proprio, la prima volta,
-  // resta legato solo al momento in cui si attiva il toggle.
-  useEffect(() => {
-    if (authState !== 'app' || !userId) return;
-    apiFetch(`/api/profile/${userId}/settings`)
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.success && data.settings?.sponsoredMissionsEnabled) {
-          requestAndSendLocation(userId);
-        }
-      })
-      .catch(() => {});
-  }, [authState, userId]);
 
   // Teniamo un riferimento persistente al socket "trasversale" —
   // serve al secondo effect qui sotto per poter entrare nella

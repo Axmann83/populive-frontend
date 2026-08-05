@@ -11,6 +11,7 @@ import Settings from './Settings';
 import MyPulses from './MyRoses';
 import MyProfile from './MyProfile';
 import SplashScreen from './SplashScreen';
+import ReloadLoader from './ReloadLoader';
 import {
   Radar as RadarIcon, Trophy, Globe, User, PulseWaveIcon,
   Eye, Heart, Star, PartyPopper, Target, Link2, Sparkles,
@@ -47,7 +48,16 @@ export default function App() {
   // finta). Quando entrambe le condizioni sono soddisfatte, sfuma
   // via — proprio come l'apertura di Hinge.
   // --------------------------------------------------------
-  const MIN_SPLASH_MS = 3000;
+  // sessionStorage sopravvive a un semplice ricaricamento della
+  // pagina (F5, pull-to-refresh) ma viene cancellato quando l'app
+  // viene DAVVERO chiusa — la firma perfetta per distinguere le due
+  // situazioni senza bisogno di altro. Prima vera apertura di questa
+  // sessione = logo completo con la cerimonia intera; ricaricamento
+  // dentro la stessa sessione = solo le onde, via il prima possibile.
+  const isColdStart = useRef(!sessionStorage.getItem('pl_session_started')).current;
+  if (isColdStart) sessionStorage.setItem('pl_session_started', 'true');
+
+  const MIN_SPLASH_MS = isColdStart ? 3000 : 0;
   const [showSplash, setShowSplash] = useState(true);
   const [splashFadingOut, setSplashFadingOut] = useState(false);
   const appMountedAt = useRef(Date.now());
@@ -476,6 +486,7 @@ export default function App() {
         {pointsToasts.map((t) => (
           <div
             key={t.id}
+            className="pl-confirm-wave-wrap"
             style={{
               display: 'flex', alignItems: 'center', gap: 8,
               background: 'var(--surface-2)', border: '1px solid rgba(47,211,232,0.4)',
@@ -485,6 +496,9 @@ export default function App() {
               animation: 'pl-toast-in 0.25s ease-out',
             }}
           >
+            <span className="pl-confirm-wave"></span>
+            <span className="pl-confirm-wave"></span>
+            <span className="pl-confirm-wave"></span>
             <t.icon size={16} />
             <span style={{ color: 'var(--cyan)' }}>+{t.points} punti</span>
           </div>
@@ -505,7 +519,9 @@ export default function App() {
   // poi — solo a sfumatura VERAMENTE conclusa — il resto.
   // --------------------------------------------------------
   if (showSplash) {
-    return <SplashScreen fadingOut={splashFadingOut} onExited={() => setShowSplash(false)} />;
+    return isColdStart
+      ? <SplashScreen fadingOut={splashFadingOut} onExited={() => setShowSplash(false)} />
+      : <ReloadLoader fadingOut={splashFadingOut} onExited={() => setShowSplash(false)} />;
   }
 
   return mainContent;

@@ -2,7 +2,7 @@ import {
   Radar, Trophy, Globe, User, Heart, Star,
   Link2, Coins, Crown, Sparkles, Eye, PartyPopper, Target,
   Map, Armchair, History, Wallet, Settings, Hand, BookmarkCheck,
-  Zap, BadgeCheck,
+  Zap, BadgeCheck, TrendingUp,
 } from 'lucide-react';
 
 /**
@@ -26,7 +26,7 @@ export {
   Radar, Trophy, Globe, User, Heart, Star,
   Link2, Coins, Crown, Sparkles, Eye, PartyPopper, Target,
   Map, Armchair, History, Wallet, Settings, Hand, BookmarkCheck,
-  Zap, BadgeCheck,
+  Zap, BadgeCheck, TrendingUp,
 };
 
 export function PulseWaveIcon({ size = 20, color = 'currentColor', strokeWidth = 2, ...props }) {

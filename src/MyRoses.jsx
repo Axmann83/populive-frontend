@@ -167,6 +167,7 @@ function StatusBadge({ status }) {
     redeemed: { text: 'Riscattata', color: 'var(--text-muted)' },
     rejected: { text: 'Rifiutata', color: 'var(--text-muted)' },
     ignored: { text: 'In sospeso', color: 'var(--text-muted)' },
+    expired: { text: 'Scaduta', color: 'var(--text-muted)' },
   };
   const label = labels[status] || { text: status, color: 'var(--text-muted)' };
   return (

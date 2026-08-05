@@ -68,7 +68,7 @@ export default function App() {
     const remaining = Math.max(0, MIN_SPLASH_MS - elapsed);
     const t = setTimeout(() => setSplashFadingOut(true), remaining);
     return () => clearTimeout(t);
-  }, [authState, showSplash, splashFadingOut]);
+  }, [authState, showSplash, splashFadingOut, MIN_SPLASH_MS]);
 
   // --------------------------------------------------------
   // QR code del locale = un semplice link web (es.

@@ -20,6 +20,7 @@ import {
 import WelcomeBack from './WelcomeBack';
 import MissionClaim from './MissionClaim';
 import VenuesMap from './VenuesMap';
+import Dashboard from './Dashboard';
 import { API_BASE, apiFetch, getToken, getStoredUserId, clearSession, requestAndSendLocation } from './apiClient';
 
 import './populive-styles.css';
@@ -80,6 +81,11 @@ export default function App() {
   // prima di ripulire l'URL (così un refresh non lo rifà da capo).
   // --------------------------------------------------------
   const [venueId, setVenueId] = useState('f923e9c8-c47f-40d6-a4b8-98afe38d43cc'); // "Locale di Prova" come default
+  // /dashboard resta un indirizzo VERO e persistente (a differenza
+  // di /checkin e /mission, che si "consumano" e spariscono subito
+  // dall'indirizzo) — un founder deve poterselo salvare nei
+  // preferiti e ritrovarlo lì ogni volta, non un link usa-e-getta.
+  const [isDashboardRoute] = useState(() => window.location.pathname.startsWith('/dashboard'));
   const [arrivedViaQr, setArrivedViaQr] = useState(false);
   // QR di una missione sponsorizzata (populive-frontend.../mission/<missionId>)
   // — stesso identico principio del check-in, un link semplice
@@ -340,6 +346,12 @@ export default function App() {
         </div>
       </div>
     );
+  } else if (authState === 'app' && isDashboardRoute) {
+    // La dashboard sostituisce del tutto l'app normale quando si è
+    // su questo indirizzo — il controllo VERO se la persona sia
+    // davvero un founder (non solo loggata) avviene dentro
+    // Dashboard.jsx stesso, lato server, non qui.
+    mainContent = <Dashboard userId={userId} />;
   } else if (authState === 'app') {
     mainContent = (
       <div className="pl-app-shell">

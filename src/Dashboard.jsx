@@ -234,6 +234,51 @@ function VenueMetricsSection() {
               <NotEnoughData minRequired={report.drinks.minRequired} />
             )}
           </MetricCard>
+
+          <MetricCard title="Interazioni sociali generate">
+            {report.socialInteractions.available ? (
+              <div>
+                <div style={{ fontSize: 22, fontWeight: 800, fontFamily: "'Space Grotesk',sans-serif", color: 'var(--cyan)' }}>
+                  {report.socialInteractions.total}
+                </div>
+                <div style={{ fontSize: 10.5, color: 'var(--text-muted)' }}>
+                  {report.socialInteractions.likes} Like · {report.socialInteractions.superlikes} Superlike scambiati qui
+                </div>
+              </div>
+            ) : (
+              <NotEnoughData minRequired={report.socialInteractions.minRequired} />
+            )}
+          </MetricCard>
+
+          <MetricCard title="Tasso di ritorno">
+            {report.returnRate.available ? (
+              <div>
+                <div style={{ fontSize: 22, fontWeight: 800, fontFamily: "'Space Grotesk',sans-serif", color: 'var(--cyan)' }}>
+                  {report.returnRate.returnRatePct}%
+                </div>
+                <div style={{ fontSize: 10.5, color: 'var(--text-muted)' }}>
+                  {report.returnRate.returningVisitors} su {report.returnRate.totalVisitors} sono tornati almeno una seconda volta
+                </div>
+              </div>
+            ) : (
+              <NotEnoughData minRequired={report.returnRate.minRequired} />
+            )}
+          </MetricCard>
+
+          <MetricCard title="Picco di presenze simultanee">
+            {report.peakAttendance.available ? (
+              <div>
+                <div style={{ fontSize: 22, fontWeight: 800, fontFamily: "'Space Grotesk',sans-serif", color: 'var(--cyan)' }}>
+                  {report.peakAttendance.allTimeHigh} persone
+                </div>
+                <div style={{ fontSize: 10.5, color: 'var(--text-muted)' }}>
+                  Picco più alto registrato · media {report.peakAttendance.avgPeakPerNight} persone a serata
+                </div>
+              </div>
+            ) : (
+              <NotEnoughData minRequired={report.peakAttendance.minRequired} />
+            )}
+          </MetricCard>
         </div>
       )}
     </div>

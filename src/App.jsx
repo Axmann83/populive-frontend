@@ -405,14 +405,23 @@ export default function App() {
 
       {/* "Bentornato" appare per prima, appena entrati in app — e
           quando sparisce (con o senza notizie), apre in automatico
-          la mappa dei locali, come richiesto: la persona vede
-          subito dove conviene andare, non deve cercarlo da sola. */}
+          la mappa dei locali SOLO LA PRIMA VOLTA della giornata —
+          dalla volta successiva resta una scelta volontaria, non ha
+          senso riaprirla ad ogni singolo riavvio dell'app. Tenuta
+          nel telefono stesso (non nel database): non serve
+          sincronizzarla tra dispositivi, è solo una comodità
+          locale. */}
       {showWelcomeBack && (
         <WelcomeBack
           userId={userId}
           onDone={() => {
             setShowWelcomeBack(false);
-            setVenuesMapMode('browse');
+            const today = new Date().toISOString().slice(0, 10); // es. "2026-08-05"
+            const lastAutoOpen = localStorage.getItem('pl_map_autoopen_date');
+            if (lastAutoOpen !== today) {
+              localStorage.setItem('pl_map_autoopen_date', today);
+              setVenuesMapMode('browse');
+            }
           }}
         />
       )}

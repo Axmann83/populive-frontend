@@ -27,6 +27,10 @@ export default function LiveRanking({ arenaSessionId, currentUserId, isGlobal, v
   // seconda di dove sei: locale → tutto schermo con interazioni,
   // globale → solo profilo di dettaglio (v. sotto il motivo).
   const [selectedProfileUserId, setSelectedProfileUserId] = useState(null);
+  // Filtri — solo per la classifica GLOBALE, non ha senso restringere
+  // quella di stanotte (già piccola, legata a un solo locale).
+  const [hashtagFilter, setHashtagFilter] = useState('');
+  const [genderFilter, setGenderFilter] = useState('');
 
   // --------------------------------------------------------
   // Caricamento iniziale della classifica
@@ -37,9 +41,14 @@ export default function LiveRanking({ arenaSessionId, currentUserId, isGlobal, v
     async function loadRanking() {
       setLoading(true);
       try {
+        const params = new URLSearchParams();
+        if (hashtagFilter.trim()) params.set('hashtag', hashtagFilter.trim());
+        if (genderFilter) params.set('gender', genderFilter);
+        const qs = params.toString();
+
         const url = isGlobal
-          ? `${API_BASE}/api/ranking/global`
-          : `${API_BASE}/api/arenas/${arenaSessionId}/ranking`;
+          ? `${API_BASE}/api/ranking/global${qs ? `?${qs}` : ''}`
+          : `${API_BASE}/api/arenas/${arenaSessionId}/ranking${qs ? `?${qs}` : ''}`;
         const res = await fetch(url);
         const data = await res.json();
         if (!cancelled && data.success) {
@@ -52,7 +61,7 @@ export default function LiveRanking({ arenaSessionId, currentUserId, isGlobal, v
 
     loadRanking();
     return () => { cancelled = true; };
-  }, [arenaSessionId, isGlobal]);
+  }, [arenaSessionId, isGlobal, hashtagFilter, genderFilter]);
 
   // --------------------------------------------------------
   // Aggiornamenti in tempo reale — SOLO per la classifica locale.
@@ -96,13 +105,36 @@ export default function LiveRanking({ arenaSessionId, currentUserId, isGlobal, v
     return () => socket.disconnect();
   }, [arenaSessionId, currentUserId, isGlobal]);
 
-  if (loading) {
-    return <div className="pl-ranking-loading">Caricamento classifica…</div>;
-  }
-
   return (
     <div className="pl-ranking-list">
-      {ranking.map((entry) => (
+      <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+        <input
+          value={hashtagFilter}
+          onChange={(e) => setHashtagFilter(e.target.value)}
+          placeholder="#nightlife…"
+          style={{ flex: 1, marginBottom: 0 }}
+        />
+        <select
+          value={genderFilter}
+          onChange={(e) => setGenderFilter(e.target.value)}
+          style={{ width: 110, marginBottom: 0 }}
+        >
+          <option value="">Tutti</option>
+          <option value="female">Donne</option>
+          <option value="male">Uomini</option>
+          <option value="other">Altro</option>
+        </select>
+      </div>
+
+      {loading && <div className="pl-ranking-loading">Caricamento classifica…</div>}
+
+      {!loading && ranking.length === 0 && (
+        <p className="pl-hint" style={{ textAlign: 'center', marginTop: 20 }}>
+          Nessuno da mostrare con questi filtri.
+        </p>
+      )}
+
+      {!loading && ranking.map((entry) => (
         <RankRow
           key={entry.userId}
           entry={entry}

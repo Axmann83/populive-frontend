@@ -293,14 +293,29 @@ export function PulseNotification({ pulse, currentUserId, arenaSessionId, venueI
     },
     super: {
       title: `${pulse.senderName || 'Qualcuno'} ti ha inviato un Pulse`,
-      sub: `Ha anche inviato un Superlike: il suo profilo è visibile. Se non accetti, non potrà più contattarti.`,
+      sub: `Ha anche inviato un Superlike: se non accetti, non potrà più contattarti.`,
     },
   }[pulse.tier];
 
   return (
     <div className="pl-sheet">
-      <h3>{copy.title}</h3>
-      <p className="pl-hint">{copy.sub}</p>
+      {/* Solo per il Pulse+Superlike: anteprima vera del profilo,
+          stessa esperienza già costruita per il Superlike puro —
+          prima erano incoerenti tra loro (lì foto, qui solo un nome
+          scritto nel titolo). */}
+      {pulse.tier === 'super' && (
+        <div style={{ width: 84, height: 84, borderRadius: '50%', overflow: 'hidden', margin: '0 auto 14px', border: '2px solid var(--cyan)' }}>
+          {pulse.senderPhotoUrl ? (
+            <img src={pulse.senderPhotoUrl} alt={pulse.senderName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          ) : (
+            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 38, background: 'var(--surface-2)' }}>
+              {pulse.senderAvatarEmoji || '🙂'}
+            </div>
+          )}
+        </div>
+      )}
+      <h3 style={{ textAlign: pulse.tier === 'super' ? 'center' : 'left' }}>{copy.title}</h3>
+      <p className="pl-hint" style={{ textAlign: pulse.tier === 'super' ? 'center' : 'left' }}>{copy.sub}</p>
 
       <div className="pl-redeem-actions">
         <button disabled={loading} onClick={() => respond('ignore')}>Lascia in sospeso</button>

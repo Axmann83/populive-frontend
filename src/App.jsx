@@ -22,6 +22,7 @@ import MissionClaim from './MissionClaim';
 import VenuesMap from './VenuesMap';
 import Dashboard from './Dashboard';
 import NearbyMissions from './NearbyMissions';
+import SuperlikeNotification from './SuperlikeNotification';
 import { API_BASE, apiFetch, getToken, getStoredUserId, clearSession } from './apiClient';
 
 import './populive-styles.css';
@@ -121,6 +122,7 @@ export default function App() {
 
   const [activeTab, setActiveTab] = useState('radar');
   const [pendingPulseNotification, setPendingPulseNotification] = useState(null);
+  const [pendingSuperlike, setPendingSuperlike] = useState(null);
   const [activeChatConversationId, setActiveChatConversationId] = useState(null);
   const [pulseBadgeCount, setPulseBadgeCount] = useState(0);
   const [showSettings, setShowSettings] = useState(false);
@@ -259,6 +261,13 @@ export default function App() {
     socket.on('pulse_received', (payload) => {
       setPendingPulseNotification(payload);
       setPulseBadgeCount((n) => n + 1);
+    });
+
+    // Mancava del tutto — il backend gestiva già accetta/rifiuta/
+    // ignora per un Superlike puro, ma senza questo ascoltatore chi
+    // lo riceveva non lo scopriva mai (nessuna schermata compariva).
+    socket.on('superlike_received', (payload) => {
+      setPendingSuperlike(payload);
     });
 
     // Motore unico dei popup punti — v. pointsIconFor sopra. Il
@@ -508,6 +517,13 @@ export default function App() {
             />
           </div>
         </div>
+      )}
+
+      {pendingSuperlike && (
+        <SuperlikeNotification
+          superlike={pendingSuperlike}
+          onResolved={() => setPendingSuperlike(null)}
+        />
       )}
 
       {/* Popup punti — impilati se ne arriva più di uno vicino nel

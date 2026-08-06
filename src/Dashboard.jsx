@@ -99,16 +99,17 @@ function SectionTab({ icon: Icon, label, active, onClick }) {
     <button
       onClick={onClick}
       style={{
-        flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
-        padding: '10px 4px', borderRadius: 12,
+        flex: '1 1 0', minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
+        padding: '9px 2px', borderRadius: 12,
         border: active ? '1px solid var(--cyan)' : '1px solid rgba(228,212,200,0.14)',
         background: active ? 'rgba(47,211,232,0.12)' : 'var(--surface)',
         color: active ? 'var(--cyan)' : 'var(--text-muted)',
         cursor: 'pointer',
+        overflow: 'hidden',
       }}
     >
-      <Icon size={16} />
-      <span style={{ fontSize: 9.5, fontWeight: 600 }}>{label}</span>
+      <Icon size={15} style={{ flexShrink: 0 }} />
+      <span style={{ fontSize: 8.5, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>{label}</span>
     </button>
   );
 }
@@ -783,6 +784,8 @@ function FeatureFlagsSection() {
     historical_board: 'Bacheca storica',
     venues_map: 'Mappa di tutti i locali',
     instant_influencer: 'Instant Influencer',
+    pulse_standalone: 'Pulse semplice (anonimo)',
+    pulse_like: 'Pulse + Like (minigioco)',
   };
 
   if (loading) return <p className="pl-hint">Caricamento…</p>;

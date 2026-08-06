@@ -3,6 +3,12 @@ import { PartyPopper } from './PopuLiveIcons';
 
 import { apiFetch } from './apiClient';
 
+const TIER_META = {
+  standalone: { label: 'Solo Pulse', sub: 'Anonima al 100% — nessun contatto' },
+  like: { label: 'Pulse + Like', sub: 'Mistero — si svela solo con reciprocità' },
+  super: { label: 'Pulse + Superlike', sub: 'Il tuo profilo sarà subito visibile' },
+};
+
 /**
  * ============================================================
  * POPULIVE — CICLO PULSE COMPLETO (componenti reali)
@@ -22,16 +28,28 @@ import { apiFetch } from './apiClient';
 export function PulseSend({ senderId, receiverId, arenaSessionId, venueId, onSent, onCancel }) {
   const [drinks, setDrinks] = useState([]);
   const [selectedDrink, setSelectedDrink] = useState(null);
-  // Per le prime serate test, semplificato a UNA SOLA modalità (Pulse
-  // + Superlike) — le altre due (Pulse anonimo, Pulse + minigioco
-  // indovina-mittente) restano già pronte e funzionanti sotto, solo
-  // nascoste dalla scelta: più facile da spiegare a chi prova l'app
-  // per la prima volta ("se accetti scopri chi te l'ha mandato, se
-  // non accetti non succede nulla"). Quando PopuLive sarà più diffuso,
-  // basterà rimettere la scelta multipla di "tier" qui sotto.
-  const tier = 'super';
+  // Quali modalità mostrare dipende dagli interruttori decisi dagli
+  // Architetti in dashboard (scheda Funzionalità) — "Pulse +
+  // Superlike" resta SEMPRE disponibile per definizione (il cuore
+  // della funzionalità), le altre due si accendono/spengono da lì,
+  // senza bisogno di toccare il codice o rifare un deploy.
+  const [availableTiers, setAvailableTiers] = useState(['super']);
+  const [tier, setTier] = useState('super');
   const [sending, setSending] = useState(false);
   const [error, setError] = useState(null);
+
+  useEffect(() => {
+    apiFetch('/api/feature-flags')
+      .then((r) => r.json())
+      .then((data) => {
+        if (!data.success) return;
+        const tiers = ['super'];
+        if (data.flags.pulse_standalone) tiers.unshift('standalone');
+        if (data.flags.pulse_like) tiers.splice(1, 0, 'like');
+        setAvailableTiers(tiers);
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     apiFetch(`/api/venues/${venueId}/drinks`)
@@ -129,9 +147,28 @@ export function PulseSend({ senderId, receiverId, arenaSessionId, venueId, onSen
 
       {drinks.length === 0 && <p className="pl-hint">Nessun drink disponibile in questo locale al momento.</p>}
 
-      <p className="pl-hint" style={{ marginBottom: 14 }}>
-        Se chi la riceve accetta, il tuo profilo diventa subito visibile e si apre la chat — se non accetta, semplicemente non succede nulla.
-      </p>
+      {availableTiers.length === 1 ? (
+        <p className="pl-hint" style={{ marginBottom: 14 }}>
+          Se chi la riceve accetta, il tuo profilo diventa subito visibile e si apre la chat — se non accetta, semplicemente non succede nulla.
+        </p>
+      ) : (
+        <>
+          <div className="pl-section-label">Come vuoi inviarla</div>
+          {availableTiers.map((tId) => {
+            const meta = TIER_META[tId];
+            return (
+              <div
+                key={tId}
+                className={`pl-pulse-option ${tier === tId ? 'selected' : ''}`}
+                onClick={() => setTier(tId)}
+              >
+                <div className="pl-pulse-title">{meta.label}</div>
+                <div className="pl-pulse-price">{meta.sub}</div>
+              </div>
+            );
+          })}
+        </>
+      )}
 
       {error && <p className="pl-error">{error}</p>}
       <button className="pl-send-btn" onClick={handleSend} disabled={!selectedDrink || sending}>

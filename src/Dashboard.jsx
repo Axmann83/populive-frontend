@@ -85,9 +85,7 @@ export default function Dashboard({ userId }) {
         </div>
 
         {activeSection === 'missioni' && <MissionsSection />}
-        {activeSection === 'commissioni' && (
-          <p className="pl-hint">Report commissioni per locale — in arrivo.</p>
-        )}
+        {activeSection === 'commissioni' && <CommissionsSection />}
         {activeSection === 'locali' && <VenueMetricsSection />}
         {activeSection === 'prezzi' && <PricingSection />}
         {activeSection === 'funzionalita' && (
@@ -607,6 +605,134 @@ function ExistingMissionRow({ mission, onGenerateQr }) {
           <img src={qrDataUrl} alt="QR missione" style={{ width: 160, height: 160 }} />
         </div>
       )}
+    </div>
+  );
+}
+
+/**
+ * ============================================================
+ * SEZIONE "COMMISSIONI" — per ciascun locale partner, due campi
+ * che si completano a vicenda (Locale % + PopuLive % = sempre
+ * 100, mai possono disallinearsi) più il conto già fatto di
+ * quanto spetta davvero al locale, in base alle Pulse riscattate
+ * lì e al prezzo di riferimento attuale.
+ * ============================================================
+ */
+function CommissionsSection() {
+  const [report, setReport] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [edits, setEdits] = useState({}); // { [venueId]: "70" } — percentuale locale mentre si scrive
+  const [savingId, setSavingId] = useState(null);
+  const [savedId, setSavedId] = useState(null);
+
+  useEffect(() => {
+    apiFetch('/api/dashboard/commissions')
+      .then((r) => r.json())
+      .then((data) => { if (data.success) setReport(data.report); })
+      .finally(() => setLoading(false));
+  }, []);
+
+  async function savePct(venue) {
+    const raw = edits[venue.venueId];
+    const pct = parseInt(raw, 10);
+    if (!Number.isInteger(pct) || pct < 0 || pct > 100) {
+      window.alert('Inserisci una percentuale valida, tra 0 e 100.');
+      return;
+    }
+
+    setSavingId(venue.venueId);
+    try {
+      const res = await apiFetch(`/api/dashboard/venues/${venue.venueId}/commission`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ commissionVenuePct: pct }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        // Ricalcoliamo l'importo dovuto usando lo stesso prezzo di
+        // riferimento implicito già in uso (deriviamo il valore
+        // "per Pulse" dal totale precedente, così non serve un
+        // secondo giro dal server solo per un numero).
+        setReport((prev) => prev.map((r) => {
+          if (r.venueId !== venue.venueId) return r;
+          const pricePerPulseCents = r.commissionVenuePct > 0 && r.redeemedCount > 0
+            ? (r.venueOwedCents / (r.commissionVenuePct / 100)) / r.redeemedCount
+            : 0;
+          const venueOwedCents = Math.round(r.redeemedCount * pricePerPulseCents * (pct / 100));
+          return { ...r, commissionVenuePct: pct, venueOwedCents };
+        }));
+        setSavedId(venue.venueId);
+        setTimeout(() => setSavedId(null), 2000);
+      } else {
+        window.alert('Qualcosa è andato storto — riprova.');
+      }
+    } finally {
+      setSavingId(null);
+    }
+  }
+
+  if (loading) return <p className="pl-hint">Caricamento…</p>;
+
+  return (
+    <div>
+      <p className="pl-hint" style={{ marginBottom: 12 }}>
+        Percentuale d'accordo per ciascun locale — cambia il valore "Locale" e "PopuLive" si aggiorna da solo. L'importo dovuto si basa sulle Pulse riscattate lì e sul prezzo attuale del Pulse singolo (v. scheda Prezzi).
+      </p>
+
+      {report.length === 0 && <p className="pl-hint">Ancora nessun locale partner.</p>}
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {report.map((r) => {
+          const editValue = edits[r.venueId] ?? String(r.commissionVenuePct);
+          const venuePct = parseInt(editValue, 10) || 0;
+          const populivePct = 100 - venuePct;
+          const changed = parseInt(editValue, 10) !== r.commissionVenuePct;
+
+          return (
+            <MetricCard key={r.venueId} title={r.venueName}>
+              <div style={{ fontSize: 10.5, color: 'var(--text-muted)', marginBottom: 10 }}>
+                {r.redeemedCount} Pulse riscattate finora
+              </div>
+
+              <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: 9.5, color: 'var(--text-muted)' }}>Locale %</label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={editValue}
+                    onChange={(e) => setEdits((prev) => ({ ...prev, [r.venueId]: e.target.value }))}
+                    style={{ marginBottom: 0 }}
+                  />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: 9.5, color: 'var(--text-muted)' }}>PopuLive %</label>
+                  <input value={populivePct} disabled style={{ marginBottom: 0, opacity: 0.6 }} />
+                </div>
+              </div>
+
+              <div style={{ fontSize: 18, fontWeight: 800, fontFamily: "'Space Grotesk',sans-serif", color: 'var(--cyan)', marginBottom: 10 }}>
+                {(r.venueOwedCents / 100).toFixed(2)}€ <span style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 500 }}>dovuti al locale</span>
+              </div>
+
+              <button
+                onClick={() => savePct(r)}
+                disabled={!changed || savingId === r.venueId}
+                style={{
+                  width: '100%', padding: '9px', borderRadius: 10, border: 'none', fontSize: 11, fontWeight: 700,
+                  background: savedId === r.venueId ? 'rgba(47,211,232,0.3)' : 'var(--cyan)',
+                  color: '#0D0D0D',
+                  cursor: !changed || savingId === r.venueId ? 'default' : 'pointer',
+                  opacity: !changed ? 0.5 : 1,
+                }}
+              >
+                {savingId === r.venueId ? 'Un attimo…' : savedId === r.venueId ? 'Salvato ✓' : 'Salva percentuale'}
+              </button>
+            </MetricCard>
+          );
+        })}
+      </div>
     </div>
   );
 }

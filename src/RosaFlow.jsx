@@ -69,6 +69,41 @@ export function PulseSend({ senderId, receiverId, arenaSessionId, venueId, onSen
       });
   }, [venueId]);
 
+  // Stesso identico meccanismo già usato per il Superlike puro
+  // (ProfileFullScreen.jsx) — quando manca proprio il Superlike (non
+  // il Pulse), offriamo di comprarne altri 5 invece di un errore
+  // muto che non spiega cosa manca davvero.
+  const offerSuperlikePurchase = useCallback(async () => {
+    const confirmed = window.confirm('Superlike esauriti per questa settimana — il Pulse ha bisogno anche di quello. Vuoi acquistarne altri 5?');
+    if (!confirmed) { setSending(false); return; }
+
+    try {
+      const catalogRes = await apiFetch('/api/products');
+      const catalogData = await catalogRes.json();
+      const product = catalogData.products?.find((p) => p.product_type === 'superlike_credits');
+      if (!product) { setSending(false); return; }
+
+      const purchaseRes = await apiFetch('/api/purchases/initiate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId: product.id, arenaSessionId }),
+      });
+      const purchaseData = await purchaseRes.json();
+
+      if (purchaseData.requiresPayment) {
+        window.location.href = purchaseData.checkoutUrl;
+      } else {
+        // Account di prova/gratis: il saldo è già ricaricato lato
+        // server, la persona può semplicemente riprovare a inviare.
+        setSending(false);
+        setError('Fatto! Riprova a inviare il Pulse.');
+      }
+    } catch (err) {
+      console.error('Errore nella proposta di acquisto Superlike:', err);
+      setSending(false);
+    }
+  }, [arenaSessionId]);
+
   const handleSend = useCallback(async () => {
     if (!selectedDrink) return;
     setSending(true);
@@ -84,6 +119,10 @@ export function PulseSend({ senderId, receiverId, arenaSessionId, venueId, onSen
       });
       const data = await res.json();
       if (!data.success) {
+        if (data.reason === 'superlike_balance_exhausted') {
+          offerSuperlikePurchase();
+          return;
+        }
         setError(reasonToMessage(data.reason));
         return;
       }
@@ -103,7 +142,7 @@ export function PulseSend({ senderId, receiverId, arenaSessionId, venueId, onSen
     } finally {
       setSending(false);
     }
-  }, [selectedDrink, tier, receiverId, arenaSessionId, onSent]);
+  }, [selectedDrink, tier, receiverId, arenaSessionId, onSent, offerSuperlikePurchase]);
 
   return (
     <div className="pl-sheet">

@@ -6,15 +6,17 @@ import { Target } from './PopuLiveIcons';
  * ============================================================
  * POPULIVE — MISSIONE SPONSORIZZATA (claim via QR)
  * ============================================================
- * Si apre quando si scansiona il QR stampato dal negozio sponsor.
- * Prima mostra il claim ("recati da X per Y punti"), poi — solo
- * dopo conferma esplicita — registra il completamento e assegna
- * i punti. Per ora basta la presenza fisica (il QR stesso ne è
- * già la prova): punti bonus per una spesa minima sono
- * un'estensione futura, non ancora costruita.
+ * Due porte d'ingresso diverse, con comportamento DIVERSO apposta:
+ *  - Scansionando il QR vero esposto nel negozio (viaQrScan=true,
+ *    l'unica prova di presenza fisica reale) → si può confermare e
+ *    ottenere i punti subito.
+ *  - Trovata nella lista "Missioni vicino a te" (viaQrScan=false,
+ *    basata solo sull'ultima posizione GPS nota, non una prova
+ *    vera di presenza) → mostra solo il claim e invita ad andare
+ *    lì per scansionare il QR — MAI punti senza il QR vero.
  * ============================================================
  */
-export default function MissionClaim({ missionId, onClose }) {
+export default function MissionClaim({ missionId, onClose, viaQrScan = true }) {
   const [mission, setMission] = useState(null);
   const [loading, setLoading] = useState(true);
   const [confirming, setConfirming] = useState(false);
@@ -71,17 +73,27 @@ export default function MissionClaim({ missionId, onClose }) {
               Missione da {mission.sponsorName}
             </div>
             <h2 style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: 18, margin: '0 0 10px' }}>{mission.claimText}</h2>
-            <p className="pl-hint" style={{ marginBottom: 18 }}>
-              Conferma per ottenere <strong style={{ color: 'var(--cyan)' }}>+{mission.bonusPoints} punti</strong>
-            </p>
-            <button className="pl-send-btn" onClick={confirm} disabled={confirming}>
-              {confirming ? 'Un attimo…' : 'Conferma la tua presenza'}
-            </button>
+
+            {viaQrScan ? (
+              <>
+                <p className="pl-hint" style={{ marginBottom: 18 }}>
+                  Conferma per ottenere <strong style={{ color: 'var(--cyan)' }}>+{mission.bonusPoints} punti</strong>
+                </p>
+                <button className="pl-send-btn" onClick={confirm} disabled={confirming}>
+                  {confirming ? 'Un attimo…' : 'Conferma la tua presenza'}
+                </button>
+              </>
+            ) : (
+              <p className="pl-hint" style={{ marginBottom: 18 }}>
+                Vai lì e inquadra il QR esposto nel locale per ottenere <strong style={{ color: 'var(--cyan)' }}>+{mission.bonusPoints} punti</strong> — la sola posizione non basta, serve la prova reale di esserci passato.
+              </p>
+            )}
+
             <button
               onClick={onClose}
-              style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: 11.5, marginTop: 12, cursor: 'pointer' }}
+              style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: 11.5, marginTop: viaQrScan ? 12 : 0, cursor: 'pointer' }}
             >
-              Annulla
+              {viaQrScan ? 'Annulla' : 'Chiudi'}
             </button>
           </>
         )}

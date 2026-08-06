@@ -22,7 +22,14 @@ import { apiFetch } from './apiClient';
 export function PulseSend({ senderId, receiverId, arenaSessionId, venueId, onSent, onCancel }) {
   const [drinks, setDrinks] = useState([]);
   const [selectedDrink, setSelectedDrink] = useState(null);
-  const [tier, setTier] = useState('standalone'); // 'standalone' | 'like' | 'super'
+  // Per le prime serate test, semplificato a UNA SOLA modalità (Pulse
+  // + Superlike) — le altre due (Pulse anonimo, Pulse + minigioco
+  // indovina-mittente) restano già pronte e funzionanti sotto, solo
+  // nascoste dalla scelta: più facile da spiegare a chi prova l'app
+  // per la prima volta ("se accetti scopri chi te l'ha mandato, se
+  // non accetti non succede nulla"). Quando PopuLive sarà più diffuso,
+  // basterà rimettere la scelta multipla di "tier" qui sotto.
+  const tier = 'super';
   const [sending, setSending] = useState(false);
   const [error, setError] = useState(null);
 
@@ -80,12 +87,6 @@ export function PulseSend({ senderId, receiverId, arenaSessionId, venueId, onSen
     }
   }, [selectedDrink, tier, receiverId, arenaSessionId, onSent]);
 
-  const tiers = [
-    { id: 'standalone', label: 'Solo Pulse', sub: 'Anonima al 100% — nessun contatto' },
-    { id: 'like', label: 'Pulse + Like', sub: 'Mistero — si svela solo con reciprocità' },
-    { id: 'super', label: 'Pulse + Superlike', sub: 'Il tuo profilo sarà subito visibile' },
-  ];
-
   return (
     <div className="pl-sheet">
       <div className="pl-sheet-close" onClick={onCancel}>Chiudi ✕</div>
@@ -128,17 +129,9 @@ export function PulseSend({ senderId, receiverId, arenaSessionId, venueId, onSen
 
       {drinks.length === 0 && <p className="pl-hint">Nessun drink disponibile in questo locale al momento.</p>}
 
-      <div className="pl-section-label">Come vuoi inviarla</div>
-      {tiers.map((t) => (
-        <div
-          key={t.id}
-          className={`pl-pulse-option ${tier === t.id ? 'selected' : ''}`}
-          onClick={() => setTier(t.id)}
-        >
-          <div className="pl-pulse-title">{t.label}</div>
-          <div className="pl-pulse-price">{t.sub}</div>
-        </div>
-      ))}
+      <p className="pl-hint" style={{ marginBottom: 14 }}>
+        Se chi la riceve accetta, il tuo profilo diventa subito visibile e si apre la chat — se non accetta, semplicemente non succede nulla.
+      </p>
 
       {error && <p className="pl-error">{error}</p>}
       <button className="pl-send-btn" onClick={handleSend} disabled={!selectedDrink || sending}>

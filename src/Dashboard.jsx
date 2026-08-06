@@ -88,9 +88,7 @@ export default function Dashboard({ userId }) {
         {activeSection === 'commissioni' && <CommissionsSection />}
         {activeSection === 'locali' && <VenueMetricsSection />}
         {activeSection === 'prezzi' && <PricingSection />}
-        {activeSection === 'funzionalita' && (
-          <p className="pl-hint">Interruttori funzionalità — in arrivo.</p>
-        )}
+        {activeSection === 'funzionalita' && <FeatureFlagsSection />}
       </div>
     </div>
   );
@@ -732,6 +730,91 @@ function CommissionsSection() {
             </MetricCard>
           );
         })}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * ============================================================
+ * SEZIONE "FUNZIONALITÀ" — interruttori on/off per le funzionalità
+ * "extra" (mai per il cuore dell'app: Like/Superlike/Pulse/
+ * classifiche/check-in restano sempre accesi). Pensata per offrire
+ * un'app "lite" nelle prime serate test.
+ * ============================================================
+ */
+function FeatureFlagsSection() {
+  const [flags, setFlags] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [togglingKey, setTogglingKey] = useState(null);
+
+  useEffect(() => {
+    apiFetch('/api/feature-flags')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.success) {
+          setFlags(Object.entries(data.flags).map(([key, isEnabled]) => ({ key, isEnabled })));
+        }
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  async function toggle(flag) {
+    setTogglingKey(flag.key);
+    try {
+      const res = await apiFetch(`/api/dashboard/feature-flags/${flag.key}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isEnabled: !flag.isEnabled }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setFlags((prev) => prev.map((f) => (f.key === flag.key ? { ...f, isEnabled: !f.isEnabled } : f)));
+      } else {
+        window.alert('Qualcosa è andato storto — riprova.');
+      }
+    } finally {
+      setTogglingKey(null);
+    }
+  }
+
+  const labels = {
+    sponsored_missions: 'Missioni sponsorizzate',
+    historical_board: 'Bacheca storica',
+    venues_map: 'Mappa di tutti i locali',
+    instant_influencer: 'Instant Influencer',
+  };
+
+  if (loading) return <p className="pl-hint">Caricamento…</p>;
+
+  return (
+    <div>
+      <p className="pl-hint" style={{ marginBottom: 12 }}>
+        Spegni una funzionalità per offrire un'app "lite" nelle prime serate test — Like, Superlike, Pulse, classifiche e check-in restano sempre accesi, non sono qui. L'effetto è immediato per tutti, senza bisogno di ricaricare nulla lato codice.
+      </p>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {flags.map((f) => (
+          <div key={f.key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--surface)', border: '1px solid rgba(228,212,200,0.12)', borderRadius: 12, padding: '12px 14px' }}>
+            <span style={{ fontSize: 12.5, fontWeight: 600 }}>{labels[f.key] || f.key}</span>
+            <button
+              onClick={() => toggle(f)}
+              disabled={togglingKey === f.key}
+              style={{
+                width: 46, height: 26, borderRadius: 999, border: 'none', position: 'relative', flexShrink: 0,
+                background: f.isEnabled ? 'var(--cyan)' : 'rgba(228,212,200,0.2)',
+                cursor: togglingKey === f.key ? 'default' : 'pointer',
+                transition: 'background 0.2s',
+              }}
+            >
+              <span style={{
+                position: 'absolute', top: 3, left: f.isEnabled ? 23 : 3,
+                width: 20, height: 20, borderRadius: '50%', background: '#fff',
+                transition: 'left 0.2s',
+              }} />
+            </button>
+          </div>
+        ))}
       </div>
     </div>
   );

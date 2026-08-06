@@ -126,6 +126,19 @@ export default function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [venuesMapMode, setVenuesMapMode] = useState(null); // null | 'browse' | 'historical'
   const [showNearbyMissions, setShowNearbyMissions] = useState(false);
+  // Interruttori decisi dagli Architetti in dashboard — letti una
+  // volta all'apertura dell'app, pubblici (nessun login richiesto),
+  // di default tutto acceso finché non arrivano davvero dal server.
+  const [featureFlags, setFeatureFlags] = useState({
+    sponsored_missions: true, historical_board: true, venues_map: true, instant_influencer: true,
+  });
+
+  useEffect(() => {
+    apiFetch('/api/feature-flags')
+      .then((r) => r.json())
+      .then((data) => { if (data.success) setFeatureFlags(data.flags); })
+      .catch(() => {});
+  }, []);
   // "Bentornato" — mostrata una sola volta appena si entra in app,
   // vero solo finché non sappiamo ancora se c'è qualcosa di nuovo
   // da mostrare (il componente stesso decide, chiamando onDone
@@ -354,24 +367,30 @@ export default function App() {
               onArenaSession={setArenaSessionId}
               autoCheckin={arrivedViaQr}
             />
-            <button
-              onClick={() => setVenuesMapMode('historical')}
-              style={{ marginTop: 12, width: '100%', padding: 12, borderRadius: 14, border: '1px solid rgba(228,212,200,0.2)', background: 'var(--surface)', color: 'var(--teak)', fontSize: 11.5, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}
-            >
-              <History size={14} /> Bacheca storica dei locali
-            </button>
-            <button
-              onClick={() => setVenuesMapMode('browse')}
-              style={{ marginTop: 8, width: '100%', padding: 12, borderRadius: 14, border: '1px solid rgba(228,212,200,0.2)', background: 'var(--surface)', color: 'var(--teak)', fontSize: 11.5, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}
-            >
-              <Map size={14} /> Sfoglia tutti i locali sulla mappa
-            </button>
-            <button
-              onClick={() => setShowNearbyMissions(true)}
-              style={{ marginTop: 8, width: '100%', padding: 12, borderRadius: 14, border: '1px solid rgba(228,212,200,0.2)', background: 'var(--surface)', color: 'var(--teak)', fontSize: 11.5, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}
-            >
-              <Target size={14} /> Missioni vicino a te
-            </button>
+            {featureFlags.historical_board && (
+              <button
+                onClick={() => setVenuesMapMode('historical')}
+                style={{ marginTop: 12, width: '100%', padding: 12, borderRadius: 14, border: '1px solid rgba(228,212,200,0.2)', background: 'var(--surface)', color: 'var(--teak)', fontSize: 11.5, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}
+              >
+                <History size={14} /> Bacheca storica dei locali
+              </button>
+            )}
+            {featureFlags.venues_map && (
+              <button
+                onClick={() => setVenuesMapMode('browse')}
+                style={{ marginTop: 8, width: '100%', padding: 12, borderRadius: 14, border: '1px solid rgba(228,212,200,0.2)', background: 'var(--surface)', color: 'var(--teak)', fontSize: 11.5, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}
+              >
+                <Map size={14} /> Sfoglia tutti i locali sulla mappa
+              </button>
+            )}
+            {featureFlags.sponsored_missions && (
+              <button
+                onClick={() => setShowNearbyMissions(true)}
+                style={{ marginTop: 8, width: '100%', padding: 12, borderRadius: 14, border: '1px solid rgba(228,212,200,0.2)', background: 'var(--surface)', color: 'var(--teak)', fontSize: 11.5, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}
+              >
+                <Target size={14} /> Missioni vicino a te
+              </button>
+            )}
           </>
         )}
 
@@ -431,7 +450,7 @@ export default function App() {
             setShowWelcomeBack(false);
             const today = new Date().toISOString().slice(0, 10); // es. "2026-08-05"
             const lastAutoOpen = localStorage.getItem('pl_map_autoopen_date');
-            if (lastAutoOpen !== today) {
+            if (lastAutoOpen !== today && featureFlags.venues_map) {
               localStorage.setItem('pl_map_autoopen_date', today);
               setVenuesMapMode('browse');
             }

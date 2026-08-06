@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import QRCode from 'qrcode';
 import { apiFetch } from './apiClient';
 import { Target, Wallet, Settings as SettingsIcon, TrendingUp, Coins } from './PopuLiveIcons';
 
@@ -83,9 +84,7 @@ export default function Dashboard({ userId }) {
           <SectionTab icon={SettingsIcon} label="Funzioni" active={activeSection === 'funzionalita'} onClick={() => setActiveSection('funzionalita')} />
         </div>
 
-        {activeSection === 'missioni' && (
-          <p className="pl-hint">Modulo creazione missioni — in arrivo.</p>
-        )}
+        {activeSection === 'missioni' && <MissionsSection />}
         {activeSection === 'commissioni' && (
           <p className="pl-hint">Report commissioni per locale — in arrivo.</p>
         )}
@@ -423,6 +422,191 @@ function PricingSection() {
           );
         })}
       </div>
+    </div>
+  );
+}
+
+/**
+ * ============================================================
+ * SEZIONE "MISSIONI" — crea missioni sponsorizzate e genera il
+ * loro QR direttamente qui, invece di passare da Supabase a mano
+ * + lo strumento HTML separato usato finora.
+ * ============================================================
+ */
+const MISSION_LINK_BASE = 'https://populive-frontend-production.up.railway.app/mission/';
+
+function MissionsSection() {
+  const [venues, setVenues] = useState([]);
+  const [missions, setMissions] = useState([]);
+  const [loadingMissions, setLoadingMissions] = useState(true);
+  const [creating, setCreating] = useState(false);
+  const [newMissionQr, setNewMissionQr] = useState(null); // { missionId, qrDataUrl } — appena creata
+
+  const [form, setForm] = useState({
+    sponsorName: '', venueId: '', claimText: '', bonusPoints: '',
+    radiusMeters: '2000', hashtagFilter: '', dateFrom: '', dateTo: '',
+  });
+
+  const loadMissions = useCallback(() => {
+    setLoadingMissions(true);
+    apiFetch('/api/dashboard/missions')
+      .then((r) => r.json())
+      .then((data) => { if (data.success) setMissions(data.missions); })
+      .finally(() => setLoadingMissions(false));
+  }, []);
+
+  useEffect(() => {
+    apiFetch('/api/venues/map')
+      .then((r) => r.json())
+      .then((data) => { if (data.success) setVenues(data.venues); });
+    loadMissions();
+  }, [loadMissions]);
+
+  function updateField(field, value) {
+    setForm((prev) => ({ ...prev, [field]: value }));
+  }
+
+  async function generateQrFor(missionId) {
+    return QRCode.toDataURL(MISSION_LINK_BASE + missionId, {
+      width: 300,
+      color: { dark: '#0D0D0D', light: '#ffffff' },
+    });
+  }
+
+  async function handleCreate() {
+    if (!form.sponsorName || !form.venueId || !form.claimText || !form.bonusPoints || !form.dateFrom || !form.dateTo) {
+      window.alert('Compila almeno sponsor, locale, claim, punti e le due date.');
+      return;
+    }
+
+    setCreating(true);
+    try {
+      const res = await apiFetch('/api/dashboard/missions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sponsorName: form.sponsorName,
+          venueId: form.venueId,
+          claimText: form.claimText,
+          bonusPoints: parseInt(form.bonusPoints, 10),
+          radiusMeters: parseInt(form.radiusMeters, 10) || 2000,
+          hashtagFilter: form.hashtagFilter.trim()
+            ? form.hashtagFilter.split(',').map((h) => h.trim().replace(/^#/, '')).filter(Boolean)
+            : null,
+          dateFrom: form.dateFrom,
+          dateTo: form.dateTo,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        const qrDataUrl = await generateQrFor(data.missionId);
+        setNewMissionQr({ missionId: data.missionId, qrDataUrl });
+        setForm({ sponsorName: '', venueId: '', claimText: '', bonusPoints: '', radiusMeters: '2000', hashtagFilter: '', dateFrom: '', dateTo: '' });
+        loadMissions();
+      } else {
+        window.alert('Qualcosa è andato storto — riprova.');
+      }
+    } finally {
+      setCreating(false);
+    }
+  }
+
+  return (
+    <div>
+      <MetricCard title="Crea una nuova missione">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <input placeholder="Nome sponsor (es. Profumeria Bianchi)" value={form.sponsorName} onChange={(e) => updateField('sponsorName', e.target.value)} style={{ marginBottom: 0 }} />
+
+          <select value={form.venueId} onChange={(e) => updateField('venueId', e.target.value)} style={{ marginBottom: 0 }}>
+            <option value="">Scegli il locale…</option>
+            {venues.map((v) => (
+              <option key={v.venueId} value={v.venueId}>{v.name}</option>
+            ))}
+          </select>
+
+          <textarea
+            placeholder='Claim (es. "Recati oggi da Profumeria Bianchi per 30 punti")'
+            value={form.claimText}
+            onChange={(e) => updateField('claimText', e.target.value)}
+            rows={2}
+            style={{ marginBottom: 0, width: '100%', padding: 12, borderRadius: 10, border: '1px solid rgba(228,212,200,0.2)', background: 'var(--surface-2)', color: 'var(--text)', fontSize: 13, fontFamily: 'inherit', resize: 'vertical' }}
+          />
+
+          <div style={{ display: 'flex', gap: 8 }}>
+            <input placeholder="Punti bonus" type="number" value={form.bonusPoints} onChange={(e) => updateField('bonusPoints', e.target.value)} style={{ marginBottom: 0, flex: 1 }} />
+            <input placeholder="Raggio in metri" type="number" value={form.radiusMeters} onChange={(e) => updateField('radiusMeters', e.target.value)} style={{ marginBottom: 0, flex: 1 }} />
+          </div>
+
+          <input placeholder="Hashtag (facoltativo, separati da virgola — es. beauty, cosmetics)" value={form.hashtagFilter} onChange={(e) => updateField('hashtagFilter', e.target.value)} style={{ marginBottom: 0 }} />
+
+          <div style={{ display: 'flex', gap: 8 }}>
+            <div style={{ flex: 1 }}>
+              <label style={{ fontSize: 9.5, color: 'var(--text-muted)' }}>Da</label>
+              <input type="date" value={form.dateFrom} onChange={(e) => updateField('dateFrom', e.target.value)} style={{ marginBottom: 0 }} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <label style={{ fontSize: 9.5, color: 'var(--text-muted)' }}>A</label>
+              <input type="date" value={form.dateTo} onChange={(e) => updateField('dateTo', e.target.value)} style={{ marginBottom: 0 }} />
+            </div>
+          </div>
+
+          <button className="pl-send-btn" onClick={handleCreate} disabled={creating} style={{ marginTop: 4 }}>
+            {creating ? 'Un attimo…' : 'Crea missione e genera QR'}
+          </button>
+        </div>
+      </MetricCard>
+
+      {newMissionQr && (
+        <div style={{ background: '#fff', borderRadius: 14, padding: 20, marginTop: 12, textAlign: 'center' }}>
+          <img src={newMissionQr.qrDataUrl} alt="QR missione" style={{ width: 220, height: 220 }} />
+          <p style={{ fontSize: 10.5, color: '#666', marginTop: 8, wordBreak: 'break-all' }}>{MISSION_LINK_BASE}{newMissionQr.missionId}</p>
+        </div>
+      )}
+
+      <div style={{ marginTop: 20 }}>
+        <div className="pl-section-label" style={{ marginBottom: 10 }}>Missioni esistenti</div>
+        {loadingMissions && <p className="pl-hint">Caricamento…</p>}
+        {!loadingMissions && missions.length === 0 && <p className="pl-hint">Ancora nessuna missione creata.</p>}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {missions.map((m) => (
+            <ExistingMissionRow key={m.missionId} mission={m} onGenerateQr={generateQrFor} />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ExistingMissionRow({ mission, onGenerateQr }) {
+  const [qrDataUrl, setQrDataUrl] = useState(null);
+  const [loadingQr, setLoadingQr] = useState(false);
+
+  async function toggleQr() {
+    if (qrDataUrl) { setQrDataUrl(null); return; }
+    setLoadingQr(true);
+    setQrDataUrl(await onGenerateQr(mission.missionId));
+    setLoadingQr(false);
+  }
+
+  return (
+    <div style={{ background: 'var(--surface)', border: '1px solid rgba(228,212,200,0.12)', borderRadius: 12, padding: 12 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+        <div>
+          <div style={{ fontSize: 12, fontWeight: 700 }}>{mission.sponsorName}</div>
+          <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>{mission.venueName} · +{mission.bonusPoints} punti</div>
+        </div>
+        <button
+          onClick={toggleQr}
+          style={{ flexShrink: 0, padding: '6px 10px', borderRadius: 8, border: 'none', background: 'var(--cyan)', color: '#0D0D0D', fontSize: 10, fontWeight: 700, cursor: 'pointer' }}
+        >
+          {loadingQr ? '…' : qrDataUrl ? 'Nascondi QR' : 'Mostra QR'}
+        </button>
+      </div>
+      {qrDataUrl && (
+        <div style={{ background: '#fff', borderRadius: 10, padding: 14, marginTop: 10, textAlign: 'center' }}>
+          <img src={qrDataUrl} alt="QR missione" style={{ width: 160, height: 160 }} />
+        </div>
+      )}
     </div>
   );
 }

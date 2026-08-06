@@ -21,6 +21,7 @@ import WelcomeBack from './WelcomeBack';
 import MissionClaim from './MissionClaim';
 import VenuesMap from './VenuesMap';
 import Dashboard from './Dashboard';
+import NearbyMissions from './NearbyMissions';
 import { API_BASE, apiFetch, getToken, getStoredUserId, clearSession } from './apiClient';
 
 import './populive-styles.css';
@@ -124,6 +125,7 @@ export default function App() {
   const [pulseBadgeCount, setPulseBadgeCount] = useState(0);
   const [showSettings, setShowSettings] = useState(false);
   const [venuesMapMode, setVenuesMapMode] = useState(null); // null | 'browse' | 'historical'
+  const [showNearbyMissions, setShowNearbyMissions] = useState(false);
   // "Bentornato" — mostrata una sola volta appena si entra in app,
   // vero solo finché non sappiamo ancora se c'è qualcosa di nuovo
   // da mostrare (il componente stesso decide, chiamando onDone
@@ -364,6 +366,12 @@ export default function App() {
             >
               <Map size={14} /> Sfoglia tutti i locali sulla mappa
             </button>
+            <button
+              onClick={() => setShowNearbyMissions(true)}
+              style={{ marginTop: 8, width: '100%', padding: 12, borderRadius: 14, border: '1px solid rgba(228,212,200,0.2)', background: 'var(--surface)', color: 'var(--teak)', fontSize: 11.5, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}
+            >
+              <Target size={14} /> Missioni vicino a te
+            </button>
           </>
         )}
 
@@ -446,6 +454,14 @@ export default function App() {
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 50 }}>
           <div style={{ width: '100%', maxWidth: 420, background: 'var(--surface)', borderRadius: '24px 24px 0 0', padding: 20, maxHeight: '85vh', overflowY: 'auto', boxShadow: 'var(--shadow-lg)' }}>
             <VenuesMap currentUserId={userId} onClose={() => setVenuesMapMode(null)} mode={venuesMapMode} />
+          </div>
+        </div>
+      )}
+
+      {showNearbyMissions && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 50 }}>
+          <div style={{ width: '100%', maxWidth: 420, background: 'var(--surface)', borderRadius: '24px 24px 0 0', padding: 20, maxHeight: '85vh', overflowY: 'auto', boxShadow: 'var(--shadow-lg)' }}>
+            <NearbyMissions onClose={() => setShowNearbyMissions(false)} />
           </div>
         </div>
       )}

@@ -358,6 +358,24 @@ function EditProfileForm({ userId, initialBio, initialHashtags, onSaved, onCance
       </div>
       <p className="pl-hint">Gli hashtag ti rendono trovabile dai brand della tua categoria — max {MAX_HASHTAGS}.</p>
 
+      <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10, cursor: 'pointer' }}>
+        <input
+          type="checkbox"
+          checked={hashtags.includes('pr')}
+          onChange={(e) => {
+            if (e.target.checked) {
+              if (!hashtags.includes('pr') && hashtags.length < MAX_HASHTAGS) {
+                setHashtags([...hashtags, 'pr']);
+              }
+            } else {
+              setHashtags(hashtags.filter((h) => h !== 'pr'));
+            }
+          }}
+          style={{ width: 16, height: 16, marginBottom: 0 }}
+        />
+        <span style={{ fontSize: 12 }}>Sono un PR — rendimi trovabile dai locali che cercano organizzatori</span>
+      </label>
+
       {error && <p className="pl-error">{error}</p>}
       <button className="pl-send-btn" onClick={save} disabled={saving}>
         {saving ? 'Salvataggio…' : 'Salva modifiche'}

@@ -259,9 +259,11 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
           secondo QR esterno: apre la fotocamera nativa (qui,
           nell'attesa della fotocamera vera, un campo testo che
           simula il codice letto) per collegarsi alla squadra del
-          tavolo. Disponibile a prescindere che l'Arena sia già
-          attiva o no. */}
-      {tableJoined ? (
+          tavolo. Visibile SOLO dopo un vero check-in nel locale
+          (arenaSessionId esiste solo a quel punto) — prima non ha
+          senso mostrarlo, il collegamento al tavolo non avrebbe
+          nessuna sessione a cui agganciarsi. */}
+      {arenaSessionId && (tableJoined ? (
         <div className="pl-hint" style={{ textAlign: 'center', marginTop: 14 }}>
           ✓ Agganciato al tavolo — i bonus di spesa si divideranno con chi altro si unisce.
         </div>
@@ -290,7 +292,7 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
             {tableJoinLoading ? 'Un attimo…' : 'Conferma'}
           </button>
         </div>
-      )}
+      ))}
 
       {selectedProfileUserId && (
         <ProfileFullScreen

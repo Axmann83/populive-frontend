@@ -229,6 +229,29 @@ export default function ProfileCreation({ onComplete }) {
           </div>
           <p className="pl-hint">Gli hashtag ti rendono trovabile dai brand della tua categoria — max {MAX_HASHTAGS}.</p>
 
+          {/* Casella dedicata, non un hashtag scritto a mano come gli
+              altri — ma sotto usa la STESSA infrastruttura hashtag
+              già esistente (aggiunge/toglie "pr"), così il motore di
+              ricerca per hashtag in dashboard funziona per questo
+              come per qualunque altra categoria, senza duplicare nulla. */}
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10, cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={hashtags.includes('pr')}
+              onChange={(e) => {
+                if (e.target.checked) {
+                  if (!hashtags.includes('pr') && hashtags.length < MAX_HASHTAGS) {
+                    setHashtags([...hashtags, 'pr']);
+                  }
+                } else {
+                  setHashtags(hashtags.filter((h) => h !== 'pr'));
+                }
+              }}
+              style={{ width: 16, height: 16, marginBottom: 0 }}
+            />
+            <span style={{ fontSize: 12 }}>Sono un PR — rendimi trovabile dai locali che cercano organizzatori</span>
+          </label>
+
           {error && <p className="pl-error">{error}</p>}
           <button type="submit" disabled={loading || !displayName.trim()}>
             {loading ? 'Un attimo…' : 'Continua'}

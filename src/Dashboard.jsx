@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import QRCode from 'qrcode';
 import { apiFetch } from './apiClient';
-import { Target, Wallet, Settings as SettingsIcon, TrendingUp, Coins } from './PopuLiveIcons';
+import { Target, Wallet, Settings as SettingsIcon, TrendingUp, Coins, Search } from './PopuLiveIcons';
 
 /**
  * ============================================================
@@ -78,14 +78,16 @@ export default function Dashboard({ userId }) {
       <div className="pl-content">
         <div style={{ display: 'flex', gap: 5, marginBottom: 18 }}>
           <SectionTab icon={Target} label="Missioni" active={activeSection === 'missioni'} onClick={() => setActiveSection('missioni')} />
-          <SectionTab icon={Wallet} label="Commissioni" active={activeSection === 'commissioni'} onClick={() => setActiveSection('commissioni')} />
+          <SectionTab icon={Wallet} label="Commiss." active={activeSection === 'commissioni'} onClick={() => setActiveSection('commissioni')} />
           <SectionTab icon={TrendingUp} label="Locali" active={activeSection === 'locali'} onClick={() => setActiveSection('locali')} />
           <SectionTab icon={Coins} label="Prezzi" active={activeSection === 'prezzi'} onClick={() => setActiveSection('prezzi')} />
+          <SectionTab icon={Search} label="Persone" active={activeSection === 'persone'} onClick={() => setActiveSection('persone')} />
           <SectionTab icon={SettingsIcon} label="Funzioni" active={activeSection === 'funzionalita'} onClick={() => setActiveSection('funzionalita')} />
         </div>
 
         {activeSection === 'missioni' && <MissionsSection />}
         {activeSection === 'commissioni' && <CommissionsSection />}
+        {activeSection === 'persone' && <PeopleSearchSection />}
         {activeSection === 'locali' && <VenueMetricsSection />}
         {activeSection === 'prezzi' && <PricingSection />}
         {activeSection === 'funzionalita' && <FeatureFlagsSection />}
@@ -816,6 +818,81 @@ function FeatureFlagsSection() {
                 transition: 'left 0.2s',
               }} />
             </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * ============================================================
+ * SEZIONE "PERSONE" — motore di ricerca per hashtag, per estrarre
+ * dalla classifica generale tutte le persone con una certa
+ * etichetta (es. "pr") e fornirle a locali/brand che le
+ * richiedono. Include il numero di telefono — solo qui, solo per
+ * gli Architetti — per poter davvero contattare chi ha scelto di
+ * rendersi trovabile con quell'hashtag.
+ * ============================================================
+ */
+function PeopleSearchSection() {
+  const [hashtagInput, setHashtagInput] = useState('pr');
+  const [people, setPeople] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  async function search() {
+    const clean = hashtagInput.trim().replace(/^#/, '');
+    if (!clean) return;
+    setLoading(true);
+    try {
+      const res = await apiFetch(`/api/dashboard/search-by-hashtag?hashtag=${encodeURIComponent(clean)}`);
+      const data = await res.json();
+      setPeople(data.success ? data.people : []);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div>
+      <p className="pl-hint" style={{ marginBottom: 12 }}>
+        Cerca tutte le persone con un dato hashtag, ordinate per punti — utile per fornire nomi veri a locali o brand che li richiedono (es. "#pr" per trovare organizzatori).
+      </p>
+
+      <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
+        <input
+          value={hashtagInput}
+          onChange={(e) => setHashtagInput(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && search()}
+          placeholder="pr, fitness, beauty…"
+          style={{ marginBottom: 0, flex: 1 }}
+        />
+        <button
+          onClick={search}
+          disabled={loading}
+          style={{ padding: '0 16px', borderRadius: 10, border: 'none', background: 'var(--cyan)', color: '#0D0D0D', fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+        >
+          <Search size={14} /> {loading ? '…' : 'Cerca'}
+        </button>
+      </div>
+
+      {people === null && <p className="pl-hint">Scrivi un hashtag e tocca Cerca.</p>}
+      {people !== null && people.length === 0 && <p className="pl-hint">Nessuno trovato con questo hashtag.</p>}
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {people?.map((p) => (
+          <div key={p.userId} style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--surface)', border: '1px solid rgba(228,212,200,0.12)', borderRadius: 12, padding: 10 }}>
+            <div style={{ width: 40, height: 40, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, background: 'var(--surface-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>
+              {p.photoUrl ? <img src={p.photoUrl} alt={p.displayName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : p.avatarEmoji}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 12.5, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 5 }}>
+                {p.displayName}
+                {p.isVerified && <span style={{ fontSize: 9, color: 'var(--cyan)' }}>✓</span>}
+                {p.isTopConnector && <span style={{ fontSize: 8.5, color: '#C7C9CC' }}>⛓</span>}
+              </div>
+              <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>{p.globalPoints} punti · {p.phoneNumber}</div>
+            </div>
           </div>
         ))}
       </div>

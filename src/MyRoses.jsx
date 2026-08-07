@@ -18,11 +18,11 @@ import { apiFetch } from './apiClient';
  * Pulse extra era pagarlo uno alla volta al momento dell'invio.
  * ============================================================
  */
-export default function MyPulses({ userId, onOpenPulse }) {
+export default function MyPulses({ userId, venueId, onOpenPulse }) {
   const [pulses, setPulses] = useState([]);
   const [balance, setBalance] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [purchasing, setPurchasing] = useState(null); // null | productId in corso
+  const [purchasing, setPurchasing] = useState(null); // null | 1 | 5, quale quantità è in corso
   const [purchaseError, setPurchaseError] = useState(null);
 
   const load = useCallback(async () => {
@@ -45,30 +45,28 @@ export default function MyPulses({ userId, onOpenPulse }) {
 
   useEffect(() => { load(); }, [load]);
 
-  const [bundleOptions, setBundleOptions] = useState([]);
+  // Prezzi specifici DI QUESTO LOCALE — non più un catalogo globale.
+  // Se il locale non ha ancora concordato un prezzo con gli
+  // Architetti, il campo resta vuoto (null) e quel bottone
+  // semplicemente non compare — mai un prezzo finto.
+  const [venuePrices, setVenuePrices] = useState({ singlePriceCents: null, bundle5PriceCents: null });
 
   useEffect(() => {
-    apiFetch('/api/products')
+    if (!venueId) return;
+    apiFetch(`/api/venues/${venueId}/pulse-prices`)
       .then((r) => r.json())
-      .then((data) => {
-        if (data.success) {
-          const options = data.products
-            .filter((p) => p.product_type === 'pulse_bundle')
-            .sort((a, b) => (a.effect_config?.credits || 0) - (b.effect_config?.credits || 0));
-          setBundleOptions(options);
-        }
-      })
+      .then((data) => { if (data.success) setVenuePrices(data); })
       .catch(() => {});
-  }, []);
+  }, [venueId]);
 
-  const buyBundle = useCallback(async (productId) => {
-    setPurchasing(productId);
+  const buyCredits = useCallback(async (quantity) => {
+    setPurchasing(quantity);
     setPurchaseError(null);
     try {
-      const purchaseRes = await apiFetch('/api/purchases/initiate', {
+      const purchaseRes = await apiFetch(`/api/venues/${venueId}/pulse-credits/purchase`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ productId }),
+        body: JSON.stringify({ quantity }),
       });
       const purchaseData = await purchaseRes.json();
 
@@ -87,11 +85,12 @@ export default function MyPulses({ userId, onOpenPulse }) {
     } finally {
       setPurchasing(null);
     }
-  }, [load]);
+  }, [load, venueId]);
 
   if (loading) return <div className="pl-hint" style={{ textAlign: 'center', marginTop: 30 }}>Caricamento…</div>;
 
   const totalAvailable = (balance?.freeBalance || 0) + (balance?.paidCredits || 0);
+  const hasAnyPriceSet = venuePrices.singlePriceCents || venuePrices.bundle5PriceCents;
 
   return (
     <div className="pl-screen">
@@ -106,29 +105,46 @@ export default function MyPulses({ userId, onOpenPulse }) {
         </div>
       </div>
 
-      {/* Opzioni di acquisto — una per ciascun pacchetto nel
-          catalogo (oggi 1 e 5, in futuro se ne aggiungiamo altri
-          compaiono qui da soli, senza toccare il codice). */}
-      {bundleOptions.length > 0 && (
+      {/* Opzioni di acquisto — prezzo specifico DI QUESTO LOCALE,
+          compare solo se è stato davvero concordato (mai un prezzo
+          finto). Se il locale non ne ha impostato nessuno, questa
+          sezione sparisce del tutto. */}
+      {hasAnyPriceSet && (
         <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
-          {bundleOptions.map((p) => (
+          {venuePrices.singlePriceCents && (
             <button
-              key={p.id}
-              onClick={() => buyBundle(p.id)}
+              onClick={() => buyCredits(1)}
               disabled={purchasing !== null}
               style={{
                 flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
                 background: 'var(--surface-2)', border: '1px solid rgba(228,212,200,0.16)', borderRadius: 12,
                 padding: '10px 8px', cursor: purchasing !== null ? 'default' : 'pointer',
-                opacity: purchasing !== null && purchasing !== p.id ? 0.5 : 1,
+                opacity: purchasing !== null && purchasing !== 1 ? 0.5 : 1,
               }}
             >
               <span style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--cyan)' }}>
-                {purchasing === p.id ? 'Un attimo…' : `+${p.effect_config?.credits || 1} Pulse`}
+                {purchasing === 1 ? 'Un attimo…' : '+1 Pulse'}
               </span>
-              <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>{(p.price_cents / 100).toFixed(2)}€</span>
+              <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>{(venuePrices.singlePriceCents / 100).toFixed(2)}€</span>
             </button>
-          ))}
+          )}
+          {venuePrices.bundle5PriceCents && (
+            <button
+              onClick={() => buyCredits(5)}
+              disabled={purchasing !== null}
+              style={{
+                flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
+                background: 'var(--surface-2)', border: '1px solid rgba(228,212,200,0.16)', borderRadius: 12,
+                padding: '10px 8px', cursor: purchasing !== null ? 'default' : 'pointer',
+                opacity: purchasing !== null && purchasing !== 5 ? 0.5 : 1,
+              }}
+            >
+              <span style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--cyan)' }}>
+                {purchasing === 5 ? 'Un attimo…' : '+5 Pulse'}
+              </span>
+              <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>{(venuePrices.bundle5PriceCents / 100).toFixed(2)}€</span>
+            </button>
+          )}
         </div>
       )}
       {purchaseError && <p className="pl-error" style={{ marginBottom: 10 }}>{purchaseError}</p>}

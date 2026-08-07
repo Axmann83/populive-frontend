@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import QRCode from 'qrcode';
+import QrScannerModal from './QrScannerModal';
 import { apiFetch } from './apiClient';
 import { Target, Settings as SettingsIcon, TrendingUp, Coins, Search, Armchair } from './PopuLiveIcons';
 
@@ -766,6 +767,7 @@ function VenueOrganizePanel({ venue, onVenueUpdate }) {
   const [savedSpending, setSavedSpending] = useState(false);
 
   const [tableCode, setTableCode] = useState('');
+  const [showScanner, setShowScanner] = useState(false);
   const [spentAmount, setSpentAmount] = useState('');
   const [confirmingSpend, setConfirmingSpend] = useState(false);
   const [spendResult, setSpendResult] = useState(null);
@@ -774,6 +776,17 @@ function VenueOrganizePanel({ venue, onVenueUpdate }) {
   const [closeTime, setCloseTime] = useState(venue.defaultCloseTime || '');
   const [savingHours, setSavingHours] = useState(false);
   const [savedHours, setSavedHours] = useState(false);
+
+  // QR d'ingresso del locale — un solo codice per locale.
+  const [venueQrDataUrl, setVenueQrDataUrl] = useState(null);
+  const [generatingVenueQr, setGeneratingVenueQr] = useState(false);
+
+  // QR tavoli — quanti servono cambia serata per serata, da qui il
+  // campo quantità invece di generarli uno alla volta.
+  const [tableQrCount, setTableQrCount] = useState('10');
+  const [tableQrLabel, setTableQrLabel] = useState('Tavolo');
+  const [tableQrs, setTableQrs] = useState(null); // [{ label, code, dataUrl }]
+  const [generatingTableQrs, setGeneratingTableQrs] = useState(false);
 
   async function savePct() {
     const pct = parseInt(pctEdit, 10);
@@ -910,6 +923,42 @@ function VenueOrganizePanel({ venue, onVenueUpdate }) {
     }
   }
 
+  async function generateVenueQr() {
+    setGeneratingVenueQr(true);
+    try {
+      const url = `https://populive-frontend-production.up.railway.app/checkin/${venue.venueId}`;
+      const dataUrl = await QRCode.toDataURL(url, { width: 300, color: { dark: '#0D0D0D', light: '#ffffff' } });
+      setVenueQrDataUrl(dataUrl);
+    } finally {
+      setGeneratingVenueQr(false);
+    }
+  }
+
+  async function generateTableQrs() {
+    const count = parseInt(tableQrCount, 10);
+    if (!Number.isInteger(count) || count <= 0 || count > 200) {
+      window.alert('Inserisci un numero di tavoli valido, tra 1 e 200.');
+      return;
+    }
+    setGeneratingTableQrs(true);
+    try {
+      // Ogni codice è un semplice testo univoco (nessun link, il QR
+      // dei tavoli non porta a nessuna pagina web — lo legge solo lo
+      // scanner della dashboard) — legato al locale, così due locali
+      // diversi non rischiano mai di avere lo stesso codice tavolo.
+      const results = [];
+      for (let i = 1; i <= count; i++) {
+        const code = `tavolo_${venue.venueId}_${i}`;
+        const label = `${tableQrLabel.trim() || 'Tavolo'} ${i}`;
+        const dataUrl = await QRCode.toDataURL(code, { width: 220, color: { dark: '#0D0D0D', light: '#ffffff' } });
+        results.push({ label, code, dataUrl });
+      }
+      setTableQrs(results);
+    } finally {
+      setGeneratingTableQrs(false);
+    }
+  }
+
   return (
     <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 12 }}>
       <MetricCard title={`${venue.venueName} — commissione`}>
@@ -969,6 +1018,14 @@ function VenueOrganizePanel({ venue, onVenueUpdate }) {
       <MetricCard title="Conferma spesa tavolo">
         <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
           <input value={tableCode} onChange={(e) => setTableCode(e.target.value)} placeholder="Codice tavolo" style={{ marginBottom: 0, flex: 1 }} />
+          <button
+            type="button"
+            onClick={() => setShowScanner(true)}
+            title="Inquadra il QR del tavolo"
+            style={{ flexShrink: 0, width: 42, borderRadius: 10, border: '1px solid rgba(228,212,200,0.2)', background: 'var(--surface-2)', color: 'var(--teak)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          >
+            📷
+          </button>
           <input type="number" min="0" value={spentAmount} onChange={(e) => setSpentAmount(e.target.value)} placeholder="Speso (€)" style={{ marginBottom: 0, flex: 1 }} />
         </div>
         <button onClick={confirmSpending} disabled={confirmingSpend} style={{ width: '100%', padding: '9px', borderRadius: 10, border: 'none', fontSize: 11, fontWeight: 700, background: 'var(--cyan)', color: '#0D0D0D', cursor: confirmingSpend ? 'default' : 'pointer' }}>
@@ -978,6 +1035,17 @@ function VenueOrganizePanel({ venue, onVenueUpdate }) {
           <p style={{ fontSize: 10, color: spendResult.startsWith('✓') ? 'var(--cyan)' : '#E85D5D', marginTop: 8, marginBottom: 0 }}>{spendResult}</p>
         )}
       </MetricCard>
+
+      {showScanner && (
+        <QrScannerModal
+          onScan={(text, error) => {
+            setShowScanner(false);
+            if (text) setTableCode(text);
+            else if (error === 'camera_error') window.alert('Non riesco ad accedere alla fotocamera — controlla i permessi del browser, oppure inserisci il codice a mano.');
+          }}
+          onClose={() => setShowScanner(false)}
+        />
+      )}
 
       <MetricCard title="Orari Arena">
         <p className="pl-hint" style={{ marginBottom: 10 }}>
@@ -996,6 +1064,50 @@ function VenueOrganizePanel({ venue, onVenueUpdate }) {
         <button onClick={saveHours} disabled={savingHours} style={{ width: '100%', padding: '9px', borderRadius: 10, border: 'none', fontSize: 11, fontWeight: 700, background: savedHours ? 'rgba(47,211,232,0.3)' : 'var(--cyan)', color: '#0D0D0D', cursor: savingHours ? 'default' : 'pointer' }}>
           {savingHours ? 'Un attimo…' : savedHours ? 'Salvato ✓' : 'Salva orari'}
         </button>
+      </MetricCard>
+
+      <MetricCard title="QR d'ingresso del locale">
+        <p className="pl-hint" style={{ marginBottom: 10 }}>
+          Un solo QR per locale — chi lo scansiona fa il check-in nell'Arena.
+        </p>
+        <button onClick={generateVenueQr} disabled={generatingVenueQr} style={{ width: '100%', padding: '9px', borderRadius: 10, border: 'none', fontSize: 11, fontWeight: 700, background: 'var(--cyan)', color: '#0D0D0D', cursor: generatingVenueQr ? 'default' : 'pointer' }}>
+          {generatingVenueQr ? 'Un attimo…' : venueQrDataUrl ? 'Rigenera QR' : 'Genera QR'}
+        </button>
+        {venueQrDataUrl && (
+          <div style={{ background: '#fff', borderRadius: 12, padding: 16, marginTop: 10, textAlign: 'center' }}>
+            <img src={venueQrDataUrl} alt="QR ingresso locale" style={{ width: 200, height: 200 }} />
+          </div>
+        )}
+      </MetricCard>
+
+      <MetricCard title="QR tavoli">
+        <p className="pl-hint" style={{ marginBottom: 10 }}>
+          Genera tutti i QR dei tavoli in una volta — quanti ne servono per stasera.
+        </p>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+          <div style={{ flex: 1 }}>
+            <label style={{ fontSize: 9.5, color: 'var(--text-muted)' }}>Etichetta</label>
+            <input value={tableQrLabel} onChange={(e) => setTableQrLabel(e.target.value)} placeholder="Tavolo" style={{ marginBottom: 0 }} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <label style={{ fontSize: 9.5, color: 'var(--text-muted)' }}>Quanti</label>
+            <input type="number" min="1" max="200" value={tableQrCount} onChange={(e) => setTableQrCount(e.target.value)} style={{ marginBottom: 0 }} />
+          </div>
+        </div>
+        <button onClick={generateTableQrs} disabled={generatingTableQrs} style={{ width: '100%', padding: '9px', borderRadius: 10, border: 'none', fontSize: 11, fontWeight: 700, background: 'var(--cyan)', color: '#0D0D0D', cursor: generatingTableQrs ? 'default' : 'pointer' }}>
+          {generatingTableQrs ? 'Genero…' : tableQrs ? 'Rigenera tutti' : 'Genera QR tavoli'}
+        </button>
+
+        {tableQrs && (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 12 }}>
+            {tableQrs.map((t) => (
+              <div key={t.code} style={{ background: '#fff', borderRadius: 10, padding: 10, textAlign: 'center' }}>
+                <img src={t.dataUrl} alt={t.label} style={{ width: '100%', maxWidth: 140 }} />
+                <div style={{ fontSize: 10, color: '#333', fontWeight: 700, marginTop: 4 }}>{t.label}</div>
+              </div>
+            ))}
+          </div>
+        )}
       </MetricCard>
     </div>
   );

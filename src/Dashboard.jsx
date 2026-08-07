@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import QRCode from 'qrcode';
 import { apiFetch } from './apiClient';
-import { Target, Wallet, Settings as SettingsIcon, TrendingUp, Coins, Search } from './PopuLiveIcons';
+import { Target, Wallet, Settings as SettingsIcon, TrendingUp, Coins, Search, Armchair } from './PopuLiveIcons';
 
 /**
  * ============================================================
@@ -78,7 +78,7 @@ export default function Dashboard({ userId }) {
       <div className="pl-content">
         <div style={{ display: 'flex', gap: 5, marginBottom: 18 }}>
           <SectionTab icon={Target} label="Missioni" active={activeSection === 'missioni'} onClick={() => setActiveSection('missioni')} />
-          <SectionTab icon={Wallet} label="Commiss." active={activeSection === 'commissioni'} onClick={() => setActiveSection('commissioni')} />
+          <SectionTab icon={Armchair} label="Serata" active={activeSection === 'organizza'} onClick={() => setActiveSection('organizza')} />
           <SectionTab icon={TrendingUp} label="Locali" active={activeSection === 'locali'} onClick={() => setActiveSection('locali')} />
           <SectionTab icon={Coins} label="Prezzi" active={activeSection === 'prezzi'} onClick={() => setActiveSection('prezzi')} />
           <SectionTab icon={Search} label="Persone" active={activeSection === 'persone'} onClick={() => setActiveSection('persone')} />
@@ -86,7 +86,7 @@ export default function Dashboard({ userId }) {
         </div>
 
         {activeSection === 'missioni' && <MissionsSection />}
-        {activeSection === 'commissioni' && <CommissionsSection />}
+        {activeSection === 'organizza' && <OrganizeNightSection />}
         {activeSection === 'persone' && <PeopleSearchSection />}
         {activeSection === 'locali' && <VenueMetricsSection />}
         {activeSection === 'prezzi' && <PricingSection />}
@@ -619,29 +619,169 @@ function ExistingMissionRow({ mission, onGenerateQr }) {
  * lì e al prezzo di riferimento attuale.
  * ============================================================
  */
-function CommissionsSection() {
-  const [report, setReport] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [edits, setEdits] = useState({}); // { [venueId]: "70" } — percentuale locale mentre si scrive
-  const [savingId, setSavingId] = useState(null);
-  const [savedId, setSavedId] = useState(null);
+/**
+ * ============================================================
+ * SEZIONE "SERATA" — pannello unico per preparare un locale prima
+ * di una serata test: si sceglie (o si crea) il locale, poi si
+ * vedono e modificano tutte le sue impostazioni in un posto solo
+ * — commissioni, prezzi Pulse specifici, soglia Big Spender,
+ * conferma spesa tavolo, orari Arena.
+ * ============================================================
+ */
+const VENUE_TYPE_OPTIONS = [
+  { value: 'nightclub', label: 'Discoteca' },
+  { value: 'ristorante', label: 'Ristorante' },
+  { value: 'cocktail_bar', label: 'Cocktail bar' },
+  { value: 'palestra', label: 'Palestra' },
+  { value: 'retail', label: 'Retail' },
+];
+
+function OrganizeNightSection() {
+  const [venues, setVenues] = useState([]);
+  const [selectedVenueId, setSelectedVenueId] = useState('');
+  const [addingManually, setAddingManually] = useState(false);
+  const [newVenueName, setNewVenueName] = useState('');
+  const [newVenueType, setNewVenueType] = useState('nightclub');
+  const [creatingVenue, setCreatingVenue] = useState(false);
+
+  const [venue, setVenue] = useState(null);
+  const [loadingVenue, setLoadingVenue] = useState(false);
 
   useEffect(() => {
-    apiFetch('/api/dashboard/commissions')
+    apiFetch('/api/venues/map')
       .then((r) => r.json())
-      .then((data) => { if (data.success) setReport(data.report); })
-      .finally(() => setLoading(false));
+      .then((data) => { if (data.success) setVenues(data.venues); });
   }, []);
 
-  async function savePct(venue) {
-    const raw = edits[venue.venueId];
-    const pct = parseInt(raw, 10);
+  const loadVenue = useCallback((venueId) => {
+    if (!venueId) { setVenue(null); return; }
+    setLoadingVenue(true);
+    apiFetch(`/api/dashboard/venues/${venueId}/full-settings`)
+      .then((r) => r.json())
+      .then((data) => { if (data.success) setVenue(data.venue); })
+      .finally(() => setLoadingVenue(false));
+  }, []);
+
+  function handleSelect(e) {
+    const id = e.target.value;
+    setSelectedVenueId(id);
+    setAddingManually(false);
+    loadVenue(id);
+  }
+
+  async function createVenue() {
+    if (!newVenueName.trim()) {
+      window.alert('Inserisci un nome per il locale.');
+      return;
+    }
+    setCreatingVenue(true);
+    try {
+      // Coordinate di default (centro di Roma) — un locale aggiunto
+      // qui è pensato principalmente per organizzare la serata, non
+      // per la precisione sulla mappa; correggibile in seguito se
+      // serve davvero mostrarlo nel punto esatto.
+      const res = await apiFetch('/api/venues/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: newVenueName.trim(), area: 'Roma',
+          latitude: 41.9028, longitude: 12.4964,
+          venueType: newVenueType,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        const created = { venueId: data.venueId, name: newVenueName.trim(), isPartner: false };
+        setVenues((prev) => [...prev, created]);
+        setSelectedVenueId(data.venueId);
+        setAddingManually(false);
+        setNewVenueName('');
+        loadVenue(data.venueId);
+      } else {
+        window.alert('Qualcosa è andato storto — riprova.');
+      }
+    } finally {
+      setCreatingVenue(false);
+    }
+  }
+
+  return (
+    <div>
+      <p className="pl-hint" style={{ marginBottom: 12 }}>
+        Scegli un locale già presente, o aggiungine uno nuovo — poi trovi qui sotto tutte le sue impostazioni in un posto solo.
+      </p>
+
+      <select value={addingManually ? '__manual__' : selectedVenueId} onChange={(e) => {
+        if (e.target.value === '__manual__') { setAddingManually(true); setSelectedVenueId(''); setVenue(null); }
+        else handleSelect(e);
+      }} style={{ marginBottom: 12 }}>
+        <option value="">Scegli un locale…</option>
+        {venues.map((v) => (
+          <option key={v.venueId} value={v.venueId}>{v.name}{v.isPartner ? ' · partner' : ''}</option>
+        ))}
+        <option value="__manual__">+ Inserisci manualmente…</option>
+      </select>
+
+      {addingManually && (
+        <MetricCard title="Nuovo locale">
+          <input
+            value={newVenueName}
+            onChange={(e) => setNewVenueName(e.target.value)}
+            placeholder="Nome del locale"
+            style={{ marginBottom: 8 }}
+          />
+          <select value={newVenueType} onChange={(e) => setNewVenueType(e.target.value)} style={{ marginBottom: 10 }}>
+            {VENUE_TYPE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+          </select>
+          <button className="pl-send-btn" onClick={createVenue} disabled={creatingVenue}>
+            {creatingVenue ? 'Un attimo…' : 'Crea locale'}
+          </button>
+        </MetricCard>
+      )}
+
+      {loadingVenue && <p className="pl-hint">Caricamento…</p>}
+
+      {venue && <VenueOrganizePanel venue={venue} onVenueUpdate={setVenue} />}
+    </div>
+  );
+}
+
+/**
+ * Il pannello vero e proprio — tutte le impostazioni di UN locale,
+ * ciascuna con il proprio salvataggio indipendente.
+ */
+function VenueOrganizePanel({ venue, onVenueUpdate }) {
+  const [pctEdit, setPctEdit] = useState(String(venue.commissionVenuePct ?? 70));
+  const [savingPct, setSavingPct] = useState(false);
+  const [savedPct, setSavedPct] = useState(false);
+
+  const [pulsePriceEdit, setPulsePriceEdit] = useState(venue.pulsePriceCents ? (venue.pulsePriceCents / 100).toString() : '');
+  const [bundlePriceEdit, setBundlePriceEdit] = useState(venue.pulseBundle5PriceCents ? (venue.pulseBundle5PriceCents / 100).toString() : '');
+  const [savingPrices, setSavingPrices] = useState(false);
+  const [savedPrices, setSavedPrices] = useState(false);
+
+  const [thresholdEdit, setThresholdEdit] = useState(venue.spendingThresholdCents ? (venue.spendingThresholdCents / 100).toString() : '');
+  const [bonusEdit, setBonusEdit] = useState(venue.spendingBonusPoints ? String(venue.spendingBonusPoints) : '');
+  const [savingSpending, setSavingSpending] = useState(false);
+  const [savedSpending, setSavedSpending] = useState(false);
+
+  const [tableCode, setTableCode] = useState('');
+  const [spentAmount, setSpentAmount] = useState('');
+  const [confirmingSpend, setConfirmingSpend] = useState(false);
+  const [spendResult, setSpendResult] = useState(null);
+
+  const [openTime, setOpenTime] = useState(venue.defaultOpenTime || '');
+  const [closeTime, setCloseTime] = useState(venue.defaultCloseTime || '');
+  const [savingHours, setSavingHours] = useState(false);
+  const [savedHours, setSavedHours] = useState(false);
+
+  async function savePct() {
+    const pct = parseInt(pctEdit, 10);
     if (!Number.isInteger(pct) || pct < 0 || pct > 100) {
       window.alert('Inserisci una percentuale valida, tra 0 e 100.');
       return;
     }
-
-    setSavingId(venue.venueId);
+    setSavingPct(true);
     try {
       const res = await apiFetch(`/api/dashboard/venues/${venue.venueId}/commission`, {
         method: 'POST',
@@ -650,90 +790,213 @@ function CommissionsSection() {
       });
       const data = await res.json();
       if (data.success) {
-        // Ricalcoliamo l'importo dovuto usando lo stesso prezzo di
-        // riferimento implicito già in uso (deriviamo il valore
-        // "per Pulse" dal totale precedente, così non serve un
-        // secondo giro dal server solo per un numero).
-        setReport((prev) => prev.map((r) => {
-          if (r.venueId !== venue.venueId) return r;
-          const pricePerPulseCents = r.commissionVenuePct > 0 && r.redeemedCount > 0
-            ? (r.venueOwedCents / (r.commissionVenuePct / 100)) / r.redeemedCount
-            : 0;
-          const venueOwedCents = Math.round(r.redeemedCount * pricePerPulseCents * (pct / 100));
-          return { ...r, commissionVenuePct: pct, venueOwedCents };
-        }));
-        setSavedId(venue.venueId);
-        setTimeout(() => setSavedId(null), 2000);
+        onVenueUpdate({ ...venue, commissionVenuePct: pct });
+        setSavedPct(true);
+        setTimeout(() => setSavedPct(false), 2000);
       } else {
         window.alert('Qualcosa è andato storto — riprova.');
       }
     } finally {
-      setSavingId(null);
+      setSavingPct(false);
     }
   }
 
-  if (loading) return <p className="pl-hint">Caricamento…</p>;
+  async function savePrices() {
+    const single = pulsePriceEdit.trim() ? Math.round(parseFloat(pulsePriceEdit.replace(',', '.')) * 100) : null;
+    const bundle = bundlePriceEdit.trim() ? Math.round(parseFloat(bundlePriceEdit.replace(',', '.')) * 100) : null;
+    setSavingPrices(true);
+    try {
+      const res = await apiFetch(`/api/dashboard/venues/${venue.venueId}/pulse-prices`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ singlePriceCents: single, bundle5PriceCents: bundle }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        onVenueUpdate({ ...venue, pulsePriceCents: single, pulseBundle5PriceCents: bundle });
+        setSavedPrices(true);
+        setTimeout(() => setSavedPrices(false), 2000);
+      } else {
+        window.alert('Qualcosa è andato storto — riprova.');
+      }
+    } finally {
+      setSavingPrices(false);
+    }
+  }
+
+  async function saveSpendingConfig() {
+    const thresholdEuros = parseFloat(thresholdEdit.replace(',', '.'));
+    const points = parseInt(bonusEdit, 10);
+    if (!Number.isFinite(thresholdEuros) || thresholdEuros <= 0 || !Number.isInteger(points) || points <= 0) {
+      window.alert('Inserisci una soglia e un numero di punti validi, entrambi maggiori di zero.');
+      return;
+    }
+    setSavingSpending(true);
+    try {
+      const res = await apiFetch(`/api/dashboard/venues/${venue.venueId}/spending-config`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ thresholdCents: Math.round(thresholdEuros * 100), bonusPoints: points }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        onVenueUpdate({ ...venue, spendingThresholdCents: Math.round(thresholdEuros * 100), spendingBonusPoints: points });
+        setSavedSpending(true);
+        setTimeout(() => setSavedSpending(false), 2000);
+      } else {
+        window.alert('Qualcosa è andato storto — riprova.');
+      }
+    } finally {
+      setSavingSpending(false);
+    }
+  }
+
+  async function confirmSpending() {
+    const amountEuros = parseFloat(spentAmount.replace(',', '.'));
+    if (!tableCode.trim() || !Number.isFinite(amountEuros) || amountEuros <= 0) {
+      window.alert('Inserisci il codice del tavolo e un importo speso valido.');
+      return;
+    }
+    setConfirmingSpend(true);
+    setSpendResult(null);
+    try {
+      const res = await apiFetch('/api/dashboard/award-table-spending', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ venueId: venue.venueId, tableQrCode: tableCode.trim(), spentCents: Math.round(amountEuros * 100) }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSpendResult(`✓ Bonus assegnato a ${data.membersRewarded} persone (+${data.perPersonPoints} punti ciascuno)`);
+        setTableCode('');
+        setSpentAmount('');
+      } else {
+        const messages = {
+          venue_has_no_spending_threshold_configured: 'Imposta prima soglia e punti bonus qui sopra.',
+          below_threshold: 'L\'importo è sotto la soglia impostata per questo locale.',
+          already_awarded_tonight: 'Questo tavolo ha già ricevuto il bonus stasera.',
+          no_squad_found_for_table: 'Nessuno risulta agganciato a questo codice tavolo stasera.',
+          no_active_session_tonight: 'Questo locale non ha un\'Arena attiva in questo momento.',
+        };
+        setSpendResult(messages[data.reason] || 'Qualcosa è andato storto — riprova.');
+      }
+    } finally {
+      setConfirmingSpend(false);
+    }
+  }
+
+  async function saveHours() {
+    if (!openTime || !closeTime) {
+      window.alert('Inserisci sia l\'orario di apertura sia quello di chiusura.');
+      return;
+    }
+    setSavingHours(true);
+    try {
+      const res = await apiFetch(`/api/dashboard/venues/${venue.venueId}/arena-hours`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ openTime, closeTime }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        onVenueUpdate({ ...venue, defaultOpenTime: openTime, defaultCloseTime: closeTime });
+        setSavedHours(true);
+        setTimeout(() => setSavedHours(false), 2000);
+      } else {
+        window.alert('Qualcosa è andato storto — riprova.');
+      }
+    } finally {
+      setSavingHours(false);
+    }
+  }
 
   return (
-    <div>
-      <p className="pl-hint" style={{ marginBottom: 12 }}>
-        Percentuale d'accordo per ciascun locale — cambia il valore "Locale" e "PopuLive" si aggiorna da solo. L'importo dovuto si basa sulle Pulse riscattate lì e sul prezzo attuale del Pulse singolo (v. scheda Prezzi).
-      </p>
+    <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <MetricCard title={`${venue.venueName} — commissione`}>
+        <div style={{ fontSize: 10.5, color: 'var(--text-muted)', marginBottom: 10 }}>
+          {venue.redeemedCount} Pulse riscattate finora · {(venue.venueOwedCents / 100).toFixed(2)}€ dovuti al locale
+        </div>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+          <div style={{ flex: 1 }}>
+            <label style={{ fontSize: 9.5, color: 'var(--text-muted)' }}>Locale %</label>
+            <input type="number" min="0" max="100" value={pctEdit} onChange={(e) => setPctEdit(e.target.value)} style={{ marginBottom: 0 }} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <label style={{ fontSize: 9.5, color: 'var(--text-muted)' }}>PopuLive %</label>
+            <input value={100 - (parseInt(pctEdit, 10) || 0)} disabled style={{ marginBottom: 0, opacity: 0.6 }} />
+          </div>
+        </div>
+        <button onClick={savePct} disabled={savingPct} style={{ width: '100%', padding: '9px', borderRadius: 10, border: 'none', fontSize: 11, fontWeight: 700, background: savedPct ? 'rgba(47,211,232,0.3)' : 'var(--cyan)', color: '#0D0D0D', cursor: savingPct ? 'default' : 'pointer' }}>
+          {savingPct ? 'Un attimo…' : savedPct ? 'Salvato ✓' : 'Salva percentuale'}
+        </button>
+      </MetricCard>
 
-      {report.length === 0 && <p className="pl-hint">Ancora nessun locale partner.</p>}
+      <MetricCard title="Prezzi Pulse di questo locale">
+        <p className="pl-hint" style={{ marginBottom: 10 }}>
+          Vuoti finché non li imposti — finché resta vuoto, l'acquisto non compare in app per questo locale. Da concordare con il proprietario.
+        </p>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+          <div style={{ flex: 1 }}>
+            <label style={{ fontSize: 9.5, color: 'var(--text-muted)' }}>Pulse singolo (€)</label>
+            <input value={pulsePriceEdit} onChange={(e) => setPulsePriceEdit(e.target.value)} placeholder="non impostato" style={{ marginBottom: 0 }} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <label style={{ fontSize: 9.5, color: 'var(--text-muted)' }}>Pacchetto da 5 (€)</label>
+            <input value={bundlePriceEdit} onChange={(e) => setBundlePriceEdit(e.target.value)} placeholder="non impostato" style={{ marginBottom: 0 }} />
+          </div>
+        </div>
+        <button onClick={savePrices} disabled={savingPrices} style={{ width: '100%', padding: '9px', borderRadius: 10, border: 'none', fontSize: 11, fontWeight: 700, background: savedPrices ? 'rgba(47,211,232,0.3)' : 'var(--cyan)', color: '#0D0D0D', cursor: savingPrices ? 'default' : 'pointer' }}>
+          {savingPrices ? 'Un attimo…' : savedPrices ? 'Salvato ✓' : 'Salva prezzi'}
+        </button>
+      </MetricCard>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {report.map((r) => {
-          const editValue = edits[r.venueId] ?? String(r.commissionVenuePct);
-          const venuePct = parseInt(editValue, 10) || 0;
-          const populivePct = 100 - venuePct;
-          const changed = parseInt(editValue, 10) !== r.commissionVenuePct;
+      <MetricCard title="Soglia Big Spender">
+        <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+          <div style={{ flex: 1 }}>
+            <label style={{ fontSize: 9.5, color: 'var(--text-muted)' }}>Soglia (€)</label>
+            <input type="number" min="0" value={thresholdEdit} onChange={(e) => setThresholdEdit(e.target.value)} placeholder="es. 50" style={{ marginBottom: 0 }} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <label style={{ fontSize: 9.5, color: 'var(--text-muted)' }}>Punti bonus</label>
+            <input type="number" min="0" value={bonusEdit} onChange={(e) => setBonusEdit(e.target.value)} placeholder="es. 20" style={{ marginBottom: 0 }} />
+          </div>
+        </div>
+        <button onClick={saveSpendingConfig} disabled={savingSpending} style={{ width: '100%', padding: '9px', borderRadius: 10, border: 'none', fontSize: 11, fontWeight: 700, background: savedSpending ? 'rgba(47,211,232,0.3)' : 'var(--cyan)', color: '#0D0D0D', cursor: savingSpending ? 'default' : 'pointer' }}>
+          {savingSpending ? 'Un attimo…' : savedSpending ? 'Salvato ✓' : 'Salva soglia'}
+        </button>
+      </MetricCard>
 
-          return (
-            <MetricCard key={r.venueId} title={r.venueName}>
-              <div style={{ fontSize: 10.5, color: 'var(--text-muted)', marginBottom: 10 }}>
-                {r.redeemedCount} Pulse riscattate finora
-              </div>
+      <MetricCard title="Conferma spesa tavolo">
+        <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+          <input value={tableCode} onChange={(e) => setTableCode(e.target.value)} placeholder="Codice tavolo" style={{ marginBottom: 0, flex: 1 }} />
+          <input type="number" min="0" value={spentAmount} onChange={(e) => setSpentAmount(e.target.value)} placeholder="Speso (€)" style={{ marginBottom: 0, flex: 1 }} />
+        </div>
+        <button onClick={confirmSpending} disabled={confirmingSpend} style={{ width: '100%', padding: '9px', borderRadius: 10, border: 'none', fontSize: 11, fontWeight: 700, background: 'var(--cyan)', color: '#0D0D0D', cursor: confirmingSpend ? 'default' : 'pointer' }}>
+          {confirmingSpend ? 'Un attimo…' : 'Conferma spesa'}
+        </button>
+        {spendResult && (
+          <p style={{ fontSize: 10, color: spendResult.startsWith('✓') ? 'var(--cyan)' : '#E85D5D', marginTop: 8, marginBottom: 0 }}>{spendResult}</p>
+        )}
+      </MetricCard>
 
-              <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
-                <div style={{ flex: 1 }}>
-                  <label style={{ fontSize: 9.5, color: 'var(--text-muted)' }}>Locale %</label>
-                  <input
-                    type="number"
-                    min="0"
-                    max="100"
-                    value={editValue}
-                    onChange={(e) => setEdits((prev) => ({ ...prev, [r.venueId]: e.target.value }))}
-                    style={{ marginBottom: 0 }}
-                  />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <label style={{ fontSize: 9.5, color: 'var(--text-muted)' }}>PopuLive %</label>
-                  <input value={populivePct} disabled style={{ marginBottom: 0, opacity: 0.6 }} />
-                </div>
-              </div>
-
-              <div style={{ fontSize: 18, fontWeight: 800, fontFamily: "'Space Grotesk',sans-serif", color: 'var(--cyan)', marginBottom: 10 }}>
-                {(r.venueOwedCents / 100).toFixed(2)}€ <span style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 500 }}>dovuti al locale</span>
-              </div>
-
-              <button
-                onClick={() => savePct(r)}
-                disabled={!changed || savingId === r.venueId}
-                style={{
-                  width: '100%', padding: '9px', borderRadius: 10, border: 'none', fontSize: 11, fontWeight: 700,
-                  background: savedId === r.venueId ? 'rgba(47,211,232,0.3)' : 'var(--cyan)',
-                  color: '#0D0D0D',
-                  cursor: !changed || savingId === r.venueId ? 'default' : 'pointer',
-                  opacity: !changed ? 0.5 : 1,
-                }}
-              >
-                {savingId === r.venueId ? 'Un attimo…' : savedId === r.venueId ? 'Salvato ✓' : 'Salva percentuale'}
-              </button>
-            </MetricCard>
-          );
-        })}
-      </div>
+      <MetricCard title="Orari Arena">
+        <p className="pl-hint" style={{ marginBottom: 10 }}>
+          Lascia vuoto per usare gli orari automatici della categoria del locale, oppure imposta orari personalizzati qui.
+        </p>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+          <div style={{ flex: 1 }}>
+            <label style={{ fontSize: 9.5, color: 'var(--text-muted)' }}>Apertura</label>
+            <input type="time" value={openTime} onChange={(e) => setOpenTime(e.target.value)} style={{ marginBottom: 0 }} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <label style={{ fontSize: 9.5, color: 'var(--text-muted)' }}>Chiusura</label>
+            <input type="time" value={closeTime} onChange={(e) => setCloseTime(e.target.value)} style={{ marginBottom: 0 }} />
+          </div>
+        </div>
+        <button onClick={saveHours} disabled={savingHours} style={{ width: '100%', padding: '9px', borderRadius: 10, border: 'none', fontSize: 11, fontWeight: 700, background: savedHours ? 'rgba(47,211,232,0.3)' : 'var(--cyan)', color: '#0D0D0D', cursor: savingHours ? 'default' : 'pointer' }}>
+          {savingHours ? 'Un attimo…' : savedHours ? 'Salvato ✓' : 'Salva orari'}
+        </button>
+      </MetricCard>
     </div>
   );
 }

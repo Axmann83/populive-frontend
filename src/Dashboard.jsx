@@ -890,6 +890,7 @@ function VenueOrganizePanel({ venue, onVenueUpdate }) {
           already_awarded_tonight: 'Questo tavolo ha già ricevuto il bonus stasera.',
           no_squad_found_for_table: 'Nessuno risulta agganciato a questo codice tavolo stasera.',
           no_active_session_tonight: 'Questo locale non ha un\'Arena attiva in questo momento.',
+          big_spender_disabled: 'Il Big Spender è spento dalla scheda Funzionalità — riaccendilo da lì per confermare spese.',
         };
         setSpendResult(messages[data.reason] || 'Qualcosa è andato storto — riprova.');
       }
@@ -1163,6 +1164,7 @@ function FeatureFlagsSection() {
     instant_influencer: 'Instant Influencer',
     pulse_standalone: 'Pulse semplice (anonimo)',
     pulse_like: 'Pulse + Like (minigioco)',
+    big_spender: 'Big Spender (soglia di spesa)',
   };
 
   if (loading) return <p className="pl-hint">Caricamento…</p>;

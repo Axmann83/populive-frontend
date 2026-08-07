@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import QRCode from 'qrcode';
 import { apiFetch } from './apiClient';
-import { Target, Wallet, Settings as SettingsIcon, TrendingUp, Coins, Search, Armchair } from './PopuLiveIcons';
+import { Target, Settings as SettingsIcon, TrendingUp, Coins, Search, Armchair } from './PopuLiveIcons';
 
 /**
  * ============================================================

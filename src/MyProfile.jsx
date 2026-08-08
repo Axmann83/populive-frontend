@@ -94,7 +94,7 @@ export default function MyProfile({ userId, arenaSessionId, onOpenSettings }) {
             ? <img src={ranking.photoUrl} alt={ranking.displayName || 'Tu'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             : (ranking?.avatarEmoji || '🙂')}
         </div>
-        <div style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, fontSize: 15, marginTop: 8 }}>{ranking?.displayName || 'Tu'}</div>
+        <div style={{ fontFamily: "'Unbounded',sans-serif", fontWeight: 700, fontSize: 15, marginTop: 8 }}>{ranking?.displayName || 'Tu'}</div>
       </div>
 
       {/* Foto a tutto schermo — per vedere esattamente come ci si
@@ -283,7 +283,7 @@ function PurchaseCard({ icon: Icon, title, sub, buttonLabel, disabled, onClick }
       <button
         onClick={onClick}
         disabled={disabled}
-        style={{ background: 'var(--cyan)', color: '#0D0D0D', border: 'none', borderRadius: 10, padding: '8px 14px', fontSize: 11, fontWeight: 700, cursor: disabled ? 'default' : 'pointer', opacity: disabled ? 0.6 : 1, flexShrink: 0 }}
+        style={{ background: 'var(--cyan)', color: '#fff', border: 'none', borderRadius: 10, padding: '8px 14px', fontSize: 11, fontWeight: 700, cursor: disabled ? 'default' : 'pointer', opacity: disabled ? 0.6 : 1, flexShrink: 0 }}
       >
         {buttonLabel}
       </button>
@@ -387,7 +387,7 @@ function EditProfileForm({ userId, initialBio, initialHashtags, onSaved, onCance
 function RankCounter({ label, rank, points, accent }) {
   return (
     <div style={{ flex: 1, background: 'var(--surface-2)', border: '1px solid rgba(228,212,200,0.1)', borderRadius: 12, padding: 10, textAlign: 'center', boxShadow: 'var(--shadow-sm)' }}>
-      <div style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 800, fontSize: 17, color: accent || 'var(--text)' }}>
+      <div style={{ fontFamily: "'Unbounded',sans-serif", fontWeight: 800, fontSize: 17, color: accent || 'var(--text)' }}>
         {rank ? `#${rank}` : '—'}
       </div>
       <div style={{ fontSize: 8.5, color: 'var(--text-muted)' }}>{label} · {points ?? 0} pt</div>

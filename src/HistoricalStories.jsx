@@ -74,7 +74,7 @@ export default function HistoricalStories({ people, currentUserId, onClose }) {
       </div>
 
       <div style={{ position: 'absolute', left: 20, right: 20, bottom: 30, zIndex: 3, color: '#fff' }}>
-        <div style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, fontSize: 20, marginBottom: 4 }}>{current.displayName}</div>
+        <div style={{ fontFamily: "'Unbounded',sans-serif", fontWeight: 700, fontSize: 20, marginBottom: 4 }}>{current.displayName}</div>
         <div style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.7)', marginBottom: 16 }}>
           Visto qui {formatRelativeDay(current.lastSeenAt)}
         </div>
@@ -88,7 +88,7 @@ export default function HistoricalStories({ people, currentUserId, onClose }) {
           </button>
           <button
             onClick={(e) => { e.stopPropagation(); setOpenProfile(true); }}
-            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '11px', borderRadius: 12, border: 'none', background: 'var(--cyan)', color: '#0D0D0D', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '11px', borderRadius: 12, border: 'none', background: 'var(--cyan)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
           >
             <Star size={14} />
             Superlike

@@ -200,7 +200,7 @@ export default function ProfileCreation({ onComplete }) {
                   style={{
                     padding: '7px 12px', borderRadius: 999, fontSize: 11, fontWeight: 600, cursor: 'pointer',
                     border: genderForStats === opt.value ? '1px solid var(--cyan)' : '1px solid rgba(228,212,200,0.16)',
-                    background: genderForStats === opt.value ? 'rgba(47,211,232,0.14)' : 'var(--surface-2)',
+                    background: genderForStats === opt.value ? 'rgba(255,61,110,0.14)' : 'var(--surface-2)',
                     color: genderForStats === opt.value ? 'var(--cyan)' : 'var(--text-muted)',
                   }}
                 >

@@ -95,7 +95,7 @@ export default function MyPulses({ userId, venueId, onOpenPulse }) {
   return (
     <div className="pl-screen">
       {/* Saldo — sempre in cima, prima della lista */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'var(--surface)', border: '1px solid rgba(47,211,232,0.3)', borderRadius: 14, padding: 12, marginBottom: 10, boxShadow: 'var(--shadow-glow-cyan)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'var(--surface)', border: '1px solid rgba(255,61,110,0.3)', borderRadius: 14, padding: 12, marginBottom: 10, boxShadow: 'var(--shadow-glow-cyan)' }}>
         <PulseWaveIcon size={26} color="var(--cyan)" />
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 13, fontWeight: 700 }}>{totalAvailable} Pulse pronti da inviare</div>

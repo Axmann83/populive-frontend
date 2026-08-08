@@ -28,7 +28,7 @@ export default function LiveRanking({ arenaSessionId, currentUserId, isGlobal, v
   // globale → solo profilo di dettaglio (v. sotto il motivo).
   const [selectedProfileUserId, setSelectedProfileUserId] = useState(null);
   // Filtri — solo per la classifica GLOBALE, non ha senso restringere
-  // quella di stanotte (già piccola, legata a un solo locale).
+  // quella locale (già piccola, legata a un solo locale).
   const [hashtagFilter, setHashtagFilter] = useState('');
   const [genderFilter, setGenderFilter] = useState('');
 

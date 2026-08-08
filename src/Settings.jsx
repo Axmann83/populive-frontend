@@ -72,6 +72,14 @@ export default function Settings({ userId, onClose }) {
         onChange={(v) => setSettings({ ...settings, ghostModeEnabled: v })}
       />
 
+      <div className="pl-section-label" style={{ marginTop: 16 }}>Notifiche</div>
+      <ToggleRow
+        label="Notifiche aptiche (vibrazione)"
+        sub="Se disattivata, non sentirai il telefono vibrare per Like/Superlike/Pulse ricevuti — vedrai comunque il resoconto quando riapri l'app da solo"
+        checked={settings.hapticNotificationsEnabled}
+        onChange={(v) => setSettings({ ...settings, hapticNotificationsEnabled: v })}
+      />
+
       <div className="pl-section-label" style={{ marginTop: 16 }}>Consenso e privacy</div>
       <p className="pl-hint">
         Queste opzioni restano tutte facoltative — ognuna attiva ti dà +5% sui punti che guadagni

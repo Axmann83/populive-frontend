@@ -65,6 +65,25 @@ export default function App() {
   const [splashFadingOut, setSplashFadingOut] = useState(false);
   const appMountedAt = useRef(Date.now());
 
+  // MODALITÀ GIORNO/NOTTE — giornata divisa esattamente a metà:
+  // dalle 6:00 alle 18:00 modalità giorno (crema calda, pensata
+  // per palestre/bar/negozi diurni), il resto notte (nero caldo,
+  // pensata per i locali). Basata sull'ora LOCALE del telefono di
+  // chi usa l'app, non su un fuso fisso — corretto ovunque nel
+  // mondo. Controllata subito all'apertura e poi ricontrollata
+  // ogni 5 minuti, per il raro caso di qualcuno con l'app aperta
+  // esattamente a cavallo delle 6:00 o delle 18:00.
+  useEffect(() => {
+    function applyTimeBasedMode() {
+      const hour = new Date().getHours();
+      const isDaytime = hour >= 6 && hour < 18;
+      document.body.classList.toggle('pl-day-mode', isDaytime);
+    }
+    applyTimeBasedMode();
+    const interval = setInterval(applyTimeBasedMode, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
   useEffect(() => {
     if (authState === 'checking' || !showSplash || splashFadingOut) return;
     const elapsed = Date.now() - appMountedAt.current;
@@ -535,7 +554,7 @@ export default function App() {
             className="pl-confirm-wave-wrap"
             style={{
               display: 'flex', alignItems: 'center', gap: 8,
-              background: 'var(--surface-2)', border: '1px solid rgba(47,211,232,0.4)',
+              background: 'var(--surface-2)', border: '1px solid rgba(255,61,110,0.4)',
               borderRadius: 999, padding: '9px 16px',
               fontSize: 13, fontWeight: 700, color: 'var(--text)',
               boxShadow: 'var(--shadow-lg)',
@@ -596,7 +615,7 @@ function ComingSoonSection() {
           <span style={{ fontSize: 8.5, fontWeight: 700, textTransform: 'uppercase', color: 'var(--teak)', background: 'rgba(228,212,200,0.14)', padding: '2px 8px', borderRadius: 6 }}>
             Coming Soon
           </span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, fontSize: 13, margin: '6px 0 3px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: "'Unbounded',sans-serif", fontWeight: 700, fontSize: 13, margin: '6px 0 3px' }}>
             <item.icon size={14} /> {item.title}
           </div>
           <div style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.4 }}>{item.sub}</div>

@@ -56,7 +56,7 @@ export default function ProfileDetail({ userId, arenaSessionId, onClose, onBack 
   }, [userId, arenaSessionId]);
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'var(--bg, #0D0D0D)', zIndex: 65, overflowY: 'auto' }}>
+    <div style={{ position: 'fixed', inset: 0, background: 'var(--bg, #14100F)', zIndex: 65, overflowY: 'auto' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 18px 6px' }}>
         {/* Torna alla foto a tutto schermo, non chiude tutto — un
             passo indietro nello stesso "viaggio", non una fine. */}
@@ -75,7 +75,7 @@ export default function ProfileDetail({ userId, arenaSessionId, onClose, onBack 
                 : profile.avatarEmoji}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 10 }}>
-              <span style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, fontSize: 18 }}>{profile.displayName}</span>
+              <span style={{ fontFamily: "'Unbounded',sans-serif", fontWeight: 700, fontSize: 18 }}>{profile.displayName}</span>
               {profile.isTopConnector && <Link2 size={13} color="#C7C9CC" title="Top Connector" />}
               {profile.isTopSpender && <Coins size={13} color="#E8C77E" title="Top Spender" />}
               {profile.isFounder && <Crown size={13} color="#E8C77E" title="Founder" />}
@@ -157,7 +157,7 @@ export default function ProfileDetail({ userId, arenaSessionId, onClose, onBack 
 function RankBox({ label, rank, points, accent }) {
   return (
     <div style={{ flex: 1, background: 'var(--surface-2)', border: '1px solid rgba(228,212,200,0.1)', borderRadius: 12, padding: 10, textAlign: 'center', boxShadow: 'var(--shadow-sm)' }}>
-      <div style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 800, fontSize: 17, color: accent || 'var(--text)' }}>
+      <div style={{ fontFamily: "'Unbounded',sans-serif", fontWeight: 800, fontSize: 17, color: accent || 'var(--text)' }}>
         {rank ? `#${rank}` : '—'}
       </div>
       <div style={{ fontSize: 8.5, color: 'var(--text-muted)' }}>{label} · {points ?? 0} pt</div>

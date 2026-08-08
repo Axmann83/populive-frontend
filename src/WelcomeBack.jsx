@@ -65,6 +65,17 @@ export default function WelcomeBack({ userId, onDone }) {
           </div>
         )}
 
+        {/* Il Like resta anonimo — non sveliamo mai chi è stato — ma
+            sapere che QUALCUNO l'ha fatto è di per sé un motivo
+            concreto per aprire il Radar e iniziare a ricambiare in
+            giro: se si becca la persona giusta, scatta il match e
+            arrivano i punti bonus (v. sistema punti). */}
+        {summary.newLikes > 0 && (
+          <p style={{ fontSize: 11.5, color: 'var(--cyan)', marginTop: 12, marginBottom: 0, lineHeight: 1.4 }}>
+            💜 Prova a mettere like in giro — se becchi la persona giusta, scatta il match e arrivano i punti bonus!
+          </p>
+        )}
+
         <button className="pl-send-btn" style={{ marginTop: 20 }} onClick={onDone}>
           Continua
         </button>

@@ -88,7 +88,13 @@ export default function Dashboard({ userId }) {
 
         {activeSection === 'missioni' && <MissionsSection />}
         {activeSection === 'organizza' && <OrganizeNightSection />}
-        {activeSection === 'persone' && <PeopleSearchSection />}
+        {activeSection === 'persone' && (
+          <>
+            <PeopleSearchSection />
+            <div style={{ height: 1, background: 'rgba(228,212,200,0.12)', margin: '24px 0' }} />
+            <InstantInfluencerSection />
+          </>
+        )}
         {activeSection === 'locali' && <VenueMetricsSection />}
         {activeSection === 'prezzi' && <PricingSection />}
         {activeSection === 'funzionalita' && <FeatureFlagsSection />}
@@ -1273,6 +1279,163 @@ function PeopleSearchSection() {
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+/**
+ * ============================================================
+ * SEZIONE "INSTANT INFLUENCER" — assegna/rimuove lo status via
+ * dashboard, sostituisce il vecchio metodo a mano su Supabase.
+ * Sempre solo gli Architetti, sempre dietro un vero accordo brand
+ * confermato — nessun modo per un utente di attivarselo da solo.
+ * ============================================================
+ */
+const INFLUENCER_CATEGORY_OPTIONS = ['Moda', 'Fitness', 'Beauty', 'Nightlife'];
+
+function InstantInfluencerSection() {
+  const [phoneInput, setPhoneInput] = useState('');
+  const [searching, setSearching] = useState(false);
+  const [foundUser, setFoundUser] = useState(null);
+  const [notFound, setNotFound] = useState(false);
+
+  const [category, setCategory] = useState('');
+  const [products, setProducts] = useState([{ name: '', url: '' }]);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  async function search() {
+    if (!phoneInput.trim()) return;
+    setSearching(true);
+    setFoundUser(null);
+    setNotFound(false);
+    try {
+      const res = await apiFetch(`/api/dashboard/find-user-by-phone?phone=${encodeURIComponent(phoneInput.trim())}`);
+      const data = await res.json();
+      if (data.success) {
+        setFoundUser(data.user);
+        setCategory(data.user.instantInfluencerCategory || '');
+        setProducts(data.user.products.length > 0 ? data.user.products : [{ name: '', url: '' }]);
+      } else {
+        setNotFound(true);
+      }
+    } finally {
+      setSearching(false);
+    }
+  }
+
+  function updateProduct(index, field, value) {
+    setProducts((prev) => prev.map((p, i) => (i === index ? { ...p, [field]: value } : p)));
+  }
+
+  function addProductRow() {
+    setProducts((prev) => [...prev, { name: '', url: '' }]);
+  }
+
+  function removeProductRow(index) {
+    setProducts((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  async function save() {
+    setSaving(true);
+    try {
+      const res = await apiFetch(`/api/dashboard/users/${foundUser.userId}/instant-influencer`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ category: category.trim() || null, products: products.filter((p) => p.name.trim()) }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2000);
+      } else {
+        window.alert('Qualcosa è andato storto — riprova.');
+      }
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div>
+      <div className="pl-section-label" style={{ marginBottom: 8 }}>Instant Influencer</div>
+      <p className="pl-hint" style={{ marginBottom: 12 }}>
+        Cerca la persona per numero di telefono, poi imposta categoria e prodotti sponsorizzati — solo dopo un vero accordo brand confermato.
+      </p>
+
+      <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+        <input
+          value={phoneInput}
+          onChange={(e) => setPhoneInput(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && search()}
+          placeholder="Numero di telefono"
+          style={{ marginBottom: 0, flex: 1 }}
+        />
+        <button
+          onClick={search}
+          disabled={searching}
+          style={{ padding: '0 16px', borderRadius: 10, border: 'none', background: 'var(--cyan)', color: '#0D0D0D', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+        >
+          {searching ? '…' : 'Cerca'}
+        </button>
+      </div>
+
+      {notFound && <p className="pl-hint">Nessun utente registrato con questo numero.</p>}
+
+      {foundUser && (
+        <MetricCard title={foundUser.displayName}>
+          <select value={category} onChange={(e) => setCategory(e.target.value)} style={{ marginBottom: 10 }}>
+            <option value="">Nessuno status (togli Instant Influencer)</option>
+            {INFLUENCER_CATEGORY_OPTIONS.map((c) => <option key={c} value={c}>{c}</option>)}
+          </select>
+
+          {category && (
+            <>
+              <div style={{ fontSize: 9.5, color: 'var(--text-muted)', marginBottom: 6 }}>Prodotti sponsorizzati</div>
+              {products.map((p, i) => (
+                <div key={i} style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
+                  <input
+                    value={p.name}
+                    onChange={(e) => updateProduct(i, 'name', e.target.value)}
+                    placeholder="Nome prodotto"
+                    style={{ marginBottom: 0, flex: 1 }}
+                  />
+                  <input
+                    value={p.url}
+                    onChange={(e) => updateProduct(i, 'url', e.target.value)}
+                    placeholder="Link (facoltativo)"
+                    style={{ marginBottom: 0, flex: 1 }}
+                  />
+                  {products.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeProductRow(i)}
+                      style={{ flexShrink: 0, width: 32, borderRadius: 8, border: '1px solid rgba(228,212,200,0.2)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={addProductRow}
+                style={{ width: '100%', padding: 8, borderRadius: 10, border: '1px dashed rgba(228,212,200,0.3)', background: 'transparent', color: 'var(--teak)', fontSize: 11, cursor: 'pointer', marginBottom: 10 }}
+              >
+                + Aggiungi prodotto
+              </button>
+            </>
+          )}
+
+          <button
+            onClick={save}
+            disabled={saving}
+            style={{ width: '100%', padding: '9px', borderRadius: 10, border: 'none', fontSize: 11, fontWeight: 700, background: saved ? 'rgba(47,211,232,0.3)' : 'var(--cyan)', color: '#0D0D0D', cursor: saving ? 'default' : 'pointer' }}
+          >
+            {saving ? 'Un attimo…' : saved ? 'Salvato ✓' : 'Salva'}
+          </button>
+        </MetricCard>
+      )}
     </div>
   );
 }

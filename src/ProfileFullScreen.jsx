@@ -164,7 +164,7 @@ export default function ProfileFullScreen({ userId, arenaSessionId, currentUserI
           <div style={infoOverlayStyle}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, fontSize: 22 }}>{profile.displayName}</span>
+                <span style={{ fontFamily: "'Unbounded',sans-serif", fontWeight: 700, fontSize: 22 }}>{profile.displayName}</span>
                 {profile.isTopConnector && <Link2 size={14} color="#C7C9CC" title="Top Connector" />}
                 {profile.isTopSpender && <Coins size={14} color="#E8C77E" title="Top Spender" />}
                 {profile.isFounder && <Crown size={14} color="#E8C77E" title="Founder" />}
@@ -262,7 +262,7 @@ function ActionButton({ icon: Icon, label, onClick, disabled, active }) {
         padding: '12px 8px',
         borderRadius: 14,
         border: active ? '1.5px solid var(--cyan)' : '1px solid rgba(228,212,200,0.25)',
-        background: active ? 'rgba(47,211,232,0.15)' : 'rgba(23,23,23,0.7)',
+        background: active ? 'rgba(255,61,110,0.15)' : 'rgba(23,23,23,0.7)',
         color: active ? 'var(--cyan)' : 'var(--text)',
         cursor: disabled ? 'default' : 'pointer',
         opacity: disabled && !active ? 0.5 : 1,
@@ -383,7 +383,7 @@ const toastStyle = {
   bottom: 100,
   transform: 'translateX(-50%)',
   background: 'var(--surface-2)',
-  border: '1px solid rgba(47,211,232,0.4)',
+  border: '1px solid rgba(255,61,110,0.4)',
   color: 'var(--text)',
   fontSize: 12,
   fontWeight: 600,

@@ -64,6 +64,14 @@ export default function Settings({ userId, onClose }) {
         onChange={(v) => setSettings({ ...settings, showRankingOnProfile: v })}
       />
 
+      <div className="pl-section-label" style={{ marginTop: 16 }}>Visibilità nel Radar</div>
+      <ToggleRow
+        label="Ghost Mode"
+        sub="Non comparirai nel Radar di nessuno — se invii tu un'interazione, quella persona vedrà comunque il tuo profilo tra i candidati, ma solo lei"
+        checked={settings.ghostModeEnabled}
+        onChange={(v) => setSettings({ ...settings, ghostModeEnabled: v })}
+      />
+
       <div className="pl-section-label" style={{ marginTop: 16 }}>Consenso e privacy</div>
       <p className="pl-hint">
         Queste opzioni restano tutte facoltative — ognuna attiva ti dà +5% sui punti che guadagni

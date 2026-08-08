@@ -45,14 +45,14 @@ const VENUE_TYPE_LABELS = {
 function makeDotIcon(color) {
   return L.divIcon({
     className: '',
-    html: `<div style="width:16px;height:16px;border-radius:50%;background:${color};border:2px solid #0D0D0D;box-shadow:0 2px 8px -1px rgba(0,0,0,0.6);"></div>`,
+    html: `<div style="width:16px;height:16px;border-radius:50%;background:${color};border:2px solid #14100F;box-shadow:0 2px 8px -1px rgba(0,0,0,0.6);"></div>`,
     iconSize: [16, 16],
     iconAnchor: [8, 8],
     popupAnchor: [0, -8],
   });
 }
 
-const VERIFIED_ICON = makeDotIcon('#2FD3E8');
+const VERIFIED_ICON = makeDotIcon('#FF3D6E');
 const UNVERIFIED_ICON = makeDotIcon('#B0AAA4');
 const NEW_PIN_ICON = makeDotIcon('#E8C77E');
 
@@ -253,7 +253,7 @@ export default function VenuesMap({ currentUserId, onClose, mode = 'browse' }) {
           barRow.style.cssText = 'display:flex;height:5px;border-radius:999px;overflow:hidden;margin-bottom:8px;';
           barRow.innerHTML = `
             <div style="background:#B0AAA4;width:${g.femalePct}%;"></div>
-            <div style="background:#2FD3E8;width:${g.malePct}%;"></div>
+            <div style="background:#FF3D6E;width:${g.malePct}%;"></div>
             ${g.otherPct > 0 ? `<div style="background:#E8C77E;width:${g.otherPct}%;"></div>` : ''}
           `;
           popupContent.appendChild(barRow);
@@ -266,7 +266,7 @@ export default function VenuesMap({ currentUserId, onClose, mode = 'browse' }) {
 
         const btn = document.createElement('button');
         btn.textContent = "Chi c'era negli ultimi giorni";
-        btn.style.cssText = 'width:100%;padding:7px 10px;border-radius:8px;border:none;background:#2FD3E8;color:#0D0D0D;font-size:10.5px;font-weight:700;cursor:pointer;';
+        btn.style.cssText = 'width:100%;padding:7px 10px;border-radius:8px;border:none;background:#FF3D6E;color:#fff;font-size:10.5px;font-weight:700;cursor:pointer;';
         btn.onclick = () => setHistoricalVenueId(v.venueId);
         popupContent.appendChild(btn);
       } else {
@@ -277,7 +277,7 @@ export default function VenuesMap({ currentUserId, onClose, mode = 'browse' }) {
 
         const btn = document.createElement('button');
         btn.textContent = 'Crea versione PopuLive non ufficiale';
-        btn.style.cssText = 'width:100%;padding:7px 10px;border-radius:8px;border:none;background:#2FD3E8;color:#0D0D0D;font-size:10.5px;font-weight:700;cursor:pointer;';
+        btn.style.cssText = 'width:100%;padding:7px 10px;border-radius:8px;border:none;background:#FF3D6E;color:#fff;font-size:10.5px;font-weight:700;cursor:pointer;';
         btn.onclick = () => createUnofficialCopy(v);
         popupContent.appendChild(btn);
       }

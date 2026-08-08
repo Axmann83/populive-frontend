@@ -42,7 +42,7 @@
    ============================================================ */
 body.pl-day-mode{
   --bg:#F7F2EA; --surface:#FFFFFF; --surface-2:#FCF6EC;
-  --teak:#8C7F74; --text:#241C19; --text-muted:#8C7F74;
+  --teak:#6B5F55; --text:#241C19; --text-muted:#5A4D45;
   --shadow-sm: 0 2px 6px -2px rgba(36,28,25,0.12);
   --shadow-md: 0 8px 22px -6px rgba(36,28,25,0.14);
   --shadow-lg: 0 16px 40px -10px rgba(36,28,25,0.18);
@@ -115,6 +115,13 @@ body{
   background:linear-gradient(135deg, #FF7A9C 0%, #FF3D6E 60%, #C41C50 100%);
   -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
   filter:drop-shadow(0 0 12px rgba(255,61,110,0.5)) drop-shadow(0 2px 4px rgba(0,0,0,0.4));
+}
+/* In modalità giorno il bagliore sfocato (pensato per risaltare su
+   un fondo scuro) rende la scritta meno definita su un fondo
+   chiaro — tolto quasi del tutto, resta solo un'ombra minima per
+   dare un filo di profondità, mai per "illuminare" come di notte. */
+body.pl-day-mode .pl-brand-live{
+  filter:drop-shadow(0 1px 2px rgba(196,28,80,0.25));
 }
 .pl-arena-pill{
   display:flex; align-items:center; gap:5px;
@@ -371,6 +378,11 @@ button{ font-family:inherit; }
   background:linear-gradient(135deg, #FF7A9C 0%, #FF3D6E 60%, #C41C50 100%);
   -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
   filter:drop-shadow(0 0 14px rgba(255,61,110,0.5)) drop-shadow(0 4px 10px rgba(0,0,0,0.5));
+}
+/* Stessa correzione della barra in alto — via il bagliore sfocato
+   in modalità giorno, resta definita anche sul fondo chiaro. */
+body.pl-day-mode .pl-splash-live{
+  filter:drop-shadow(0 1px 3px rgba(196,28,80,0.25));
 }
 
 .pl-splash-antenna-node{

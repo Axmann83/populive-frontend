@@ -55,7 +55,7 @@ export default function SuperlikeNotification({ superlike, onResolved }) {
               <Star size={16} color="var(--cyan)" fill="var(--cyan)" />
               <span style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Superlike ricevuto</span>
             </div>
-            <h2 style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: 18, margin: '0 0 18px' }}>{superlike.senderName}</h2>
+            <h2 style={{ fontFamily: "'Unbounded',sans-serif", fontSize: 18, margin: '0 0 18px' }}>{superlike.senderName}</h2>
 
             <button className="pl-send-btn" onClick={() => respond('accept')} style={{ marginBottom: 8 }}>
               Accetta — apri la chat
@@ -82,7 +82,7 @@ export default function SuperlikeNotification({ superlike, onResolved }) {
         {actionState === 'accepted' && (
           <>
             <div style={{ fontSize: 34, marginBottom: 6 }}>💬</div>
-            <h2 style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: 18, margin: 0 }}>Chat aperta!</h2>
+            <h2 style={{ fontFamily: "'Unbounded',sans-serif", fontSize: 18, margin: 0 }}>Chat aperta!</h2>
           </>
         )}
 

@@ -427,7 +427,7 @@ export default function App() {
         )}
         {activeTab === 'locale' && !arenaSessionId && (
           <div className="pl-hint" style={{ textAlign: 'center', marginTop: 40 }}>
-            Fai check-in in un'Arena per sbloccare la classifica di stanotte.
+            Fai check-in in un'Arena per sbloccare la classifica locale.
           </div>
         )}
 
@@ -457,7 +457,7 @@ export default function App() {
 
       <div className="pl-bottom-nav">
         <NavItem icon={RadarIcon} label="Radar" active={activeTab === 'radar'} onClick={() => setActiveTab('radar')} />
-        <NavItem icon={Trophy} label="Stanotte" active={activeTab === 'locale'} onClick={() => setActiveTab('locale')} />
+        <NavItem icon={Trophy} label="Locale" active={activeTab === 'locale'} onClick={() => setActiveTab('locale')} />
         <NavItem icon={Globe} label="Globale" active={activeTab === 'globale'} onClick={() => setActiveTab('globale')} />
         <NavItem icon={PulseWaveIcon} label="Pulse" active={activeTab === 'pulse'} onClick={() => setActiveTab('pulse')} badge={pulseBadgeCount} />
         <NavItem icon={User} label="Profilo" active={activeTab === 'profilo'} onClick={() => setActiveTab('profilo')} />

@@ -140,6 +140,43 @@ export default function App() {
   const [arenaSessionId, setArenaSessionId] = useState(null);
 
   const [activeTab, setActiveTab] = useState('radar');
+
+  // NAVIGAZIONE A SWIPE — scorrere tra le schermate principali con
+  // un tocco trascinato da destra a sinistra (e viceversa), come
+  // ormai fanno tutte le app curate, oltre al tocco diretto
+  // sull'icona. Attaccato SOLO al contenitore delle schede
+  // principali (.pl-content qui sotto) — le schermate a tutto
+  // schermo (profilo, chat, impostazioni) sono elementi separati
+  // sopra di esso, quindi non ne risentono.
+  const TAB_ORDER = ['radar', 'locale', 'globale', 'pulse', 'profilo'];
+  const swipeStart = useRef(null);
+
+  function handleSwipeStart(e) {
+    const touch = e.touches[0];
+    swipeStart.current = { x: touch.clientX, y: touch.clientY };
+  }
+
+  function handleSwipeEnd(e) {
+    if (!swipeStart.current) return;
+    const touch = e.changedTouches[0];
+    const deltaX = touch.clientX - swipeStart.current.x;
+    const deltaY = touch.clientY - swipeStart.current.y;
+    swipeStart.current = null;
+
+    // Deve essere chiaramente orizzontale (non uno scorrimento
+    // verticale della lista) e abbastanza ampio da essere
+    // intenzionale, non un tocco tremolante per sbaglio.
+    if (Math.abs(deltaX) < 60 || Math.abs(deltaX) < Math.abs(deltaY) * 1.5) return;
+
+    const currentIndex = TAB_ORDER.indexOf(activeTab);
+    if (currentIndex === -1) return;
+
+    if (deltaX < 0 && currentIndex < TAB_ORDER.length - 1) {
+      setActiveTab(TAB_ORDER[currentIndex + 1]); // sinistra -> avanti
+    } else if (deltaX > 0 && currentIndex > 0) {
+      setActiveTab(TAB_ORDER[currentIndex - 1]); // destra -> indietro
+    }
+  }
   const [pendingPulseNotification, setPendingPulseNotification] = useState(null);
   const [pendingSuperlike, setPendingSuperlike] = useState(null);
   const [activeChatConversationId, setActiveChatConversationId] = useState(null);
@@ -386,7 +423,7 @@ export default function App() {
         {arenaSessionId && <div className="pl-arena-pill"><span className="pl-live-dot"></span> Arena attiva</div>}
       </div>
 
-      <div className="pl-content">
+      <div className="pl-content" onTouchStart={handleSwipeStart} onTouchEnd={handleSwipeEnd}>
         {activeTab === 'radar' && (
           <>
             <CheckinRadar

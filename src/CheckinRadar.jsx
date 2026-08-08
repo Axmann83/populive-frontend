@@ -114,6 +114,21 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
       });
     });
 
+    // GHOST MODE — chi ha il Ghost Mode attivo non arriva mai via
+    // radar_snapshot/presence_update (il server lo esclude apposta,
+    // v. populive-websocket-rooms.js). Questo evento è la SOLA
+    // eccezione: arriva SOLO a chi ha appena ricevuto una sua
+    // interazione, e lo aggiunge al radar esattamente come un
+    // arrivo normale — senza nessuna indicazione visibile che sia
+    // un fantasma, resta un profilo come un altro.
+    socket.on('ghost_revealed', ({ userId: ghostUserId }) => {
+      if (ghostUserId === userId) return;
+      setRadarPeople((prev) => {
+        if (prev.some((p) => p.userId === ghostUserId)) return prev;
+        return [...prev, { userId: ghostUserId, joinedAt: Date.now() }];
+      });
+    });
+
     setSocketRef(socket);
     return () => socket.disconnect();
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -111,7 +111,7 @@ function SectionTab({ icon: Icon, label, active, onClick }) {
         flex: '1 1 0', minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
         padding: '9px 2px', borderRadius: 12,
         border: active ? '1px solid var(--cyan)' : '1px solid rgba(228,212,200,0.14)',
-        background: active ? 'rgba(47,211,232,0.12)' : 'var(--surface)',
+        background: active ? 'rgba(255,61,110,0.12)' : 'var(--surface)',
         color: active ? 'var(--cyan)' : 'var(--text-muted)',
         cursor: 'pointer',
         overflow: 'hidden',
@@ -188,7 +188,7 @@ function VenueMetricsSection() {
 
           <MetricCard title="Permanenza media">
             {report.dwellTime.available ? (
-              <div style={{ fontSize: 22, fontWeight: 800, fontFamily: "'Space Grotesk',sans-serif", color: 'var(--cyan)' }}>
+              <div style={{ fontSize: 22, fontWeight: 800, fontFamily: "'Unbounded',sans-serif", color: 'var(--cyan)' }}>
                 {report.dwellTime.avgMinutes} min
                 <span style={{ fontSize: 10.5, color: 'var(--text-muted)', fontWeight: 500, marginLeft: 8 }}>
                   su {report.dwellTime.sampleSize} persone
@@ -243,7 +243,7 @@ function VenueMetricsSection() {
           <MetricCard title="Interazioni sociali generate">
             {report.socialInteractions.available ? (
               <div>
-                <div style={{ fontSize: 22, fontWeight: 800, fontFamily: "'Space Grotesk',sans-serif", color: 'var(--cyan)' }}>
+                <div style={{ fontSize: 22, fontWeight: 800, fontFamily: "'Unbounded',sans-serif", color: 'var(--cyan)' }}>
                   {report.socialInteractions.total}
                 </div>
                 <div style={{ fontSize: 10.5, color: 'var(--text-muted)' }}>
@@ -258,7 +258,7 @@ function VenueMetricsSection() {
           <MetricCard title="Tasso di ritorno">
             {report.returnRate.available ? (
               <div>
-                <div style={{ fontSize: 22, fontWeight: 800, fontFamily: "'Space Grotesk',sans-serif", color: 'var(--cyan)' }}>
+                <div style={{ fontSize: 22, fontWeight: 800, fontFamily: "'Unbounded',sans-serif", color: 'var(--cyan)' }}>
                   {report.returnRate.returnRatePct}%
                 </div>
                 <div style={{ fontSize: 10.5, color: 'var(--text-muted)' }}>
@@ -273,7 +273,7 @@ function VenueMetricsSection() {
           <MetricCard title="Picco di presenze simultanee">
             {report.peakAttendance.available ? (
               <div>
-                <div style={{ fontSize: 22, fontWeight: 800, fontFamily: "'Space Grotesk',sans-serif", color: 'var(--cyan)' }}>
+                <div style={{ fontSize: 22, fontWeight: 800, fontFamily: "'Unbounded',sans-serif", color: 'var(--cyan)' }}>
                   {report.peakAttendance.allTimeHigh} persone
                 </div>
                 <div style={{ fontSize: 10.5, color: 'var(--text-muted)' }}>
@@ -415,8 +415,8 @@ function PricingSection() {
                   disabled={!changed || savingId === p.id}
                   style={{
                     padding: '10px 14px', borderRadius: 10, border: 'none', fontSize: 11, fontWeight: 700, flexShrink: 0,
-                    background: savedId === p.id ? 'rgba(47,211,232,0.3)' : 'var(--cyan)',
-                    color: '#0D0D0D',
+                    background: savedId === p.id ? 'rgba(255,61,110,0.3)' : 'var(--cyan)',
+                    color: '#fff',
                     cursor: !changed || savingId === p.id ? 'default' : 'pointer',
                     opacity: !changed ? 0.5 : 1,
                   }}
@@ -475,7 +475,7 @@ function MissionsSection() {
   async function generateQrFor(missionId) {
     return QRCode.toDataURL(MISSION_LINK_BASE + missionId, {
       width: 300,
-      color: { dark: '#0D0D0D', light: '#ffffff' },
+      color: { dark: '#14100F', light: '#ffffff' },
     });
   }
 
@@ -603,7 +603,7 @@ function ExistingMissionRow({ mission, onGenerateQr }) {
         </div>
         <button
           onClick={toggleQr}
-          style={{ flexShrink: 0, padding: '6px 10px', borderRadius: 8, border: 'none', background: 'var(--cyan)', color: '#0D0D0D', fontSize: 10, fontWeight: 700, cursor: 'pointer' }}
+          style={{ flexShrink: 0, padding: '6px 10px', borderRadius: 8, border: 'none', background: 'var(--cyan)', color: '#fff', fontSize: 10, fontWeight: 700, cursor: 'pointer' }}
         >
           {loadingQr ? '…' : qrDataUrl ? 'Nascondi QR' : 'Mostra QR'}
         </button>
@@ -934,7 +934,7 @@ function VenueOrganizePanel({ venue, onVenueUpdate }) {
     setGeneratingVenueQr(true);
     try {
       const url = `https://populive-frontend-production.up.railway.app/checkin/${venue.venueId}`;
-      const dataUrl = await QRCode.toDataURL(url, { width: 300, color: { dark: '#0D0D0D', light: '#ffffff' } });
+      const dataUrl = await QRCode.toDataURL(url, { width: 300, color: { dark: '#14100F', light: '#ffffff' } });
       setVenueQrDataUrl(dataUrl);
     } finally {
       setGeneratingVenueQr(false);
@@ -957,7 +957,7 @@ function VenueOrganizePanel({ venue, onVenueUpdate }) {
       for (let i = 1; i <= count; i++) {
         const code = `tavolo_${venue.venueId}_${i}`;
         const label = `${tableQrLabel.trim() || 'Tavolo'} ${i}`;
-        const dataUrl = await QRCode.toDataURL(code, { width: 220, color: { dark: '#0D0D0D', light: '#ffffff' } });
+        const dataUrl = await QRCode.toDataURL(code, { width: 220, color: { dark: '#14100F', light: '#ffffff' } });
         results.push({ label, code, dataUrl });
       }
       setTableQrs(results);
@@ -982,7 +982,7 @@ function VenueOrganizePanel({ venue, onVenueUpdate }) {
             <input value={100 - (parseInt(pctEdit, 10) || 0)} disabled style={{ marginBottom: 0, opacity: 0.6 }} />
           </div>
         </div>
-        <button onClick={savePct} disabled={savingPct} style={{ width: '100%', padding: '9px', borderRadius: 10, border: 'none', fontSize: 11, fontWeight: 700, background: savedPct ? 'rgba(47,211,232,0.3)' : 'var(--cyan)', color: '#0D0D0D', cursor: savingPct ? 'default' : 'pointer' }}>
+        <button onClick={savePct} disabled={savingPct} style={{ width: '100%', padding: '9px', borderRadius: 10, border: 'none', fontSize: 11, fontWeight: 700, background: savedPct ? 'rgba(255,61,110,0.3)' : 'var(--cyan)', color: '#fff', cursor: savingPct ? 'default' : 'pointer' }}>
           {savingPct ? 'Un attimo…' : savedPct ? 'Salvato ✓' : 'Salva percentuale'}
         </button>
       </MetricCard>
@@ -1001,7 +1001,7 @@ function VenueOrganizePanel({ venue, onVenueUpdate }) {
             <input value={bundlePriceEdit} onChange={(e) => setBundlePriceEdit(e.target.value)} placeholder="non impostato" style={{ marginBottom: 0 }} />
           </div>
         </div>
-        <button onClick={savePrices} disabled={savingPrices} style={{ width: '100%', padding: '9px', borderRadius: 10, border: 'none', fontSize: 11, fontWeight: 700, background: savedPrices ? 'rgba(47,211,232,0.3)' : 'var(--cyan)', color: '#0D0D0D', cursor: savingPrices ? 'default' : 'pointer' }}>
+        <button onClick={savePrices} disabled={savingPrices} style={{ width: '100%', padding: '9px', borderRadius: 10, border: 'none', fontSize: 11, fontWeight: 700, background: savedPrices ? 'rgba(255,61,110,0.3)' : 'var(--cyan)', color: '#fff', cursor: savingPrices ? 'default' : 'pointer' }}>
           {savingPrices ? 'Un attimo…' : savedPrices ? 'Salvato ✓' : 'Salva prezzi'}
         </button>
       </MetricCard>
@@ -1017,7 +1017,7 @@ function VenueOrganizePanel({ venue, onVenueUpdate }) {
             <input type="number" min="0" value={bonusEdit} onChange={(e) => setBonusEdit(e.target.value)} placeholder="es. 20" style={{ marginBottom: 0 }} />
           </div>
         </div>
-        <button onClick={saveSpendingConfig} disabled={savingSpending} style={{ width: '100%', padding: '9px', borderRadius: 10, border: 'none', fontSize: 11, fontWeight: 700, background: savedSpending ? 'rgba(47,211,232,0.3)' : 'var(--cyan)', color: '#0D0D0D', cursor: savingSpending ? 'default' : 'pointer' }}>
+        <button onClick={saveSpendingConfig} disabled={savingSpending} style={{ width: '100%', padding: '9px', borderRadius: 10, border: 'none', fontSize: 11, fontWeight: 700, background: savedSpending ? 'rgba(255,61,110,0.3)' : 'var(--cyan)', color: '#fff', cursor: savingSpending ? 'default' : 'pointer' }}>
           {savingSpending ? 'Un attimo…' : savedSpending ? 'Salvato ✓' : 'Salva soglia'}
         </button>
       </MetricCard>
@@ -1035,7 +1035,7 @@ function VenueOrganizePanel({ venue, onVenueUpdate }) {
           </button>
           <input type="number" min="0" value={spentAmount} onChange={(e) => setSpentAmount(e.target.value)} placeholder="Speso (€)" style={{ marginBottom: 0, flex: 1 }} />
         </div>
-        <button onClick={confirmSpending} disabled={confirmingSpend} style={{ width: '100%', padding: '9px', borderRadius: 10, border: 'none', fontSize: 11, fontWeight: 700, background: 'var(--cyan)', color: '#0D0D0D', cursor: confirmingSpend ? 'default' : 'pointer' }}>
+        <button onClick={confirmSpending} disabled={confirmingSpend} style={{ width: '100%', padding: '9px', borderRadius: 10, border: 'none', fontSize: 11, fontWeight: 700, background: 'var(--cyan)', color: '#fff', cursor: confirmingSpend ? 'default' : 'pointer' }}>
           {confirmingSpend ? 'Un attimo…' : 'Conferma spesa'}
         </button>
         {spendResult && (
@@ -1068,7 +1068,7 @@ function VenueOrganizePanel({ venue, onVenueUpdate }) {
             <input type="time" value={closeTime} onChange={(e) => setCloseTime(e.target.value)} style={{ marginBottom: 0 }} />
           </div>
         </div>
-        <button onClick={saveHours} disabled={savingHours} style={{ width: '100%', padding: '9px', borderRadius: 10, border: 'none', fontSize: 11, fontWeight: 700, background: savedHours ? 'rgba(47,211,232,0.3)' : 'var(--cyan)', color: '#0D0D0D', cursor: savingHours ? 'default' : 'pointer' }}>
+        <button onClick={saveHours} disabled={savingHours} style={{ width: '100%', padding: '9px', borderRadius: 10, border: 'none', fontSize: 11, fontWeight: 700, background: savedHours ? 'rgba(255,61,110,0.3)' : 'var(--cyan)', color: '#fff', cursor: savingHours ? 'default' : 'pointer' }}>
           {savingHours ? 'Un attimo…' : savedHours ? 'Salvato ✓' : 'Salva orari'}
         </button>
       </MetricCard>
@@ -1077,7 +1077,7 @@ function VenueOrganizePanel({ venue, onVenueUpdate }) {
         <p className="pl-hint" style={{ marginBottom: 10 }}>
           Un solo QR per locale — chi lo scansiona fa il check-in nell'Arena.
         </p>
-        <button onClick={generateVenueQr} disabled={generatingVenueQr} style={{ width: '100%', padding: '9px', borderRadius: 10, border: 'none', fontSize: 11, fontWeight: 700, background: 'var(--cyan)', color: '#0D0D0D', cursor: generatingVenueQr ? 'default' : 'pointer' }}>
+        <button onClick={generateVenueQr} disabled={generatingVenueQr} style={{ width: '100%', padding: '9px', borderRadius: 10, border: 'none', fontSize: 11, fontWeight: 700, background: 'var(--cyan)', color: '#fff', cursor: generatingVenueQr ? 'default' : 'pointer' }}>
           {generatingVenueQr ? 'Un attimo…' : venueQrDataUrl ? 'Rigenera QR' : 'Genera QR'}
         </button>
         {venueQrDataUrl && (
@@ -1101,7 +1101,7 @@ function VenueOrganizePanel({ venue, onVenueUpdate }) {
             <input type="number" min="1" max="200" value={tableQrCount} onChange={(e) => setTableQrCount(e.target.value)} style={{ marginBottom: 0 }} />
           </div>
         </div>
-        <button onClick={generateTableQrs} disabled={generatingTableQrs} style={{ width: '100%', padding: '9px', borderRadius: 10, border: 'none', fontSize: 11, fontWeight: 700, background: 'var(--cyan)', color: '#0D0D0D', cursor: generatingTableQrs ? 'default' : 'pointer' }}>
+        <button onClick={generateTableQrs} disabled={generatingTableQrs} style={{ width: '100%', padding: '9px', borderRadius: 10, border: 'none', fontSize: 11, fontWeight: 700, background: 'var(--cyan)', color: '#fff', cursor: generatingTableQrs ? 'default' : 'pointer' }}>
           {generatingTableQrs ? 'Genero…' : tableQrs ? 'Rigenera tutti' : 'Genera QR tavoli'}
         </button>
 
@@ -1253,7 +1253,7 @@ function PeopleSearchSection() {
         <button
           onClick={search}
           disabled={loading}
-          style={{ padding: '0 16px', borderRadius: 10, border: 'none', background: 'var(--cyan)', color: '#0D0D0D', fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+          style={{ padding: '0 16px', borderRadius: 10, border: 'none', background: 'var(--cyan)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
         >
           <Search size={14} /> {loading ? '…' : 'Cerca'}
         </button>
@@ -1374,7 +1374,7 @@ function InstantInfluencerSection() {
         <button
           onClick={search}
           disabled={searching}
-          style={{ padding: '0 16px', borderRadius: 10, border: 'none', background: 'var(--cyan)', color: '#0D0D0D', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+          style={{ padding: '0 16px', borderRadius: 10, border: 'none', background: 'var(--cyan)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
         >
           {searching ? '…' : 'Cerca'}
         </button>
@@ -1430,7 +1430,7 @@ function InstantInfluencerSection() {
           <button
             onClick={save}
             disabled={saving}
-            style={{ width: '100%', padding: '9px', borderRadius: 10, border: 'none', fontSize: 11, fontWeight: 700, background: saved ? 'rgba(47,211,232,0.3)' : 'var(--cyan)', color: '#0D0D0D', cursor: saving ? 'default' : 'pointer' }}
+            style={{ width: '100%', padding: '9px', borderRadius: 10, border: 'none', fontSize: 11, fontWeight: 700, background: saved ? 'rgba(255,61,110,0.3)' : 'var(--cyan)', color: '#fff', cursor: saving ? 'default' : 'pointer' }}
           >
             {saving ? 'Un attimo…' : saved ? 'Salvato ✓' : 'Salva'}
           </button>

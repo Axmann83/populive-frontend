@@ -72,7 +72,7 @@ export default function MissionClaim({ missionId, onClose, viaQrScan = true }) {
             <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>
               Missione da {mission.sponsorName}
             </div>
-            <h2 style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: 18, margin: '0 0 10px' }}>{mission.claimText}</h2>
+            <h2 style={{ fontFamily: "'Unbounded',sans-serif", fontSize: 18, margin: '0 0 10px' }}>{mission.claimText}</h2>
 
             {viaQrScan ? (
               <>
@@ -101,7 +101,7 @@ export default function MissionClaim({ missionId, onClose, viaQrScan = true }) {
         {result?.success && (
           <>
             <div style={{ fontSize: 34, marginBottom: 6 }}>🎉</div>
-            <h2 style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: 18, margin: '0 0 6px' }}>Missione completata!</h2>
+            <h2 style={{ fontFamily: "'Unbounded',sans-serif", fontSize: 18, margin: '0 0 6px' }}>Missione completata!</h2>
             <p className="pl-hint" style={{ marginBottom: 18 }}>
               +{result.bonusPoints} punti da {result.sponsorName}
             </p>

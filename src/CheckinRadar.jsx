@@ -258,6 +258,30 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
                     />
                   ))}
                 </div>
+
+                {/* Momento editoriale a fine scorrimento — stesso
+                    principio del Top Match di Hinge: non funzionale,
+                    solo un respiro visivo che rinforza la promessa di
+                    fondo dell'app, dopo aver visto tutti i presenti.
+                    Mostrato solo se c'era davvero qualcuno da vedere. */}
+                {othersOnly.length > 0 && (
+                  <div style={{ position: 'relative', marginTop: 16, borderRadius: 20, overflow: 'hidden', aspectRatio: '4/3', boxShadow: 'var(--shadow-md)' }}>
+                    <img
+                      src="https://res.cloudinary.com/rjkegdrp/image/upload/v1786253032/Radar_Populive_x4srpz.webp"
+                      alt=""
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                    <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(20,16,15,0.85) 0%, rgba(20,16,15,0.1) 55%, rgba(255,61,110,0.1) 100%)' }} />
+                    <div style={{ position: 'absolute', left: 16, right: 16, bottom: 14 }}>
+                      <div style={{ fontFamily: "'Unbounded',sans-serif", fontWeight: 700, fontSize: 14, color: '#fff', textShadow: '0 2px 6px rgba(0,0,0,0.4)' }}>
+                        Hai visto tutti quelli connessi ora.
+                      </div>
+                      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.75)', marginTop: 2 }}>
+                        Torna più tardi — il locale si riempie in fretta.
+                      </div>
+                    </div>
+                  </div>
+                )}
               </>
             );
           })()}

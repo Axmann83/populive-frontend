@@ -141,6 +141,25 @@ body.pl-day-mode .pl-brand-live{
 /* --- Contenuto centrale, scorrevole --- */
 .pl-content{ flex:1; overflow-y:auto; padding:6px 18px 90px; }
 
+/* ============================================================
+   SCORRIMENTO FLUIDO TRA SCHEDE — stile "storie" (Instagram) invece
+   del cambio di scatto. Il contenuto nuovo scorre dentro da un
+   lato (destra se si va avanti, sinistra se si torna indietro) con
+   una leggera dissolvenza — applicata sia allo swipe sia al tocco
+   diretto delle icone, per coerenza in tutta l'app.
+   ============================================================ */
+@keyframes pl-tab-slide-from-right{
+  from{ opacity:0; transform:translateX(24px); }
+  to{ opacity:1; transform:translateX(0); }
+}
+@keyframes pl-tab-slide-from-left{
+  from{ opacity:0; transform:translateX(-24px); }
+  to{ opacity:1; transform:translateX(0); }
+}
+.pl-tab-panel-forward{ animation:pl-tab-slide-from-right 0.28s cubic-bezier(0.16,1,0.3,1) both; }
+.pl-tab-panel-back{ animation:pl-tab-slide-from-left 0.28s cubic-bezier(0.16,1,0.3,1) both; }
+
+
 /* --- Bottom nav --- */
 .pl-bottom-nav{
   position:fixed; bottom:0; left:50%; transform:translateX(-50%);

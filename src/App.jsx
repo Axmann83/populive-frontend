@@ -150,6 +150,18 @@ export default function App() {
   // sopra di esso, quindi non ne risentono.
   const TAB_ORDER = ['radar', 'locale', 'globale', 'pulse', 'profilo'];
   const swipeStart = useRef(null);
+  const [tabSlideDirection, setTabSlideDirection] = useState('forward'); // 'forward' | 'back'
+
+  // Un solo punto di verità per cambiare scheda, usato sia dallo
+  // swipe sia dal tocco diretto delle icone — così la direzione
+  // dell'animazione è sempre corretta ovunque, mai calcolata due
+  // volte in due posti diversi.
+  function navigateToTab(newTab) {
+    const currentIndex = TAB_ORDER.indexOf(activeTab);
+    const newIndex = TAB_ORDER.indexOf(newTab);
+    setTabSlideDirection(newIndex > currentIndex ? 'forward' : 'back');
+    setActiveTab(newTab);
+  }
 
   function handleSwipeStart(e) {
     const touch = e.touches[0];
@@ -172,9 +184,9 @@ export default function App() {
     if (currentIndex === -1) return;
 
     if (deltaX < 0 && currentIndex < TAB_ORDER.length - 1) {
-      setActiveTab(TAB_ORDER[currentIndex + 1]); // sinistra -> avanti
+      navigateToTab(TAB_ORDER[currentIndex + 1]); // sinistra -> avanti
     } else if (deltaX > 0 && currentIndex > 0) {
-      setActiveTab(TAB_ORDER[currentIndex - 1]); // destra -> indietro
+      navigateToTab(TAB_ORDER[currentIndex - 1]); // destra -> indietro
     }
   }
   const [pendingPulseNotification, setPendingPulseNotification] = useState(null);
@@ -423,7 +435,12 @@ export default function App() {
         {arenaSessionId && <div className="pl-arena-pill"><span className="pl-live-dot"></span> Arena attiva</div>}
       </div>
 
-      <div className="pl-content" onTouchStart={handleSwipeStart} onTouchEnd={handleSwipeEnd}>
+      <div
+        className={`pl-content ${tabSlideDirection === 'forward' ? 'pl-tab-panel-forward' : 'pl-tab-panel-back'}`}
+        key={activeTab}
+        onTouchStart={handleSwipeStart}
+        onTouchEnd={handleSwipeEnd}
+      >
         {activeTab === 'radar' && (
           <>
             <CheckinRadar
@@ -493,11 +510,11 @@ export default function App() {
       </div>
 
       <div className="pl-bottom-nav">
-        <NavItem icon={RadarIcon} label="Radar" active={activeTab === 'radar'} onClick={() => setActiveTab('radar')} />
-        <NavItem icon={Trophy} label="Locale" active={activeTab === 'locale'} onClick={() => setActiveTab('locale')} />
-        <NavItem icon={Globe} label="Globale" active={activeTab === 'globale'} onClick={() => setActiveTab('globale')} />
-        <NavItem icon={PulseWaveIcon} label="Pulse" active={activeTab === 'pulse'} onClick={() => setActiveTab('pulse')} badge={pulseBadgeCount} />
-        <NavItem icon={User} label="Profilo" active={activeTab === 'profilo'} onClick={() => setActiveTab('profilo')} />
+        <NavItem icon={RadarIcon} label="Radar" active={activeTab === 'radar'} onClick={() => navigateToTab('radar')} />
+        <NavItem icon={Trophy} label="Locale" active={activeTab === 'locale'} onClick={() => navigateToTab('locale')} />
+        <NavItem icon={Globe} label="Globale" active={activeTab === 'globale'} onClick={() => navigateToTab('globale')} />
+        <NavItem icon={PulseWaveIcon} label="Pulse" active={activeTab === 'pulse'} onClick={() => navigateToTab('pulse')} badge={pulseBadgeCount} />
+        <NavItem icon={User} label="Profilo" active={activeTab === 'profilo'} onClick={() => navigateToTab('profilo')} />
       </div>
 
       {/* "Bentornato" appare per prima, appena entrati in app — e

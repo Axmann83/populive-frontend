@@ -202,19 +202,16 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
   if (status === 'idle' || status === 'checking_in') {
     return (
       <div className="pl-screen">
-        <div className="pl-venue-tag">In attesa che l'Arena si accenda</div>
-        <button
-          className="pl-qr-frame"
-          onClick={handleScanQr}
-          disabled={status === 'checking_in'}
-        >
-          {status === 'checking_in' ? '…' : '▦'}
-        </button>
-        <p className="pl-scan-cta">
-          {status === 'checking_in'
-            ? 'Verifica in corso…'
-            : "Inquadra il QR all'ingresso per entrare nell'Arena"}
-        </p>
+        {status === 'checking_in' ? (
+          <p className="pl-scan-cta" style={{ marginTop: 30 }}>Verifica in corso…</p>
+        ) : (
+          <>
+            <div className="pl-venue-tag">In attesa che l'Arena si accenda</div>
+            <p className="pl-scan-cta">
+              Scansiona il QR del locale con la fotocamera del telefono per entrare nell'Arena — nessun tocco necessario qui, si apre da sola.
+            </p>
+          </>
+        )}
       </div>
     );
   }

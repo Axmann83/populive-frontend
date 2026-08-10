@@ -99,6 +99,7 @@ body{
   max-width:420px; margin:0 auto; min-height:100vh;
   display:flex; flex-direction:column;
   background:radial-gradient(120% 90% at 50% 0%, #201613 0%, #14100F 60%);
+  overflow-x:hidden; /* "taglia" lo scorrimento delle schede fuori dai bordi, altrimenti l'animazione al 100% di larghezza creerebbe uno scorrimento orizzontale indesiderato */
 }
 
 /* --- Barra superiore --- */
@@ -149,15 +150,15 @@ body.pl-day-mode .pl-brand-live{
    diretto delle icone, per coerenza in tutta l'app.
    ============================================================ */
 @keyframes pl-tab-slide-from-right{
-  from{ opacity:0; transform:translateX(24px); }
+  from{ opacity:0.4; transform:translateX(100%); }
   to{ opacity:1; transform:translateX(0); }
 }
 @keyframes pl-tab-slide-from-left{
-  from{ opacity:0; transform:translateX(-24px); }
+  from{ opacity:0.4; transform:translateX(-100%); }
   to{ opacity:1; transform:translateX(0); }
 }
-.pl-tab-panel-forward{ animation:pl-tab-slide-from-right 0.28s cubic-bezier(0.16,1,0.3,1) both; }
-.pl-tab-panel-back{ animation:pl-tab-slide-from-left 0.28s cubic-bezier(0.16,1,0.3,1) both; }
+.pl-tab-panel-forward{ animation:pl-tab-slide-from-right 0.32s cubic-bezier(0.22,1,0.36,1) both; }
+.pl-tab-panel-back{ animation:pl-tab-slide-from-left 0.32s cubic-bezier(0.22,1,0.36,1) both; }
 
 
 /* --- Bottom nav --- */

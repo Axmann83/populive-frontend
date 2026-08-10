@@ -283,32 +283,48 @@ export default function App() {
   // All'avvio: c'è già un token salvato da una sessione precedente?
   // Se sì, verifichiamolo col server prima di decidere cosa mostrare
   // — un token scaduto/non valido ci rimanda al login, non fa
-  // crashare l'app.
+  // crashare l'app. Estratta come useCallback (non più dentro
+  // l'useEffect) apposta perché il bottone "Riprova" della
+  // schermata di errore rete la possa richiamare di nuovo, senza
+  // dover ricaricare l'intera app.
   // --------------------------------------------------------
-  useEffect(() => {
-    async function checkExistingSession() {
-      const token = getToken();
-      const storedUserId = getStoredUserId();
-      if (!token || !storedUserId) {
-        setAuthState('login');
-        return;
-      }
-      try {
-        const res = await apiFetch('/api/auth/me');
-        const data = await res.json();
-        if (data.success) {
-          setUserId(data.userId);
-          setAuthState(data.onboardingCompleted ? 'app' : 'onboarding');
-        } else {
-          clearSession();
-          setAuthState('login');
-        }
-      } catch {
+  const checkExistingSession = useCallback(async () => {
+    const token = getToken();
+    const storedUserId = getStoredUserId();
+    if (!token || !storedUserId) {
+      setAuthState('login');
+      return;
+    }
+    try {
+      const res = await apiFetch('/api/auth/me');
+      const data = await res.json();
+      if (data.success) {
+        setUserId(data.userId);
+        setAuthState(data.onboardingCompleted ? 'app' : 'onboarding');
+      } else {
+        // Il server ha risposto DAVVERO e ha detto esplicitamente
+        // che il token non è valido (es. scaduto per davvero,
+        // o revocato) — qui sì che ha senso ripulire la sessione
+        // e rimandare al login.
         clearSession();
         setAuthState('login');
       }
+    } catch {
+      // Qui invece la richiesta non è nemmeno arrivata a
+      // destinazione (rete assente/instabile — capita spesso
+      // riaprendo l'app dopo ore, proprio mentre il telefono
+      // sta ristabilendo la connessione). NON è una prova che il
+      // token sia scaduto — anzi, il token da 30 giorni salvato
+      // è quasi certamente ancora valido. Cancellarlo qui
+      // costringerebbe a rifare login+SMS per un semplice
+      // problema di rete temporaneo, non per un vero logout.
+      setAuthState('connection_error');
     }
+  }, []);
+
+  useEffect(() => {
     checkExistingSession();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Teniamo un riferimento persistente al socket "trasversale" —
@@ -399,7 +415,26 @@ export default function App() {
   // --------------------------------------------------------
   let mainContent = null; // 'checking': nient'altro da mostrare, la splash copre tutto da sola
 
-  if (authState === 'login') {
+  if (authState === 'connection_error') {
+    // Problema di RETE, non di sessione — il token salvato resta
+    // intatto (mai cancellato qui), si riprova semplicemente a
+    // ricontattare il server.
+    mainContent = (
+      <div className="pl-app-shell">
+        <div className="pl-content" style={{ paddingTop: 20, display: 'flex', flexDirection: 'column', justifyContent: 'center', minHeight: '100vh', textAlign: 'center' }}>
+          <div className="pl-brand" style={{ justifyContent: 'center', marginBottom: 20 }}>
+            Popu<span className="pl-brand-live">Live</span>
+          </div>
+          <p className="pl-hint" style={{ marginBottom: 16 }}>
+            Non riesco a contattare il server — controlla la connessione e riprova. Il tuo accesso resta salvato, non serve rifare login.
+          </p>
+          <button className="pl-send-btn" onClick={checkExistingSession} style={{ maxWidth: 200, margin: '0 auto' }}>
+            Riprova
+          </button>
+        </div>
+      </div>
+    );
+  } else if (authState === 'login') {
     mainContent = (
       <div className="pl-app-shell">
         <div className="pl-content" style={{ paddingTop: 20 }}>

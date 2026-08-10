@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { io } from 'socket.io-client';
 import { apiFetch } from './apiClient';
 import ProfileFullScreen from './ProfileFullScreen';
-import { Armchair } from './PopuLiveIcons';
+import { Armchair, Radar as RadarIcon } from './PopuLiveIcons';
 
 /**
  * ============================================================
@@ -246,6 +246,38 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
             const othersOnly = radarPeople.filter((p) => p.userId !== userId);
             return (
               <>
+                {/* Momento editoriale — stesso principio della
+                    striscia di "My Hinge": foto DESATURATA, icona
+                    tonda + testo su due righe + freccina, sul lato
+                    più scuro della foto. Messa qui IN CIMA (non più
+                    in fondo alla lista) apposta: il Radar cresce in
+                    diretta durante la serata via socket, quindi
+                    qualunque frase tipo "hai visto tutti" sarebbe
+                    diventata falsa al primo nuovo arrivo — qui il
+                    testo resta sempre vero, qualunque cosa succeda
+                    dopo nella lista. */}
+                <div style={{ position: 'relative', aspectRatio: '16/5', borderRadius: 16, overflow: 'hidden', marginBottom: 16, boxShadow: 'var(--shadow-md)' }}>
+                  <img
+                    src="https://res.cloudinary.com/rjkegdrp/image/upload/v1786253032/Radar_Populive_x4srpz.webp"
+                    alt=""
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 30%', filter: 'grayscale(100%) contrast(1.08) brightness(0.95)' }}
+                  />
+                  <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, rgba(20,16,15,0.92) 0%, rgba(20,16,15,0.55) 40%, rgba(20,16,15,0.05) 75%)' }} />
+                  <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', padding: '0 14px', gap: 10 }}>
+                    <div style={{ width: 32, height: 32, borderRadius: '50%', flexShrink: 0, background: 'linear-gradient(135deg, #FF7A9C, var(--cyan))', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 10px -2px rgba(255,61,110,0.5)' }}>
+                      <RadarIcon size={16} color="#fff" />
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontFamily: "'Unbounded',sans-serif", fontWeight: 700, fontSize: 12.5, color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,0.4)' }}>
+                        Chi troverai stasera qui
+                      </div>
+                      <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.7)', marginTop: 1 }}>
+                        Scopri chi è già arrivato
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 <p>{othersOnly.length} persone connesse ora</p>
                 <div className="pl-radar-list">
                   {othersOnly.map((p) => (
@@ -257,30 +289,6 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
                       onClick={() => setSelectedProfileUserId(p.userId)}
                     />
                   ))}
-                </div>
-
-                {/* Momento editoriale — stesso principio del Top
-                    Match di Hinge: non funzionale, solo un respiro
-                    visivo che rinforza la promessa di fondo
-                    dell'app. Sempre presente, testo diverso a
-                    seconda che ci sia già gente connessa o no —
-                    proprio quando il Radar è vuoto è il momento in
-                    cui c'è più bisogno di incoraggiare a restare. */}
-                <div style={{ position: 'relative', marginTop: 16, borderRadius: 20, overflow: 'hidden', aspectRatio: '4/3', boxShadow: 'var(--shadow-md)' }}>
-                  <img
-                    src="https://res.cloudinary.com/rjkegdrp/image/upload/v1786253032/Radar_Populive_x4srpz.webp"
-                    alt=""
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                  />
-                  <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(20,16,15,0.85) 0%, rgba(20,16,15,0.1) 55%, rgba(255,61,110,0.1) 100%)' }} />
-                  <div style={{ position: 'absolute', left: 16, right: 16, bottom: 14 }}>
-                    <div style={{ fontFamily: "'Unbounded',sans-serif", fontWeight: 700, fontSize: 14, color: '#fff', textShadow: '0 2px 6px rgba(0,0,0,0.4)' }}>
-                      {othersOnly.length > 0 ? 'Hai visto tutti quelli connessi ora.' : 'Il locale si sta ancora animando.'}
-                    </div>
-                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.75)', marginTop: 2 }}>
-                      {othersOnly.length > 0 ? 'Torna più tardi — il locale si riempie in fretta.' : 'Torna a controllare tra poco.'}
-                    </div>
-                  </div>
                 </div>
               </>
             );

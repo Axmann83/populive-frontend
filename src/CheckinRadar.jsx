@@ -201,42 +201,45 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
   // --------------------------------------------------------
   if (status === 'idle' || status === 'checking_in') {
     return (
-      <div className="pl-screen">
+      <div className="pl-screen" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         {status === 'checking_in' ? (
-          <p className="pl-scan-cta" style={{ marginTop: 30 }}>Verifica in corso…</p>
+          <p className="pl-scan-cta" style={{ marginTop: 30, textAlign: 'center' }}>Verifica in corso…</p>
         ) : (
-          <>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 22 }}>
             {/* Momento editoriale — stesso linguaggio delle strisce
-                di Radar e Pulse: foto desaturata, icona+testo+
-                freccina. Fila fuori dal locale, coerente col
-                momento vero ("stai per entrare"). */}
-            <div style={{ position: 'relative', aspectRatio: '16/5', borderRadius: 16, overflow: 'hidden', marginBottom: 16, boxShadow: 'var(--shadow-md)' }}>
+                di Radar e Pulse, ma qui più grande: è l'unico
+                contenuto della pagina, non un accento sopra una
+                lista vera, quindi ha senso che occupi più spazio
+                invece di restare una striscia sottile. */}
+            <div style={{ position: 'relative', aspectRatio: '4/5', borderRadius: 20, overflow: 'hidden', boxShadow: 'var(--shadow-md)' }}>
               <img
                 src="https://res.cloudinary.com/rjkegdrp/image/upload/v1786334476/populive_entrata_locale_bqvrhj.webp"
                 alt=""
                 style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 40%', filter: 'grayscale(100%) contrast(1.08) brightness(0.95)' }}
               />
-              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, rgba(20,16,15,0.92) 0%, rgba(20,16,15,0.55) 40%, rgba(20,16,15,0.05) 75%)' }} />
-              <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', padding: '0 14px', gap: 10 }}>
-                <div style={{ width: 32, height: 32, borderRadius: '50%', flexShrink: 0, background: 'linear-gradient(135deg, #FF7A9C, var(--cyan))', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 10px -2px rgba(255,61,110,0.5)' }}>
-                  <RadarIcon size={16} color="#fff" />
+              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(20,16,15,0.88) 0%, rgba(20,16,15,0.15) 45%, rgba(20,16,15,0.05) 70%)' }} />
+              <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: 20, display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ width: 40, height: 40, borderRadius: '50%', flexShrink: 0, background: 'linear-gradient(135deg, #FF7A9C, var(--cyan))', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 10px -2px rgba(255,61,110,0.5)' }}>
+                  <RadarIcon size={18} color="#fff" />
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontFamily: "'Unbounded',sans-serif", fontWeight: 700, fontSize: 12.5, color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,0.4)' }}>
+                  <div style={{ fontFamily: "'Unbounded',sans-serif", fontWeight: 700, fontSize: 16, color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,0.4)' }}>
                     La serata sta per iniziare
                   </div>
-                  <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.7)', marginTop: 1 }}>
+                  <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)', marginTop: 3 }}>
                     Scansiona per entrare
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="pl-venue-tag">In attesa che l'Arena si accenda</div>
-            <p className="pl-scan-cta">
-              Scansiona il QR del locale con la fotocamera del telefono per entrare nell'Arena — nessun tocco necessario qui, si apre da sola.
-            </p>
-          </>
+            <div style={{ textAlign: 'center', padding: '0 8px' }}>
+              <div className="pl-venue-tag" style={{ fontFamily: "'Unbounded',sans-serif", fontWeight: 700, fontSize: 17, marginBottom: 10 }}>In attesa che l'Arena si accenda</div>
+              <p className="pl-scan-cta" style={{ fontSize: 14, lineHeight: 1.55 }}>
+                Scansiona il QR del locale con la fotocamera del telefono per entrare nell'Arena — nessun tocco necessario qui, si apre da sola.
+              </p>
+            </div>
+          </div>
         )}
       </div>
     );

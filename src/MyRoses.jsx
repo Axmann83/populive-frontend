@@ -94,6 +94,32 @@ export default function MyPulses({ userId, venueId, onOpenPulse }) {
 
   return (
     <div className="pl-screen">
+      {/* Momento editoriale — stesso linguaggio della striscia in
+          cima al Radar: foto desaturata, icona+testo+freccina.
+          Coppia al bancone, coerente col contenuto reale di questa
+          pagina (è dove nasce la consumazione di una Pulse). */}
+      <div style={{ position: 'relative', aspectRatio: '16/5', borderRadius: 16, overflow: 'hidden', marginBottom: 10, boxShadow: 'var(--shadow-md)' }}>
+        <img
+          src="https://res.cloudinary.com/rjkegdrp/image/upload/v1786332632/pulse_populive_nv5g9y.webp"
+          alt=""
+          style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 35%', filter: 'grayscale(100%) contrast(1.08) brightness(0.95)' }}
+        />
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, rgba(20,16,15,0.92) 0%, rgba(20,16,15,0.55) 40%, rgba(20,16,15,0.05) 75%)' }} />
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', padding: '0 14px', gap: 10 }}>
+          <div style={{ width: 32, height: 32, borderRadius: '50%', flexShrink: 0, background: 'linear-gradient(135deg, #FF7A9C, var(--cyan))', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 10px -2px rgba(255,61,110,0.5)' }}>
+            <PulseWaveIcon size={16} color="#fff" />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontFamily: "'Unbounded',sans-serif", fontWeight: 700, fontSize: 12.5, color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,0.4)' }}>
+              Offri un momento vero
+            </div>
+            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.7)', marginTop: 1 }}>
+              Un Pulse è un invito, non solo un drink
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Saldo — sempre in cima, prima della lista */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'var(--surface)', border: '1px solid rgba(255,61,110,0.3)', borderRadius: 14, padding: 12, marginBottom: 10, boxShadow: 'var(--shadow-glow-cyan)' }}>
         <PulseWaveIcon size={26} color="var(--cyan)" />

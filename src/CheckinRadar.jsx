@@ -23,6 +23,7 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
   const [checkinCount, setCheckinCount] = useState(0);
   const [threshold, setThreshold] = useState(20);
   const [radarPeople, setRadarPeople] = useState([]);
+  const [boostedUserIds, setBoostedUserIds] = useState([]); // in ordine dal più recente boost
   const [arenaSessionId, setArenaSessionId] = useState(null);
   const [status, setStatus] = useState('idle'); // 'idle' | 'checking_in' | 'checked_in' | 'error'
   const [errorReason, setErrorReason] = useState(null);
@@ -127,6 +128,18 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
         if (prev.some((p) => p.userId === ghostUserId)) return prev;
         return [...prev, { userId: ghostUserId, joinedAt: Date.now() }];
       });
+    });
+
+    // RIORDINO DOPO UN LIKE — chi ha ricevuto un Like vede il
+    // mittente comparire tra i primi del proprio radar (v. sotto,
+    // dove si applica davvero l'ordinamento), per rendere più
+    // facile un eventuale ricambio. Il Like resta comunque anonimo
+    // — non sappiamo QUI chi è stato, solo che qualcuno tra i
+    // profili normalmente visibili merita una posizione più in
+    // vista adesso.
+    socket.on('like_boost', ({ userId: boostedId }) => {
+      if (boostedId === userId) return;
+      setBoostedUserIds((prev) => [boostedId, ...prev.filter((id) => id !== boostedId)]);
     });
 
     setSocketRef(socket);
@@ -270,6 +283,23 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
               radar, qualunque cosa succeda con socket/riconnessioni. */}
           {(() => {
             const othersOnly = radarPeople.filter((p) => p.userId !== userId);
+
+            // Chi ha mandato un Like di recente va tra i primi —
+            // mai una rivelazione (restano profili normali, senza
+            // nessuna indicazione del perché sono lì), solo un
+            // aiuto concreto a incrociarli di nuovo per un
+            // eventuale ricambio. L'ordine tra i "boostati" stessi
+            // segue quello del boost più recente; tutti gli altri
+            // restano nel loro ordine originale, semplicemente
+            // spostati dopo.
+            const sortedOthers = boostedUserIds.length === 0 ? othersOnly : [...othersOnly].sort((a, b) => {
+              const aBoost = boostedUserIds.indexOf(a.userId);
+              const bBoost = boostedUserIds.indexOf(b.userId);
+              if (aBoost === -1 && bBoost === -1) return 0; // nessuno dei due è boostato — ordine invariato
+              if (aBoost === -1) return 1;
+              if (bBoost === -1) return -1;
+              return aBoost - bBoost; // tra due boostati, il più recente prima
+            });
             return (
               <>
                 {/* Momento editoriale — stesso principio della
@@ -306,7 +336,7 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
 
                 <p>{othersOnly.length} persone connesse ora</p>
                 <div className="pl-radar-list">
-                  {othersOnly.map((p) => (
+                  {sortedOthers.map((p) => (
                     <RadarCard
                       key={p.userId}
                       personId={p.userId}

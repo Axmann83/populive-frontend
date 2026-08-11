@@ -783,6 +783,10 @@ function VenueOrganizePanel({ venue, onVenueUpdate }) {
   const [savingHours, setSavingHours] = useState(false);
   const [savedHours, setSavedHours] = useState(false);
 
+  const [minUsersEdit, setMinUsersEdit] = useState(venue.minUsersForLocalRanking ? String(venue.minUsersForLocalRanking) : '5');
+  const [savingMinUsers, setSavingMinUsers] = useState(false);
+  const [savedMinUsers, setSavedMinUsers] = useState(false);
+
   // QR d'ingresso del locale — un solo codice per locale.
   const [venueQrDataUrl, setVenueQrDataUrl] = useState(null);
   const [generatingVenueQr, setGeneratingVenueQr] = useState(false);
@@ -930,6 +934,32 @@ function VenueOrganizePanel({ venue, onVenueUpdate }) {
     }
   }
 
+  async function saveMinUsers() {
+    const n = parseInt(minUsersEdit, 10);
+    if (!Number.isInteger(n) || n < 1) {
+      window.alert('Inserisci un numero valido, almeno 1.');
+      return;
+    }
+    setSavingMinUsers(true);
+    try {
+      const res = await apiFetch(`/api/dashboard/venues/${venue.venueId}/ranking-threshold`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ minUsers: n }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        onVenueUpdate({ ...venue, minUsersForLocalRanking: n });
+        setSavedMinUsers(true);
+        setTimeout(() => setSavedMinUsers(false), 2000);
+      } else {
+        window.alert('Qualcosa è andato storto — riprova.');
+      }
+    } finally {
+      setSavingMinUsers(false);
+    }
+  }
+
   async function generateVenueQr() {
     setGeneratingVenueQr(true);
     try {
@@ -984,6 +1014,21 @@ function VenueOrganizePanel({ venue, onVenueUpdate }) {
         </div>
         <button onClick={savePct} disabled={savingPct} style={{ width: '100%', padding: '9px', borderRadius: 10, border: 'none', fontSize: 11, fontWeight: 700, background: savedPct ? 'rgba(255,61,110,0.3)' : 'var(--cyan)', color: '#fff', cursor: savingPct ? 'default' : 'pointer' }}>
           {savingPct ? 'Un attimo…' : savedPct ? 'Salvato ✓' : 'Salva percentuale'}
+        </button>
+      </MetricCard>
+
+      <MetricCard title="Soglia classifica locale">
+        <p className="pl-hint" style={{ marginBottom: 10 }}>
+          Se ci sono meno persone connesse di questo numero, la classifica locale resta nascosta per non mostrare qualcuno da solo in cima (demotivante) — Radar, interazioni e punti funzionano comunque normalmente, e i punti contano sempre per la classifica generale.
+        </p>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 10, alignItems: 'flex-end' }}>
+          <div style={{ flex: 1 }}>
+            <label style={{ fontSize: 9.5, color: 'var(--text-muted)' }}>Minimo persone</label>
+            <input type="number" min="1" value={minUsersEdit} onChange={(e) => setMinUsersEdit(e.target.value)} style={{ marginBottom: 0 }} />
+          </div>
+        </div>
+        <button onClick={saveMinUsers} disabled={savingMinUsers} style={{ width: '100%', padding: '9px', borderRadius: 10, border: 'none', fontSize: 11, fontWeight: 700, background: savedMinUsers ? 'rgba(255,61,110,0.3)' : 'var(--cyan)', color: '#fff', cursor: savingMinUsers ? 'default' : 'pointer' }}>
+          {savingMinUsers ? 'Un attimo…' : savedMinUsers ? 'Salvato ✓' : 'Salva soglia'}
         </button>
       </MetricCard>
 

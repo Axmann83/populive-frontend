@@ -379,16 +379,21 @@ export default function VenuesMap({ currentUserId, onClose, mode = 'browse' }) {
 function NewVenueForm({ coords, onCancel, onCreated }) {
   const [name, setName] = useState('');
   const [venueType, setVenueType] = useState('cocktail_bar');
+  const [minUsers, setMinUsers] = useState('5');
   const [saving, setSaving] = useState(false);
 
   async function save() {
     if (!name.trim()) return;
     setSaving(true);
     try {
+      const parsedMinUsers = parseInt(minUsers, 10);
       const res = await apiFetch('/api/venues/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, latitude: coords[0], longitude: coords[1], venueType }),
+        body: JSON.stringify({
+          name, latitude: coords[0], longitude: coords[1], venueType,
+          minUsersForLocalRanking: Number.isInteger(parsedMinUsers) && parsedMinUsers >= 1 ? parsedMinUsers : undefined,
+        }),
       });
       const data = await res.json();
       if (data.success) {
@@ -409,6 +414,15 @@ function NewVenueForm({ coords, onCancel, onCreated }) {
           <option key={key} value={key}>{label}</option>
         ))}
       </select>
+      <div style={{ marginBottom: 10 }}>
+        <label style={{ fontSize: 9.5, color: 'var(--text-muted)' }}>Minimo persone per sbloccare la classifica locale</label>
+        <input
+          type="number" min="1" value={minUsers}
+          onChange={(e) => setMinUsers(e.target.value)}
+          placeholder="5"
+          style={{ marginBottom: 0 }}
+        />
+      </div>
       <div style={{ display: 'flex', gap: 8 }}>
         <button className="pl-send-btn" onClick={save} disabled={saving || !name.trim()}>
           {saving ? 'Un attimo…' : 'Crea locale'}

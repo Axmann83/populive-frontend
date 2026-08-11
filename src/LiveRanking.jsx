@@ -131,13 +131,41 @@ export default function LiveRanking({ arenaSessionId, currentUserId, isGlobal, v
       {loading && <div className="pl-ranking-loading">Caricamento classifica…</div>}
 
       {!loading && thresholdInfo && (
-        <div style={{ textAlign: 'center', marginTop: 30, padding: '0 16px' }}>
-          <p style={{ fontFamily: "'Unbounded',sans-serif", fontWeight: 700, fontSize: 15, marginBottom: 8 }}>
-            La classifica si sta ancora scaldando
-          </p>
-          <p className="pl-hint">
-            Servono almeno {thresholdInfo.minRequired} persone connesse per sbloccarla — al momento siete in {thresholdInfo.currentCount}. Il Radar e i tuoi punti funzionano comunque normalmente, e contano già per la classifica generale.
-          </p>
+        <div style={{ padding: '0 4px' }}>
+          {/* Stessa foto/stile della schermata di attesa check-in —
+              qui però il concetto "in attesa" ha davvero senso: si
+              aspetta che si raggiunga il numero minimo di persone,
+              non solo che qualcuno scansioni. */}
+          <div style={{ position: 'relative', aspectRatio: '4/5', borderRadius: 20, overflow: 'hidden', marginBottom: 16, boxShadow: 'var(--shadow-md)' }}>
+            <img
+              src="https://res.cloudinary.com/rjkegdrp/image/upload/v1786420149/populive_senza_classifica_syju7o.webp"
+              alt=""
+              style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 35%', filter: 'grayscale(100%) contrast(1.08) brightness(0.95)' }}
+            />
+            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(20,16,15,0.88) 0%, rgba(20,16,15,0.15) 45%, rgba(20,16,15,0.05) 70%)' }} />
+            <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: 20, display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ width: 40, height: 40, borderRadius: '50%', flexShrink: 0, background: 'linear-gradient(135deg, #FF7A9C, var(--cyan))', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 10px -2px rgba(255,61,110,0.5)' }}>
+                <Crown size={18} color="#fff" />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontFamily: "'Unbounded',sans-serif", fontWeight: 700, fontSize: 16, color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,0.4)' }}>
+                  In attesa che l'Arena si accenda
+                </div>
+                <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)', marginTop: 3 }}>
+                  Servono più persone per la classifica
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ textAlign: 'center', padding: '0 8px' }}>
+            <p style={{ fontFamily: "'Unbounded',sans-serif", fontWeight: 700, fontSize: 15, marginBottom: 8 }}>
+              La classifica si sta ancora scaldando
+            </p>
+            <p className="pl-hint">
+              Servono almeno {thresholdInfo.minRequired} persone connesse per sbloccarla — al momento siete in {thresholdInfo.currentCount}. Il Radar e i tuoi punti funzionano comunque normalmente, e contano già per la classifica generale.
+            </p>
+          </div>
         </div>
       )}
 

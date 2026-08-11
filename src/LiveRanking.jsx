@@ -22,6 +22,7 @@ const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:3000';
 export default function LiveRanking({ arenaSessionId, currentUserId, isGlobal, venueId, onSelectSelf }) {
   const [ranking, setRanking] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [thresholdInfo, setThresholdInfo] = useState(null); // { currentCount, minRequired } — solo per la classifica locale
   const [recentDeltas, setRecentDeltas] = useState({}); // userId -> {points, key} per l'animazione "+N"
   // Chi hai toccato in classifica — apre la schermata giusta a
   // seconda di dove sei: locale → tutto schermo con interazioni,
@@ -53,6 +54,7 @@ export default function LiveRanking({ arenaSessionId, currentUserId, isGlobal, v
         const data = await res.json();
         if (!cancelled && data.success) {
           setRanking(data.ranking);
+          setThresholdInfo(data.belowThreshold ? { currentCount: data.currentCount, minRequired: data.minRequired } : null);
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -128,13 +130,24 @@ export default function LiveRanking({ arenaSessionId, currentUserId, isGlobal, v
 
       {loading && <div className="pl-ranking-loading">Caricamento classifica…</div>}
 
-      {!loading && ranking.length === 0 && (
+      {!loading && thresholdInfo && (
+        <div style={{ textAlign: 'center', marginTop: 30, padding: '0 16px' }}>
+          <p style={{ fontFamily: "'Unbounded',sans-serif", fontWeight: 700, fontSize: 15, marginBottom: 8 }}>
+            La classifica si sta ancora scaldando
+          </p>
+          <p className="pl-hint">
+            Servono almeno {thresholdInfo.minRequired} persone connesse per sbloccarla — al momento siete in {thresholdInfo.currentCount}. Il Radar e i tuoi punti funzionano comunque normalmente, e contano già per la classifica generale.
+          </p>
+        </div>
+      )}
+
+      {!loading && !thresholdInfo && ranking.length === 0 && (
         <p className="pl-hint" style={{ textAlign: 'center', marginTop: 20 }}>
           Nessuno da mostrare con questi filtri.
         </p>
       )}
 
-      {!loading && ranking.map((entry) => (
+      {!loading && !thresholdInfo && ranking.map((entry) => (
         <RankRow
           key={entry.userId}
           entry={entry}

@@ -219,9 +219,9 @@ export default function App() {
   // la sua sparizione automatica indipendente dalle altre.
   const [pointsToasts, setPointsToasts] = useState([]);
 
-  const showPointsToast = useCallback((icon, points) => {
+  const showPointsToast = useCallback((icon, points, label) => {
     const id = Date.now() + Math.random();
-    setPointsToasts((prev) => [...prev, { id, icon, points }]);
+    setPointsToasts((prev) => [...prev, { id, icon, points, label }]);
     setTimeout(() => {
       setPointsToasts((prev) => prev.filter((t) => t.id !== id));
     }, 2800);
@@ -248,6 +248,29 @@ export default function App() {
       connector_discovery_bonus: Link2,
     };
     return icons[base] || Sparkles;
+  }, []);
+
+  // Stessa idea di pointsIconFor, ma per il testo — utile
+  // soprattutto per il Like, che non ha una schermata dedicata
+  // (a differenza di Superlike/Pulse, dove è già ovvio cosa hai
+  // ricevuto): vedere scritto "Like" accanto ai punti invoglia ad
+  // aprire il Radar e provare a ricambiare.
+  const pointsLabelFor = useCallback((source) => {
+    const base = source.replace(/_sent$/, '');
+    const labels = {
+      profile_view: 'Visita profilo',
+      like_received: 'Like',
+      superlike_received: 'Superlike',
+      pulse_standalone: 'Pulse',
+      pulse_like: 'Pulse',
+      pulse_super: 'Pulse',
+      pulse_like_match: 'Match',
+      like_match: 'Match',
+      pulse_guess_won: 'Match',
+      mission_completed: 'Missione',
+      connector_discovery_bonus: 'Scoperta',
+    };
+    return labels[base] || null;
   }, []);
 
   // Proposta d'acquisto quando i Like smettono di generare punti —
@@ -361,7 +384,7 @@ export default function App() {
     // mai per quelli di un'altra persona che vediamo aggiornarsi.
     socket.on('points_update', (payload) => {
       if (payload.userId === userId) {
-        showPointsToast(pointsIconFor(payload.source), payload.points);
+        showPointsToast(pointsIconFor(payload.source), payload.points, pointsLabelFor(payload.source));
       }
     });
 
@@ -381,7 +404,7 @@ export default function App() {
       socket.disconnect();
       socketRef.current = null;
     };
-  }, [authState, userId, showPointsToast, pointsIconFor, offerLikeCreditsPurchase]);
+  }, [authState, userId, showPointsToast, pointsIconFor, pointsLabelFor, offerLikeCreditsPurchase]);
 
   // Appena conosciamo l'Arena in cui siamo (dopo il check-in),
   // colleghiamo QUESTA STESSA connessione anche alla sua stanza —
@@ -654,7 +677,7 @@ export default function App() {
             <span className="pl-confirm-wave"></span>
             <span className="pl-confirm-wave"></span>
             <t.icon size={16} />
-            <span style={{ color: 'var(--cyan)' }}>+{t.points} punti</span>
+            <span style={{ color: 'var(--cyan)' }}>+{t.points} {t.label || 'punti'}</span>
           </div>
         ))}
       </div>

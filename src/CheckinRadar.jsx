@@ -245,13 +245,6 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
                 </div>
               </div>
             </div>
-
-            <div style={{ textAlign: 'center', padding: '0 8px' }}>
-              <div className="pl-venue-tag" style={{ fontFamily: "'Unbounded',sans-serif", fontWeight: 700, fontSize: 17, marginBottom: 10 }}>In attesa che l'Arena si accenda</div>
-              <p className="pl-scan-cta" style={{ fontSize: 14, lineHeight: 1.55 }}>
-                Scansiona il QR del locale con la fotocamera del telefono per entrare nell'Arena — nessun tocco necessario qui, si apre da sola.
-              </p>
-            </div>
           </div>
         )}
       </div>

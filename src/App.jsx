@@ -23,7 +23,7 @@ import VenuesMap from './VenuesMap';
 import Dashboard from './Dashboard';
 import NearbyMissions from './NearbyMissions';
 import SuperlikeNotification from './SuperlikeNotification';
-import { API_BASE, apiFetch, getToken, getStoredUserId, clearSession } from './apiClient';
+import { API_BASE, apiFetch, getToken, getStoredUserId, clearSession, getLastVenueId } from './apiClient';
 
 import './populive-styles.css';
 
@@ -119,6 +119,20 @@ export default function App() {
       setVenueId(match[1]);
       setArrivedViaQr(true);
       window.history.replaceState(null, '', '/');
+    } else {
+      // Nessuna scansione vera in questo caricamento — ma se
+      // eravamo già dentro un locale prima dell'aggiornamento
+      // della pagina, ritentiamo da soli invece di costringere a
+      // riscansionare il QR (l'utente potrebbe essere ancora
+      // fisicamente lì). Se nel frattempo il locale ha chiuso
+      // l'Arena, /api/checkin lo scoprirà comunque da solo — qui
+      // non forziamo né inventiamo nulla, solo ripetiamo lo stesso
+      // tentativo che avrebbe fatto un vero QR.
+      const lastVenueId = getLastVenueId();
+      if (lastVenueId) {
+        setVenueId(lastVenueId);
+        setArrivedViaQr(true);
+      }
     }
 
     const missionMatch = window.location.pathname.match(/^\/mission\/([a-zA-Z0-9-]+)/);

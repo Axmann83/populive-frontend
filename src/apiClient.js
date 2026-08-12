@@ -42,6 +42,34 @@ function clearSession() {
 }
 
 /**
+ * ============================================================
+ * ULTIMO LOCALE — per sopravvivere a un aggiornamento pagina
+ * ============================================================
+ * L'essere "dentro" un'Arena vive solo in memoria (arenaSessionId),
+ * quindi un semplice refresh lo cancellava sempre, costringendo a
+ * riscansionare il QR anche restando fisicamente nello stesso
+ * locale — un problema vero, trovato durante un test dal vivo.
+ * Qui salviamo SOLO il venueId (mai l'arenaSessionId, che va
+ * comunque richiesto di nuovo al server ad ogni avvio: se il
+ * locale nel frattempo ha chiuso l'Arena, richiamare /api/checkin
+ * lo scopre da solo, niente di forzato o finto).
+ * ============================================================
+ */
+const LAST_VENUE_KEY = 'pl_last_venue_id';
+
+function getLastVenueId() {
+  try { return localStorage.getItem(LAST_VENUE_KEY); } catch { return null; }
+}
+
+function setLastVenueId(venueId) {
+  try { localStorage.setItem(LAST_VENUE_KEY, venueId); } catch { /* ignorato */ }
+}
+
+function clearLastVenueId() {
+  try { localStorage.removeItem(LAST_VENUE_KEY); } catch { /* ignorato */ }
+}
+
+/**
  * Sostituto di fetch() che aggiunge da solo il token, se presente.
  * Se il server risponde 401 (token scaduto/non valido), ripuliamo
  * la sessione salvata — così l'app sa di dover tornare al login
@@ -62,7 +90,7 @@ async function apiFetch(path, options = {}) {
   return res;
 }
 
-export { API_BASE, getToken, getStoredUserId, setSession, clearSession, apiFetch };
+export { API_BASE, getToken, getStoredUserId, setSession, clearSession, apiFetch, getLastVenueId, setLastVenueId, clearLastVenueId };
 
 /**
  * ============================================================

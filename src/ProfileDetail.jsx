@@ -56,7 +56,7 @@ export default function ProfileDetail({ userId, arenaSessionId, onClose, onBack 
   }, [userId, arenaSessionId]);
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'var(--bg, #14100F)', zIndex: 65, overflowY: 'auto' }}>
+    <div className="pl-fullscreen-modal" style={{ position: 'fixed', inset: 0, background: 'var(--bg, #14100F)', zIndex: 65, overflowY: 'auto' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 18px 6px' }}>
         {/* Torna alla foto a tutto schermo, non chiude tutto — un
             passo indietro nello stesso "viaggio", non una fine. */}

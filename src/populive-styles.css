@@ -106,6 +106,7 @@ body{
 
 .pl-app-shell{
   max-width:420px; margin:0 auto; min-height:100vh;
+  min-height:100dvh; /* altezza vera dello schermo sui browser mobili — 100vh da solo ignora la barra degli indirizzi del telefono, spingendo la barra in basso fuori dall'area visibile finché non si scorre. Scritta DOPO apposta: i browser che non conoscono "dvh" ignorano questa riga e restano su 100vh, quelli che la conoscono la usano al posto della precedente. */
   display:flex; flex-direction:column;
   background:radial-gradient(120% 90% at 50% 0%, #201613 0%, #14100F 60%);
   overflow-x:hidden; /* "taglia" lo scorrimento delle schede fuori dai bordi, altrimenti l'animazione al 100% di larghezza creerebbe uno scorrimento orizzontale indesiderato */

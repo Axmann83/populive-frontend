@@ -185,6 +185,18 @@ body.pl-day-mode .pl-brand-live{
   backdrop-filter:blur(8px);
   box-shadow:0 -8px 24px -8px rgba(0,0,0,0.5);
 }
+/* Invece di fidarci solo dell'ordine di sovrapposizione (z-index) —
+   che in teoria basterebbe da solo, ma segnalato più volte come
+   ancora insufficiente in pratica — qui la barra SPARISCE del
+   tutto ogni volta che una schermata a tutto schermo (profilo,
+   dettaglio profilo, ecc.) è aperta da qualche parte nell'app,
+   invece di restare semplicemente "sotto". Marcatore comune:
+   .pl-fullscreen-modal, aggiunto sul contenitore di quelle
+   schermate. Così non può più esserci nessuna sovrapposizione
+   visibile, qualunque cosa succeda con lo stacking. */
+.pl-app-shell:has(.pl-fullscreen-modal) .pl-bottom-nav{
+  display:none;
+}
 .pl-nav-item{
   display:flex; flex-direction:column; align-items:center; gap:3px;
   color:var(--text-muted); cursor:pointer; background:none; border:none;

@@ -115,7 +115,7 @@ export default function ProfileFullScreen({ userId, arenaSessionId, currentUserI
 
   if (showPulseSend) {
     return (
-      <div style={overlayStyle}>
+      <div className="pl-fullscreen-modal" style={overlayStyle}>
         <PulseSend
           senderId={currentUserId}
           receiverId={userId}

@@ -263,7 +263,7 @@ function ActionButton({ icon: Icon, label, onClick, disabled, active }) {
         borderRadius: 14,
         border: active ? '1.5px solid var(--cyan)' : '1px solid rgba(228,212,200,0.25)',
         background: active ? 'rgba(255,61,110,0.15)' : 'rgba(23,23,23,0.7)',
-        color: active ? 'var(--cyan)' : 'var(--text)',
+        color: active ? 'var(--cyan)' : '#F7EEE6',
         cursor: disabled ? 'default' : 'pointer',
         opacity: disabled && !active ? 0.5 : 1,
         backdropFilter: 'blur(4px)',

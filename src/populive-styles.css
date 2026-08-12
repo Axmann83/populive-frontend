@@ -176,6 +176,7 @@ body.pl-day-mode .pl-brand-live{
 /* --- Bottom nav --- */
 .pl-bottom-nav{
   position:fixed; bottom:0; left:50%; transform:translateX(-50%);
+  z-index:5; /* sempre sotto qualunque schermata a tutto schermo (profilo, impostazioni, ecc. usano 60+) — senza questo, un elemento fisso senza ordine esplicito può finire sopra per puro caso di struttura del codice, coprendo quello che c'è sotto */
   width:100%; max-width:420px;
   display:flex; justify-content:space-around; align-items:center;
   padding:10px 10px calc(14px + env(safe-area-inset-bottom, 0px));

@@ -133,7 +133,7 @@ export default function ProfileFullScreen({ userId, arenaSessionId, currentUserI
   }
 
   return (
-    <div style={fullScreenStyle}>
+    <div className="pl-fullscreen-modal" style={fullScreenStyle}>
       {/* X per chiudere — sempre in alto, sempre raggiungibile */}
       <button onClick={onClose} style={closeButtonStyle} aria-label="Chiudi">✕</button>
 

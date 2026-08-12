@@ -458,7 +458,7 @@ export default function App() {
     // ricontattare il server.
     mainContent = (
       <div className="pl-app-shell">
-        <div className="pl-content" style={{ paddingTop: 20, display: 'flex', flexDirection: 'column', justifyContent: 'center', minHeight: '100vh', textAlign: 'center' }}>
+        <div className="pl-content" style={{ paddingTop: 20, display: 'flex', flexDirection: 'column', justifyContent: 'center', minHeight: '100dvh', textAlign: 'center' }}>
           <div className="pl-brand" style={{ justifyContent: 'center', marginBottom: 20 }}>
             Popu<span className="pl-brand-live">Live</span>
           </div>

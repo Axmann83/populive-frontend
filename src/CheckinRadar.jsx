@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { io } from 'socket.io-client';
-import { apiFetch } from './apiClient';
+import { apiFetch, setLastVenueId, clearLastVenueId } from './apiClient';
 import ProfileFullScreen from './ProfileFullScreen';
 import { Armchair, Radar as RadarIcon } from './PopuLiveIcons';
 
@@ -165,6 +165,7 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
       if (!data.success) {
         setStatus('error');
         setErrorReason(data.reason); // es. 'venue_closed'
+        clearLastVenueId(); // niente da riprovare da solo la prossima volta, era una tappa già chiusa
         return;
       }
 
@@ -172,6 +173,7 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
       setThreshold(data.threshold);
       setArenaActive(data.arenaActive);
       setStatus('checked_in');
+      setLastVenueId(venueId); // sopravvive a un aggiornamento pagina, v. apiClient.js
 
       // Ora che sappiamo in quale sessione siamo, entriamo
       // davvero nella stanza WebSocket giusta, e avvisiamo la shell

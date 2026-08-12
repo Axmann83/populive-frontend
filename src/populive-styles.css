@@ -43,10 +43,19 @@
 body.pl-day-mode{
   --bg:#F7F2EA; --surface:#FFFFFF; --surface-2:#FCF6EC;
   --teak:#6B5F55; --text:#241C19; --text-muted:#5A4D45;
+  /* Di giorno il rosa flash lascia il posto al terracotta/ambra —
+     stessa famiglia calda di tutta la palette (mai un colore
+     "estraneo" come blu o verde), ma con un carattere più
+     energico e versatile per i luoghi diurni veri (palestre, bar,
+     negozi) rispetto al rosa, che di giorno risultava troppo
+     simile a Tinder. Stesso nome di variabile di sempre — ogni
+     bottone/badge/pillola che già usa var(--cyan) cambia colore
+     da solo, nessun componente da ritoccare uno per uno. */
+  --cyan:#C86E3E;
   --shadow-sm: 0 2px 6px -2px rgba(36,28,25,0.12);
   --shadow-md: 0 8px 22px -6px rgba(36,28,25,0.14);
   --shadow-lg: 0 16px 40px -10px rgba(36,28,25,0.18);
-  --shadow-glow-cyan: 0 6px 20px -4px rgba(255,61,110,0.25);
+  --shadow-glow-cyan: 0 6px 20px -4px rgba(200,110,62,0.25);
 }
 /* I due sfondi qui sotto sono scritti come sfumature dirette (non
    tramite variabile, per avere il controllo preciso dei due punti
@@ -122,7 +131,9 @@ body{
    chiaro — tolto quasi del tutto, resta solo un'ombra minima per
    dare un filo di profondità, mai per "illuminare" come di notte. */
 body.pl-day-mode .pl-brand-live{
-  filter:drop-shadow(0 1px 2px rgba(196,28,80,0.25));
+  background:linear-gradient(135deg, #DB8B5C 0%, #C86E3E 60%, #A8552C 100%);
+  -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 1px 2px rgba(168,85,44,0.25));
 }
 .pl-arena-pill{
   display:flex; align-items:center; gap:5px;
@@ -402,7 +413,9 @@ button{ font-family:inherit; }
 /* Stessa correzione della barra in alto — via il bagliore sfocato
    in modalità giorno, resta definita anche sul fondo chiaro. */
 body.pl-day-mode .pl-splash-live{
-  filter:drop-shadow(0 1px 3px rgba(196,28,80,0.25));
+  background:linear-gradient(135deg, #DB8B5C 0%, #C86E3E 60%, #A8552C 100%);
+  -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 1px 3px rgba(168,85,44,0.25));
 }
 
 .pl-splash-antenna-node{
@@ -418,6 +431,16 @@ body.pl-day-mode .pl-splash-live{
 @keyframes pl-splash-node-pulse{
   0%,100%{ box-shadow:0 0 10px 2px rgba(255,61,110,0.65); }
   50%{ box-shadow:0 0 16px 4px rgba(255,61,110,0.95); }
+}
+/* Stessa animazione, bagliore terracotta invece di rosa quando è
+   attiva la modalità giorno — un nome diverso, applicato con più
+   specificità, così vince sempre sulle regole della versione notte. */
+@keyframes pl-splash-node-pulse-day{
+  0%,100%{ box-shadow:0 0 10px 2px rgba(200,110,62,0.65); }
+  50%{ box-shadow:0 0 16px 4px rgba(200,110,62,0.95); }
+}
+body.pl-day-mode .pl-splash-antenna-node{
+  animation-name: pl-splash-node-pulse-day;
 }
 
 .pl-splash-waves{
@@ -440,6 +463,47 @@ body.pl-day-mode .pl-splash-live{
 .pl-splash-wave-arc:nth-child(1){ width:16px; height:8px; animation-delay:0.1s; }
 .pl-splash-wave-arc:nth-child(2){ width:28px; height:14px; animation-delay:0.35s; }
 .pl-splash-wave-arc:nth-child(3){ width:40px; height:20px; animation-delay:0.6s; }
+body.pl-day-mode .pl-splash-wave-arc{
+  filter:drop-shadow(0 0 3px rgba(200,110,62,0.7));
+}
+
+/* ============================================================
+   ALTRI PUNTI FISSI AL ROSA — trovati con un controllo completo
+   di tutto il file, dopo aver notato che il primo giro di
+   correzioni (marchio, splash) non copriva tutto. Ognuno di questi
+   scriveva rgba(255,61,110,...) a mano invece di passare dalla
+   variabile --cyan, quindi restavano rosa anche di giorno.
+   ============================================================ */
+body.pl-day-mode .pl-rank-row-me{
+  border-color: rgba(200,110,62,0.5);
+  background: linear-gradient(90deg, rgba(200,110,62,0.14), var(--surface) 55%);
+}
+body.pl-day-mode .pl-pulse-option.selected{
+  background: rgba(200,110,62,0.08);
+}
+body.pl-day-mode .pl-keep-toggle.pl-keep-on{
+  background: rgba(200,110,62,0.14);
+}
+body.pl-day-mode .pl-chat-hint-success{
+  background: rgba(200,110,62,0.08);
+  border-color: rgba(200,110,62,0.3);
+}
+body.pl-day-mode .pl-chat-mine{
+  background: rgba(200,110,62,0.14);
+  border-color: rgba(200,110,62,0.3);
+}
+/* Il "lampo" del sigillo alla riscossione — stessa tecnica del
+   pallino pulsante dello splash: un'animazione gemella con colore
+   diverso, applicata con più specificità in modalità giorno. */
+@keyframes pl-seal-flash-anim-day{
+  0%{box-shadow:0 0 30px -8px var(--cyan);}
+  40%{box-shadow:0 0 55px 10px rgba(200,110,62,0.9); background:rgba(200,110,62,0.3);}
+  100%{box-shadow:0 0 30px -8px var(--cyan);}
+}
+body.pl-day-mode .pl-seal-flash{
+  animation-name: pl-seal-flash-anim-day;
+}
+
 
 @keyframes pl-splash-wave-pulse{
   0%{ opacity:0; transform:translateX(-50%) translateY(2px) scale(0.85); }

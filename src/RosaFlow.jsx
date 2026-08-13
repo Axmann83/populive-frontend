@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { PartyPopper } from './PopuLiveIcons';
+import ProfileFullScreen from './ProfileFullScreen';
 
 import { apiFetch } from './apiClient';
 
@@ -237,6 +238,7 @@ export function PulseNotification({ pulse, currentUserId, arenaSessionId, venueI
   const [guessCandidates, setGuessCandidates] = useState([]);
   const [redeemInfo, setRedeemInfo] = useState(null);
   const [pendingRedeemCode, setPendingRedeemCode] = useState(null);
+  const [showFullProfile, setShowFullProfile] = useState(false);
 
   async function respond(action) {
     setLoading(true);
@@ -304,7 +306,10 @@ export function PulseNotification({ pulse, currentUserId, arenaSessionId, venueI
           prima erano incoerenti tra loro (lì foto, qui solo un nome
           scritto nel titolo). */}
       {pulse.tier === 'super' && (
-        <div style={{ width: 84, height: 84, borderRadius: '50%', overflow: 'hidden', margin: '0 auto 14px', border: '2px solid var(--cyan)' }}>
+        <div
+          onClick={() => pulse.senderId && setShowFullProfile(true)}
+          style={{ width: 84, height: 84, borderRadius: '50%', overflow: 'hidden', margin: '0 auto 14px', border: '2px solid var(--cyan)', cursor: pulse.senderId ? 'pointer' : 'default' }}
+        >
           {pulse.senderPhotoUrl ? (
             <img src={pulse.senderPhotoUrl} alt={pulse.senderName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           ) : (
@@ -313,6 +318,15 @@ export function PulseNotification({ pulse, currentUserId, arenaSessionId, venueI
             </div>
           )}
         </div>
+      )}
+      {showFullProfile && pulse.senderId && (
+        <ProfileFullScreen
+          userId={pulse.senderId}
+          arenaSessionId={arenaSessionId}
+          currentUserId={currentUserId}
+          venueId={venueId}
+          onClose={() => setShowFullProfile(false)}
+        />
       )}
       <h3 style={{ textAlign: pulse.tier === 'super' ? 'center' : 'left' }}>{copy.title}</h3>
       <p className="pl-hint" style={{ textAlign: pulse.tier === 'super' ? 'center' : 'left' }}>{copy.sub}</p>

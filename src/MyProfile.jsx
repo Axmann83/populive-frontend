@@ -27,6 +27,7 @@ export default function MyProfile({ userId, arenaSessionId, onOpenSettings, pend
   const [editing, setEditing] = useState(false);
   const [showPhoto, setShowPhoto] = useState(false);
   const [matchProfiles, setMatchProfiles] = useState({}); // { [withUserId]: { displayName, photoUrl } }
+  const [activeChats, setActiveChats] = useState([]); // [{ conversationId, withUserId }] — letta fresca dal server, sopravvive a un refresh
 
   useEffect(() => {
     let cancelled = false;
@@ -56,13 +57,32 @@ export default function MyProfile({ userId, arenaSessionId, onOpenSettings, pend
     return () => { cancelled = true; };
   }, [userId, arenaSessionId]);
 
-  // Nome e foto di ciascun match in sospeso — senza questo, tutti i
-  // bottoni della lista sotto sarebbero identici e indistinguibili
-  // ("Apri la chat", uguale per tutti). Recuperati solo per i
-  // withUserId che non conosciamo ancora, mai richiesti di nuovo.
+  // Le chat già aperte (con o senza "Conserva") — lette SEMPRE
+  // fresche dal server, mai dalla sola memoria del browser. Prima
+  // non c'era alcun modo di ritrovare una chat dopo un
+  // aggiornamento della pagina, anche con "Conserva" attivo da
+  // entrambe le parti — lo stato viveva solo nella sessione in
+  // corso, sparendo ad ogni refresh.
   useEffect(() => {
-    if (!pendingMatches || pendingMatches.length === 0) return;
-    const missing = pendingMatches.filter((m) => m.withUserId && !matchProfiles[m.withUserId]);
+    let cancelled = false;
+    apiFetch(`/api/users/${userId}/active-chats`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (!cancelled && data.success) setActiveChats(data.conversations);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [userId]);
+
+  // Nome e foto di ciascun match in sospeso E di ciascuna chat già
+  // aperta — senza questo, i bottoni sarebbero identici e
+  // indistinguibili ("Apri la chat", uguale per tutti). Recuperati
+  // solo per i withUserId che non conosciamo ancora, mai richiesti
+  // di nuovo. Un solo meccanismo serve entrambe le liste.
+  useEffect(() => {
+    const allEntries = [...(pendingMatches || []), ...(activeChats || [])];
+    if (allEntries.length === 0) return;
+    const missing = allEntries.filter((m) => m.withUserId && !matchProfiles[m.withUserId]);
     if (missing.length === 0) return;
 
     let cancelled = false;
@@ -84,7 +104,7 @@ export default function MyProfile({ userId, arenaSessionId, onOpenSettings, pend
       });
     });
     return () => { cancelled = true; };
-  }, [pendingMatches, matchProfiles, arenaSessionId]);
+  }, [pendingMatches, activeChats, matchProfiles, arenaSessionId]);
 
   if (loading) return <div className="pl-hint" style={{ textAlign: 'center', marginTop: 30 }}>Caricamento…</div>;
 
@@ -150,6 +170,49 @@ export default function MyProfile({ userId, arenaSessionId, onOpenSettings, pend
               </button>
             );
           })}
+        </div>
+      )}
+
+      {/* Chat già aperte (con o senza "Conserva") — letta fresca dal
+          server ad ogni apertura del profilo, quindi sopravvive
+          sempre a un refresh, a differenza dei "nuovi match" qui
+          sopra che vivono solo nella sessione in corso. Non
+          sparisce quando la si apre: resta qui per tornarci quante
+          volte si vuole, coerente con l'idea di una chat in corso,
+          non di una notifica una tantum. */}
+      {activeChats && activeChats.filter((c) => !pendingMatches.some((m) => m.conversationId === c.conversationId)).length > 0 && (
+        <div style={{ background: 'var(--surface-2)', border: '1px solid rgba(217,204,192,0.14)', borderRadius: 14, padding: 12, marginBottom: 14 }}>
+          <div className="pl-section-label" style={{ marginTop: 0, marginBottom: 8 }}>
+            Le tue chat
+          </div>
+          {activeChats
+            .filter((c) => !pendingMatches.some((m) => m.conversationId === c.conversationId))
+            .map((c) => {
+              const info = matchProfiles[c.withUserId];
+              return (
+                <button
+                  key={c.conversationId}
+                  onClick={() => onOpenMatch(c.conversationId)}
+                  style={{
+                    width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+                    background: 'var(--surface)', border: 'none', borderRadius: 10,
+                    padding: '10px 12px', marginBottom: 6, cursor: 'pointer', color: 'var(--text)',
+                  }}
+                >
+                  <div style={{ width: 30, height: 30, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, background: 'var(--surface-2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {info?.photoUrl ? (
+                      <img src={info.photoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      <PulseWaveIcon size={14} color="var(--cyan)" />
+                    )}
+                  </div>
+                  <span style={{ flex: 1, textAlign: 'left', fontSize: 12.5, fontWeight: 600 }}>
+                    {info ? info.displayName : 'Apri la chat'}
+                  </span>
+                  <span style={{ color: 'var(--text-muted)' }}>›</span>
+                </button>
+              );
+            })}
         </div>
       )}
 

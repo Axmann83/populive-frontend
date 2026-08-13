@@ -108,8 +108,13 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
     socket.on('radar_snapshot', ({ userIds }) => {
       setRadarPeople((prev) => {
         const existingIds = new Set(prev.map((p) => p.userId));
+        const seenInThisBatch = new Set(); // il server ora è già corretto, ma non ci fidiamo di un solo livello — se lo stesso id comparisse più volte nello stesso messaggio, lo prendiamo una volta sola
         const newEntries = userIds
-          .filter((id) => id !== userId && !existingIds.has(id)) // mai il proprio userId, stessa sicurezza di sopra
+          .filter((id) => {
+            if (id === userId || existingIds.has(id) || seenInThisBatch.has(id)) return false;
+            seenInThisBatch.add(id);
+            return true;
+          })
           .map((id) => ({ userId: id, joinedAt: Date.now() }));
         return [...prev, ...newEntries];
       });

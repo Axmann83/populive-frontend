@@ -58,7 +58,14 @@ export default function ProfileFullScreen({ userId, arenaSessionId, currentUserI
 
   async function sendQuickInteraction(type) {
     // type: 'like' | 'superlike'
-    setActionState('sending');
+    // Aggiornamento "ottimistico": il bottone si colora SUBITO al
+    // tocco, senza aspettare il giro di andata e ritorno al server
+    // (che su una rete reale può richiedere qualche secondo) — se
+    // per un motivo qualunque l'invio viene rifiutato, torniamo
+    // indietro noi stessi, ma nel caso normale (la stragrande
+    // maggioranza delle volte) l'utente vede il colore scattare
+    // all'istante, prima ancora che il server abbia confermato.
+    setActionState(type === 'like' ? 'liked' : 'superliked');
     try {
       const res = await apiFetch('/api/interactions/send', {
         method: 'POST',
@@ -67,13 +74,19 @@ export default function ProfileFullScreen({ userId, arenaSessionId, currentUserI
       });
       const data = await res.json();
       if (data.success) {
-        setActionState(type === 'like' ? 'liked' : 'superliked');
+        // già colorato da subito, niente da fare qui
       } else if (data.reason === 'requires_premium_for_historical_board') {
         setActionState(null);
         window.alert('Serve Premium per contattare qualcuno dalla Bacheca Storica — puoi attivarlo dal tuo profilo.');
       } else if (data.reason === 'superlike_balance_exhausted') {
         setActionState(null);
         offerSuperlikePurchase();
+      } else if (data.reason === 'like_already_sent_tonight') {
+        setActionState(null);
+        window.alert('Hai già mandato un Like a questa persona stasera — puoi riprovare in un\'altra serata.');
+      } else if (data.reason === 'superlike_already_sent_tonight') {
+        setActionState(null);
+        window.alert('Hai già mandato un Superlike a questa persona stasera — puoi riprovare in un\'altra serata.');
       } else {
         setActionState(null);
       }

@@ -84,7 +84,7 @@ export default function MyProfile({ userId, arenaSessionId, onOpenSettings, pend
       });
     });
     return () => { cancelled = true; };
-  }, [pendingMatches, matchProfiles]);
+  }, [pendingMatches, matchProfiles, arenaSessionId]);
 
   if (loading) return <div className="pl-hint" style={{ textAlign: 'center', marginTop: 30 }}>Caricamento…</div>;
 

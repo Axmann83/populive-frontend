@@ -230,6 +230,24 @@ export default function App() {
     setShowMatchBanner(false);
   }
   const [pulseBadgeCount, setPulseBadgeCount] = useState(0);
+
+  // Il numero sulla Pulse conta insieme due cose diverse — quante
+  // sono ancora da decidere (accetta/rifiuta) E quante sono già
+  // accettate ma non ancora riscattate al bancone — sempre letto
+  // fresco dal server invece che tenuto a mano con incrementi e
+  // decrementi locali, che con due stati diversi da tracciare
+  // insieme rischiano facilmente di andare fuori sincrono.
+  const refreshPulseBadge = useCallback(async () => {
+    if (!userId) return;
+    try {
+      const res = await apiFetch(`/api/users/${userId}/pulses`);
+      const data = await res.json();
+      if (data.success) {
+        const count = data.pulses.filter((p) => p.status === 'pending' || p.status === 'accepted').length;
+        setPulseBadgeCount(count);
+      }
+    } catch { /* ignorato — il numero resta quello di prima, non blocca nulla */ }
+  }, [userId]);
   const [showSettings, setShowSettings] = useState(false);
   const [venuesMapMode, setVenuesMapMode] = useState(null); // null | 'browse' | 'historical'
   const [showNearbyMissions, setShowNearbyMissions] = useState(false);
@@ -387,6 +405,14 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Totale vero del numero sulla Pulse appena si sa chi è connesso —
+  // senza questo, il numero partirebbe da zero e si vedrebbe solo
+  // dopo il primo evento in diretta, non riflettendo Pulse già in
+  // sospeso/da riscattare da PRIMA di aprire l'app in questa sessione.
+  useEffect(() => {
+    if (authState === 'app' && userId) refreshPulseBadge();
+  }, [authState, userId, refreshPulseBadge]);
+
   // Teniamo un riferimento persistente al socket "trasversale" —
   // serve al secondo effect qui sotto per poter entrare nella
   // stanza dell'Arena appena la conosciamo, senza dover ricreare
@@ -404,7 +430,7 @@ export default function App() {
 
     socket.on('pulse_received', (payload) => {
       setPendingPulseNotification(payload);
-      setPulseBadgeCount((n) => n + 1);
+      refreshPulseBadge();
     });
 
     // Mancava del tutto — il backend gestiva già accetta/rifiuta/
@@ -449,7 +475,7 @@ export default function App() {
       socket.disconnect();
       socketRef.current = null;
     };
-  }, [authState, userId, showPointsToast, pointsIconFor, pointsLabelFor, offerLikeCreditsPurchase]);
+  }, [authState, userId, showPointsToast, pointsIconFor, pointsLabelFor, offerLikeCreditsPurchase, refreshPulseBadge]);
 
   // Appena conosciamo l'Arena in cui siamo (dopo il check-in),
   // colleghiamo QUESTA STESSA connessione anche alla sua stanza —
@@ -593,7 +619,7 @@ export default function App() {
         )}
 
         {activeTab === 'pulse' && (
-          <MyPulses userId={userId} venueId={venueId} onOpenPulse={(pulse) => setPendingPulseNotification(pulse)} />
+          <MyPulses userId={userId} venueId={venueId} onOpenPulse={(pulse) => setPendingPulseNotification(pulse)} onPulseListChanged={refreshPulseBadge} />
         )}
 
         {activeTab === 'profilo' && (
@@ -688,7 +714,7 @@ export default function App() {
               venueId={venueId}
               onResolved={() => {
                 setPendingPulseNotification(null);
-                setPulseBadgeCount((n) => Math.max(0, n - 1));
+                refreshPulseBadge();
               }}
             />
           </div>

@@ -1051,6 +1051,8 @@ function VenueOrganizePanel({ venue, onVenueUpdate }) {
         </button>
       </MetricCard>
 
+      <VenueDrinksSection venueId={venue.venueId} />
+
       <MetricCard title="Soglia Big Spender">
         <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
           <div style={{ flex: 1 }}>
@@ -1482,5 +1484,164 @@ function InstantInfluencerSection() {
         </MetricCard>
       )}
     </div>
+  );
+}
+
+/**
+ * ============================================================
+ * CATALOGO DRINK — gestione dei drink disponibili per la Pulse in
+ * questo locale. Prima non esisteva NESSUNO strumento per questo,
+ * scoperto vuoto per ogni locale durante un test dal vivo (il
+ * bottone "Invia Pulse" restava bloccato, niente da selezionare).
+ * ============================================================
+ */
+function VenueDrinksSection({ venueId }) {
+  const [drinks, setDrinks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [newName, setNewName] = useState('');
+  const [newPrice, setNewPrice] = useState('');
+  const [adding, setAdding] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [editName, setEditName] = useState('');
+  const [editPrice, setEditPrice] = useState('');
+  const [savingEdit, setSavingEdit] = useState(false);
+
+  const loadDrinks = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await apiFetch(`/api/dashboard/venues/${venueId}/drinks`);
+      const data = await res.json();
+      if (data.success) setDrinks(data.drinks);
+    } finally {
+      setLoading(false);
+    }
+  }, [venueId]);
+
+  useEffect(() => { loadDrinks(); }, [loadDrinks]);
+
+  async function addDrink() {
+    const priceCents = Math.round(parseFloat(newPrice.replace(',', '.')) * 100);
+    if (!newName.trim() || !Number.isInteger(priceCents) || priceCents <= 0) {
+      window.alert('Inserisci un nome e un prezzo valido.');
+      return;
+    }
+    setAdding(true);
+    try {
+      const res = await apiFetch(`/api/dashboard/venues/${venueId}/drinks`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newName.trim(), basePriceCents: priceCents }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setNewName('');
+        setNewPrice('');
+        loadDrinks();
+      } else {
+        window.alert('Qualcosa è andato storto — riprova.');
+      }
+    } finally {
+      setAdding(false);
+    }
+  }
+
+  function startEdit(d) {
+    setEditingId(d.id);
+    setEditName(d.name);
+    setEditPrice((d.basePriceCents / 100).toFixed(2));
+  }
+
+  async function saveEdit(drinkId) {
+    const priceCents = Math.round(parseFloat(editPrice.replace(',', '.')) * 100);
+    if (!editName.trim() || !Number.isInteger(priceCents) || priceCents <= 0) {
+      window.alert('Inserisci un nome e un prezzo valido.');
+      return;
+    }
+    setSavingEdit(true);
+    try {
+      const res = await apiFetch(`/api/dashboard/drinks/${drinkId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: editName.trim(), basePriceCents: priceCents }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setEditingId(null);
+        loadDrinks();
+      } else {
+        window.alert('Qualcosa è andato storto — riprova.');
+      }
+    } finally {
+      setSavingEdit(false);
+    }
+  }
+
+  async function removeDrink(drinkId) {
+    if (!window.confirm('Togliere questo drink dal catalogo del locale?')) return;
+    const res = await apiFetch(`/api/dashboard/venues/${venueId}/drinks/${drinkId}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (data.success) loadDrinks();
+  }
+
+  return (
+    <MetricCard title="Catalogo drink Pulse">
+      <p className="pl-hint" style={{ marginBottom: 10 }}>
+        I drink che chi invia una Pulse può scegliere in questo locale. Senza almeno uno, l'invio resta bloccato — nessuna scelta possibile.
+      </p>
+
+      {loading ? (
+        <p className="pl-hint">Caricamento…</p>
+      ) : (
+        <>
+          {drinks.length === 0 && (
+            <p className="pl-hint" style={{ marginBottom: 10, color: 'var(--red)' }}>
+              Nessun drink ancora — aggiungine almeno uno qui sotto.
+            </p>
+          )}
+          {drinks.map((d) => (
+            <div key={d.id} style={{ background: 'var(--surface-2)', borderRadius: 10, padding: 10, marginBottom: 8 }}>
+              {editingId === d.id ? (
+                <>
+                  <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+                    <input value={editName} onChange={(e) => setEditName(e.target.value)} placeholder="Nome" style={{ marginBottom: 0, flex: 2 }} />
+                    <input value={editPrice} onChange={(e) => setEditPrice(e.target.value)} placeholder="Prezzo (€)" style={{ marginBottom: 0, flex: 1 }} />
+                  </div>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <button onClick={() => saveEdit(d.id)} disabled={savingEdit} style={{ flex: 1, padding: 8, borderRadius: 8, border: 'none', background: 'var(--cyan)', color: '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>
+                      {savingEdit ? 'Un attimo…' : 'Salva'}
+                    </button>
+                    <button onClick={() => setEditingId(null)} style={{ flex: 1, padding: 8, borderRadius: 8, border: '1px solid rgba(228,212,200,0.2)', background: 'transparent', color: 'var(--text-muted)', fontSize: 11, cursor: 'pointer' }}>
+                      Annulla
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 12.5, fontWeight: 600 }}>{d.name}</div>
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{(d.basePriceCents / 100).toFixed(2)}€</div>
+                  </div>
+                  <button onClick={() => startEdit(d)} style={{ padding: '6px 10px', borderRadius: 8, border: '1px solid rgba(228,212,200,0.2)', background: 'transparent', color: 'var(--text-muted)', fontSize: 11, cursor: 'pointer' }}>
+                    Modifica
+                  </button>
+                  <button onClick={() => removeDrink(d.id)} style={{ padding: '6px 10px', borderRadius: 8, border: '1px solid rgba(229,57,53,0.3)', background: 'transparent', color: 'var(--red)', fontSize: 11, cursor: 'pointer' }}>
+                    Rimuovi
+                  </button>
+                </div>
+              )}
+            </div>
+          ))}
+
+          <div className="pl-section-label" style={{ marginTop: 14 }}>Aggiungi un nuovo drink</div>
+          <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+            <input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Nome (es. Spritz)" style={{ marginBottom: 0, flex: 2 }} />
+            <input value={newPrice} onChange={(e) => setNewPrice(e.target.value)} placeholder="Prezzo (€)" style={{ marginBottom: 0, flex: 1 }} />
+          </div>
+          <button onClick={addDrink} disabled={adding} style={{ width: '100%', padding: '9px', borderRadius: 10, border: 'none', fontSize: 11, fontWeight: 700, background: 'var(--cyan)', color: '#fff', cursor: adding ? 'default' : 'pointer' }}>
+            {adding ? 'Un attimo…' : '+ Aggiungi drink'}
+          </button>
+        </>
+      )}
+    </MetricCard>
   );
 }

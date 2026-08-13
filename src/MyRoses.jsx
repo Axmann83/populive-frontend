@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { PulseWaveIcon } from './PopuLiveIcons';
+import { PulseRedeemSeal } from './RosaFlow';
 
 import { apiFetch } from './apiClient';
 
@@ -18,12 +19,13 @@ import { apiFetch } from './apiClient';
  * Pulse extra era pagarlo uno alla volta al momento dell'invio.
  * ============================================================
  */
-export default function MyPulses({ userId, venueId, onOpenPulse }) {
+export default function MyPulses({ userId, venueId, onOpenPulse, onPulseListChanged }) {
   const [pulses, setPulses] = useState([]);
   const [balance, setBalance] = useState(null);
   const [loading, setLoading] = useState(true);
   const [purchasing, setPurchasing] = useState(null); // null | 1 | 5, quale quantità è in corso
   const [purchaseError, setPurchaseError] = useState(null);
+  const [redeemingPulse, setRedeemingPulse] = useState(null); // { pulseId, redeemCode } | null — riscatto rimandato, attivato da qui quando si è pronti
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -195,9 +197,29 @@ export default function MyPulses({ userId, venueId, onOpenPulse }) {
               {r.senderName ? r.senderName : 'Ammiratore misterioso'} · {r.venueName}
             </div>
           </div>
-          <StatusBadge status={r.status} />
+          {r.status === 'accepted' && r.redeemCode ? (
+            <button
+              onClick={(e) => { e.stopPropagation(); setRedeemingPulse({ pulseId: r.pulseId, redeemCode: r.redeemCode }); }}
+              style={{ padding: '6px 12px', borderRadius: 999, border: 'none', background: 'var(--cyan)', color: '#fff', fontSize: 10.5, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}
+            >
+              Riscatta
+            </button>
+          ) : (
+            <StatusBadge status={r.status} />
+          )}
         </div>
       ))}
+
+      {redeemingPulse && (
+        <div className="pl-fullscreen-modal" style={{ position: 'fixed', inset: 0, background: 'var(--bg, #14100F)', zIndex: 70 }}>
+          <PulseRedeemSeal
+            pulseId={redeemingPulse.pulseId}
+            redeemCode={redeemingPulse.redeemCode}
+            venueId={venueId}
+            onDone={() => { setRedeemingPulse(null); load(); onPulseListChanged?.(); }}
+          />
+        </div>
+      )}
     </div>
   );
 }

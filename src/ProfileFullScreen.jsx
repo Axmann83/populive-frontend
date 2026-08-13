@@ -186,11 +186,20 @@ export default function ProfileFullScreen({ userId, arenaSessionId, currentUserI
                 <Sparkles size={12} style={{ verticalAlign: 'middle', marginRight: 4 }} /> Instant Influencer · {profile.instantInfluencerCategory}
               </div>
             )}
-            {profile.bio && <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '6px 0 0' }}>{profile.bio}</p>}
+            {profile.bio && <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.85)', textShadow: '0 1px 3px rgba(0,0,0,0.6)', margin: '6px 0 0' }}>{profile.bio}</p>}
             {profile.hashtags?.length > 0 && (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
                 {profile.hashtags.map((h) => (
-                  <span key={h} className="pl-hashtag">{h}</span>
+                  <span
+                    key={h}
+                    style={{
+                      display: 'inline-block', background: 'rgba(20,16,15,0.65)', border: '1px solid rgba(255,255,255,0.25)',
+                      color: '#fff', fontSize: 11, fontWeight: 600, padding: '5px 10px', borderRadius: 999,
+                      backdropFilter: 'blur(4px)', textShadow: '0 1px 2px rgba(0,0,0,0.4)',
+                    }}
+                  >
+                    {h}
+                  </span>
                 ))}
               </div>
             )}

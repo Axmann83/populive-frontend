@@ -698,6 +698,9 @@ export default function App() {
       {pendingSuperlike && (
         <SuperlikeNotification
           superlike={pendingSuperlike}
+          currentUserId={userId}
+          arenaSessionId={arenaSessionId}
+          venueId={venueId}
           onResolved={() => setPendingSuperlike(null)}
         />
       )}

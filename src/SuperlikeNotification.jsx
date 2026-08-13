@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { apiFetch } from './apiClient';
 import { Star } from './PopuLiveIcons';
+import ProfileFullScreen from './ProfileFullScreen';
 
 /**
  * ============================================================
@@ -13,8 +14,9 @@ import { Star } from './PopuLiveIcons';
  * natura del Superlike fin dall'inizio, mai anonimo.
  * ============================================================
  */
-export default function SuperlikeNotification({ superlike, onResolved }) {
+export default function SuperlikeNotification({ superlike, currentUserId, arenaSessionId, venueId, onResolved }) {
   const [actionState, setActionState] = useState(null); // null | 'accepted' | 'rejected' | 'ignored' | 'sending'
+  const [showFullProfile, setShowFullProfile] = useState(false);
 
   async function respond(action) {
     setActionState('sending');
@@ -42,7 +44,10 @@ export default function SuperlikeNotification({ superlike, onResolved }) {
 
         {actionState === null && (
           <>
-            <div style={{ width: 84, height: 84, borderRadius: '50%', overflow: 'hidden', margin: '0 auto 14px', border: '2px solid var(--cyan)' }}>
+            <div
+              onClick={() => superlike.senderId && setShowFullProfile(true)}
+              style={{ width: 84, height: 84, borderRadius: '50%', overflow: 'hidden', margin: '0 auto 14px', border: '2px solid var(--cyan)', cursor: superlike.senderId ? 'pointer' : 'default' }}
+            >
               {superlike.senderPhotoUrl ? (
                 <img src={superlike.senderPhotoUrl} alt={superlike.senderName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               ) : (
@@ -51,6 +56,15 @@ export default function SuperlikeNotification({ superlike, onResolved }) {
                 </div>
               )}
             </div>
+            {showFullProfile && superlike.senderId && (
+              <ProfileFullScreen
+                userId={superlike.senderId}
+                arenaSessionId={arenaSessionId}
+                currentUserId={currentUserId}
+                venueId={venueId}
+                onClose={() => setShowFullProfile(false)}
+              />
+            )}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 4 }}>
               <Star size={16} color="var(--cyan)" fill="var(--cyan)" />
               <span style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Superlike ricevuto</span>

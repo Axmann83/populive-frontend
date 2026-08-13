@@ -215,6 +215,20 @@ export default function App() {
   useEffect(() => {
     activeChatConversationIdRef.current = activeChatConversationId;
   }, [activeChatConversationId]);
+  // Notifica discreta stile Tinder — mai un salto diretto e forzato
+  // alla chat. La LISTA resta finché non si tocca davvero un match
+  // (mai cancellata dal solo passare del tempo) — solo il BANNER in
+  // alto sparisce da solo dopo un po', il match resta comunque
+  // raggiungibile dal pallino sul Profilo.
+  const [pendingMatches, setPendingMatches] = useState([]); // [{ conversationId }]
+  const [showMatchBanner, setShowMatchBanner] = useState(false);
+
+  function openMatch(conversationId) {
+    setActiveChatConversationId(conversationId);
+    setActiveTab('chat');
+    setPendingMatches((prev) => prev.filter((m) => m.conversationId !== conversationId));
+    setShowMatchBanner(false);
+  }
   const [pulseBadgeCount, setPulseBadgeCount] = useState(0);
   const [showSettings, setShowSettings] = useState(false);
   const [venuesMapMode, setVenuesMapMode] = useState(null); // null | 'browse' | 'historical'
@@ -421,8 +435,13 @@ export default function App() {
 
     socket.on('chat_unlocked', (payload) => {
       if (!activeChatConversationIdRef.current) {
-        setActiveChatConversationId(payload.conversationId);
-        setActiveTab('chat'); // il pezzo che mancava: senza questo, i dati arrivavano ma la schermata non si apriva mai davvero
+        setPendingMatches((prev) => (
+          prev.some((m) => m.conversationId === payload.conversationId)
+            ? prev
+            : [...prev, { conversationId: payload.conversationId, withUserId: payload.withUserId }]
+        ));
+        setShowMatchBanner(true);
+        setTimeout(() => setShowMatchBanner(false), 10000);
       }
     });
 
@@ -579,7 +598,7 @@ export default function App() {
 
         {activeTab === 'profilo' && (
           <>
-            <MyProfile userId={userId} arenaSessionId={arenaSessionId} onOpenSettings={() => setShowSettings(true)} />
+            <MyProfile userId={userId} arenaSessionId={arenaSessionId} onOpenSettings={() => setShowSettings(true)} pendingMatches={pendingMatches} onOpenMatch={openMatch} />
             <ComingSoonSection />
           </>
         )}
@@ -598,7 +617,7 @@ export default function App() {
         <NavItem icon={Trophy} label="Locale" active={activeTab === 'locale'} onClick={() => navigateToTab('locale')} />
         <NavItem icon={Globe} label="Globale" active={activeTab === 'globale'} onClick={() => navigateToTab('globale')} />
         <NavItem icon={PulseWaveIcon} label="Pulse" active={activeTab === 'pulse'} onClick={() => navigateToTab('pulse')} badge={pulseBadgeCount} />
-        <NavItem icon={User} label="Profilo" active={activeTab === 'profilo'} onClick={() => navigateToTab('profilo')} />
+        <NavItem icon={User} label="Profilo" active={activeTab === 'profilo'} onClick={() => navigateToTab('profilo')} badge={pendingMatches.length} />
       </div>
 
       {/* "Bentornato" appare per prima, appena entrati in app — e
@@ -681,6 +700,41 @@ export default function App() {
           superlike={pendingSuperlike}
           onResolved={() => setPendingSuperlike(null)}
         />
+      )}
+
+      {/* Notifica di match — stile Tinder, discreta e toccabile, mai
+          un salto forzato alla chat. Sparisce da sola se ignorata
+          per un po', ma resta lì abbastanza a lungo da poterla
+          notare e toccare con calma. */}
+      {showMatchBanner && pendingMatches.length > 0 && (
+        <div
+          onClick={() => openMatch(pendingMatches[pendingMatches.length - 1].conversationId)}
+          style={{
+            position: 'fixed', top: 70, left: '50%', transform: 'translateX(-50%)', zIndex: 71,
+            width: 'calc(100% - 32px)', maxWidth: 380,
+            background: 'var(--surface-2)', border: '1px solid rgba(255,61,110,0.4)',
+            borderRadius: 16, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 10,
+            boxShadow: 'var(--shadow-glow-cyan)', cursor: 'pointer',
+          }}
+        >
+          <span className="pl-confirm-wave-wrap" style={{ position: 'relative', flexShrink: 0 }}>
+            <span className="pl-confirm-wave"></span>
+            <span className="pl-confirm-wave"></span>
+            <PulseWaveIcon size={20} color="var(--cyan)" />
+          </span>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontFamily: "'Unbounded',sans-serif", fontWeight: 700, fontSize: 13 }}>
+              {pendingMatches.length > 1 ? `${pendingMatches.length} nuovi match!` : 'È un match!'}
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Tocca per aprire la chat — resta anche sul tuo profilo</div>
+          </div>
+          <span
+            onClick={(e) => { e.stopPropagation(); setShowMatchBanner(false); }}
+            style={{ color: 'var(--text-muted)', fontSize: 16, padding: 4, cursor: 'pointer' }}
+          >
+            ✕
+          </span>
+        </div>
       )}
 
       {/* Popup punti — impilati se ne arriva più di uno vicino nel

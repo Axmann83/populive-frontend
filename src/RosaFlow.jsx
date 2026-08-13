@@ -258,6 +258,13 @@ export function PulseNotification({ pulse, currentUserId, arenaSessionId, venueI
           const candData = await candRes.json();
           setGuessCandidates(candData.candidates || []);
           setShowGuessGame(true);
+        } else if (pulse.tier === 'super') {
+          // Nessuna schermata intermedia apposta: la chat si sblocca
+          // da sola (v. banner/lista match), e la Pulse resta in
+          // lista pronta da riscattare quando si vuole — un
+          // passaggio in meno rispetto a un primo tentativo con una
+          // conferma di mezzo, semplificato su richiesta esplicita.
+          onResolved({ action: 'accepted', chatUnlocked: true });
         } else {
           setRedeemInfo({ redeemCode: data.redeemCode });
         }
@@ -279,7 +286,16 @@ export function PulseNotification({ pulse, currentUserId, arenaSessionId, venueI
         pulseId={pulse.pulseId}
         currentUserId={currentUserId}
         candidates={guessCandidates}
-        onFinished={() => setRedeemInfo({ redeemCode: pendingRedeemCode })}
+        onFinished={({ matched }) => {
+          if (matched) {
+            // Stesso principio del Pulse+Superlike: niente schermata
+            // di mezzo, la chat si sblocca da sola e la Pulse resta
+            // in lista pronta per il riscatto quando si vuole.
+            onResolved({ action: 'accepted', chatUnlocked: true });
+          } else {
+            setRedeemInfo({ redeemCode: pendingRedeemCode });
+          }
+        }}
       />
     );
   }

@@ -206,6 +206,15 @@ export default function App() {
   const [pendingPulseNotification, setPendingPulseNotification] = useState(null);
   const [pendingSuperlike, setPendingSuperlike] = useState(null);
   const [activeChatConversationId, setActiveChatConversationId] = useState(null);
+  // Il listener socket qui sotto è registrato una volta sola quando
+  // ci si collega (mai ricollegato ad ogni chat aperta/chiusa) — un
+  // ref tiene il valore sempre aggiornato senza quel problema,
+  // invece di leggere lo stato "vecchio" catturato al momento della
+  // connessione.
+  const activeChatConversationIdRef = useRef(null);
+  useEffect(() => {
+    activeChatConversationIdRef.current = activeChatConversationId;
+  }, [activeChatConversationId]);
   const [pulseBadgeCount, setPulseBadgeCount] = useState(0);
   const [showSettings, setShowSettings] = useState(false);
   const [venuesMapMode, setVenuesMapMode] = useState(null); // null | 'browse' | 'historical'
@@ -411,7 +420,10 @@ export default function App() {
     });
 
     socket.on('chat_unlocked', (payload) => {
-      setActiveChatConversationId((prev) => prev || payload.conversationId);
+      if (!activeChatConversationIdRef.current) {
+        setActiveChatConversationId(payload.conversationId);
+        setActiveTab('chat'); // il pezzo che mancava: senza questo, i dati arrivavano ma la schermata non si apriva mai davvero
+      }
     });
 
     return () => {

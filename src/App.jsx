@@ -11,6 +11,7 @@ import Settings from './Settings';
 import MyPulses from './MyRoses';
 import MyProfile from './MyProfile';
 import ChatCenter from './ChatCenter';
+import NotificationCenter from './NotificationCenter';
 import SplashScreen from './SplashScreen';
 import ReloadLoader from './ReloadLoader';
 import {
@@ -239,7 +240,30 @@ export default function App() {
   useEffect(() => {
     if (authState === 'app' && userId) refreshActiveChats();
   }, [authState, userId, refreshActiveChats]);
+
+  // Pallino sulla scheda Notifiche — quante interazioni ricevute da
+  // quando si è aperto DAVVERO il Centro Notifiche l'ultima volta.
+  // Stesso principio degli altri numeretti stanotte: sempre letto
+  // fresco dal server, mai un contatore locale a mano.
+  const [notificationBadgeCount, setNotificationBadgeCount] = useState(0);
+  const refreshNotificationBadge = useCallback(async () => {
+    if (!userId) return;
+    try {
+      const res = await apiFetch(`/api/users/${userId}/unseen-notification-count`);
+      const data = await res.json();
+      if (data.success) setNotificationBadgeCount(data.count);
+    } catch { /* ignorato — il numero resta quello di prima */ }
+  }, [userId]);
+  useEffect(() => {
+    if (authState === 'app' && userId) refreshNotificationBadge();
+  }, [authState, userId, refreshNotificationBadge]);
   const [showMatchBanner, setShowMatchBanner] = useState(false);
+  // Notifica a schermo dedicata per un Like ricevuto — stile
+  // Facebook, più ricca del semplice popup punti generico. Il Like
+  // resta anonimo (nessun nome/foto da mostrare, coerente con tutto
+  // il resto dell'app), ma merita comunque una notifica vera, dato
+  // che Superlike e Pulse hanno già la propria schermata dedicata.
+  const [showLikeReceivedBanner, setShowLikeReceivedBanner] = useState(false);
 
   function openMatch(conversationId) {
     setActiveChatConversationId(conversationId);
@@ -466,7 +490,18 @@ export default function App() {
     // mai per quelli di un'altra persona che vediamo aggiornarsi.
     socket.on('points_update', (payload) => {
       if (payload.userId === userId) {
-        showPointsToast(pointsIconFor(payload.source), payload.points, pointsLabelFor(payload.source));
+        if (payload.source === 'like_received') {
+          // Notifica più ricca al posto del popup punti generico
+          // per questo caso specifico — stile Facebook, si azzera
+          // da sola dopo qualche secondo. I punti restano comunque
+          // conteggiati normalmente, semplicemente il modo in cui
+          // vengono comunicati è diverso da un generico "+5 punti".
+          setShowLikeReceivedBanner(true);
+          setTimeout(() => setShowLikeReceivedBanner(false), 6000);
+          refreshNotificationBadge();
+        } else {
+          showPointsToast(pointsIconFor(payload.source), payload.points, pointsLabelFor(payload.source));
+        }
       }
     });
 
@@ -494,7 +529,7 @@ export default function App() {
       socket.disconnect();
       socketRef.current = null;
     };
-  }, [authState, userId, showPointsToast, pointsIconFor, pointsLabelFor, offerLikeCreditsPurchase, refreshPulseBadge]);
+  }, [authState, userId, showPointsToast, pointsIconFor, pointsLabelFor, offerLikeCreditsPurchase, refreshPulseBadge, refreshNotificationBadge]);
 
   // Appena conosciamo l'Arena in cui siamo (dopo il check-in),
   // colleghiamo QUESTA STESSA connessione anche alla sua stanza —
@@ -657,9 +692,7 @@ export default function App() {
         )}
 
         {activeTab === 'notification_center' && (
-          <div className="pl-hint" style={{ textAlign: 'center', marginTop: 40 }}>
-            Centro Notifiche — in arrivo.
-          </div>
+          <NotificationCenter userId={userId} onSeen={() => setNotificationBadgeCount(0)} />
         )}
 
         {activeTab === 'pulse' && (
@@ -685,7 +718,7 @@ export default function App() {
       <div className="pl-bottom-nav">
         <NavItem icon={RadarIcon} label="Radar" active={activeTab === 'radar'} onClick={() => navigateToTab('radar')} />
         <NavItem icon={MessageCircle} label="Chat" active={activeTab === 'chat_list'} onClick={() => navigateToTab('chat_list')} badge={activeChats.filter((c) => !pendingMatches.some((m) => m.conversationId === c.conversationId)).length} />
-        <NavItem icon={Bell} label="Notifiche" active={activeTab === 'notification_center'} onClick={() => navigateToTab('notification_center')} />
+        <NavItem icon={Bell} label="Notifiche" active={activeTab === 'notification_center'} onClick={() => navigateToTab('notification_center')} badge={notificationBadgeCount} />
         <NavItem icon={PulseWaveIcon} label="Pulse" active={activeTab === 'pulse'} onClick={() => navigateToTab('pulse')} badge={pulseBadgeCount} />
         <NavItem icon={User} label="Profilo" active={activeTab === 'profilo'} onClick={() => navigateToTab('profilo')} badge={pendingMatches.length} />
       </div>
@@ -779,6 +812,37 @@ export default function App() {
           un salto forzato alla chat. Sparisce da sola se ignorata
           per un po', ma resta lì abbastanza a lungo da poterla
           notare e toccare con calma. */}
+      {showLikeReceivedBanner && (
+        <div
+          onClick={() => { setActiveTab('notification_center'); setShowLikeReceivedBanner(false); }}
+          style={{
+            position: 'fixed', top: 70, left: '50%', transform: 'translateX(-50%)', zIndex: 71,
+            width: 'calc(100% - 32px)', maxWidth: 380,
+            background: 'var(--surface-2)', border: '1px solid rgba(255,61,110,0.4)',
+            borderRadius: 16, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 10,
+            boxShadow: 'var(--shadow-glow-cyan)', cursor: 'pointer',
+          }}
+        >
+          <span className="pl-confirm-wave-wrap" style={{ position: 'relative', flexShrink: 0 }}>
+            <span className="pl-confirm-wave"></span>
+            <span className="pl-confirm-wave"></span>
+            <Heart size={20} color="var(--cyan)" />
+          </span>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontFamily: "'Unbounded',sans-serif", fontWeight: 700, fontSize: 13 }}>
+              Hai ricevuto un nuovo Like!
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Tocca per vedere il Centro Notifiche</div>
+          </div>
+          <span
+            onClick={(e) => { e.stopPropagation(); setShowLikeReceivedBanner(false); }}
+            style={{ color: 'var(--text-muted)', fontSize: 16, padding: 4, cursor: 'pointer' }}
+          >
+            ✕
+          </span>
+        </div>
+      )}
+
       {showMatchBanner && pendingMatches.length > 0 && (
         <div
           onClick={() => openMatch(pendingMatches[pendingMatches.length - 1].conversationId)}

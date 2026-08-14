@@ -129,18 +129,20 @@ export default function ProfileFullScreen({ userId, arenaSessionId, currentUserI
   if (showPulseSend) {
     return (
       <div className="pl-fullscreen-modal" style={overlayStyle}>
-        <PulseSend
-          senderId={currentUserId}
-          receiverId={userId}
-          arenaSessionId={arenaSessionId}
-          venueId={venueId}
-          onCancel={() => setShowPulseSend(false)}
-          onSent={() => {
-            setShowPulseSend(false);
-            setPulseSentConfirmation(true);
-            setTimeout(() => setPulseSentConfirmation(false), 2500);
-          }}
-        />
+        <div style={{ width: '100%', maxWidth: 420, background: 'var(--surface)', borderRadius: '24px 24px 0 0', padding: 20, boxSizing: 'border-box', maxHeight: '85vh', overflowY: 'auto', boxShadow: 'var(--shadow-lg)' }}>
+          <PulseSend
+            senderId={currentUserId}
+            receiverId={userId}
+            arenaSessionId={arenaSessionId}
+            venueId={venueId}
+            onCancel={() => setShowPulseSend(false)}
+            onSent={() => {
+              setShowPulseSend(false);
+              setPulseSentConfirmation(true);
+              setTimeout(() => setPulseSentConfirmation(false), 2500);
+            }}
+          />
+        </div>
       </div>
     );
   }

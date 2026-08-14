@@ -10,10 +10,11 @@ import ChatWindow from './ChatWindow';
 import Settings from './Settings';
 import MyPulses from './MyRoses';
 import MyProfile from './MyProfile';
+import ChatCenter from './ChatCenter';
 import SplashScreen from './SplashScreen';
 import ReloadLoader from './ReloadLoader';
 import {
-  Radar as RadarIcon, Trophy, Globe, User, PulseWaveIcon,
+  Radar as RadarIcon, Trophy, Globe, User, PulseWaveIcon, MessageCircle, Bell,
   Eye, Heart, Star, PartyPopper, Target, Link2, Sparkles,
   Map, History, Wallet,
 } from './PopuLiveIcons';
@@ -221,6 +222,23 @@ export default function App() {
   // alto sparisce da solo dopo un po', il match resta comunque
   // raggiungibile dal pallino sul Profilo.
   const [pendingMatches, setPendingMatches] = useState([]); // [{ conversationId }]
+  // Le chat già aperte (con o senza "Conserva") — a livello app,
+  // non più dentro al Profilo, perché ora serve sia al numeretto
+  // sulla scheda Chat sia alla nuova schermata dedicata "Centro
+  // Chat". Letta SEMPRE fresca dal server, mai dalla sola memoria
+  // del browser — sopravvive a un aggiornamento pagina.
+  const [activeChats, setActiveChats] = useState([]); // [{ conversationId, withUserId }]
+  const refreshActiveChats = useCallback(async () => {
+    if (!userId) return;
+    try {
+      const res = await apiFetch(`/api/users/${userId}/active-chats`);
+      const data = await res.json();
+      if (data.success) setActiveChats(data.conversations);
+    } catch { /* ignorato — la lista resta quella di prima */ }
+  }, [userId]);
+  useEffect(() => {
+    if (authState === 'app' && userId) refreshActiveChats();
+  }, [authState, userId, refreshActiveChats]);
   const [showMatchBanner, setShowMatchBanner] = useState(false);
 
   function openMatch(conversationId) {
@@ -228,6 +246,7 @@ export default function App() {
     setActiveTab('chat');
     setPendingMatches((prev) => prev.filter((m) => m.conversationId !== conversationId));
     setShowMatchBanner(false);
+    refreshActiveChats();
   }
   const [pulseBadgeCount, setPulseBadgeCount] = useState(0);
 
@@ -560,7 +579,17 @@ export default function App() {
     mainContent = (
       <div className="pl-app-shell">
       <div className="pl-top-bar">
-        <div className="pl-brand">Popu<span className="pl-brand-live">Live</span></div>
+        <div className="pl-top-bar-left">
+          <div className="pl-brand">Popu<span className="pl-brand-live">Live</span></div>
+          <button className={`pl-top-icon ${activeTab === 'locale' ? 'active' : ''}`} onClick={() => navigateToTab('locale')}>
+            <Trophy size={18} />
+            <span className="pl-top-icon-label">Locale</span>
+          </button>
+          <button className={`pl-top-icon ${activeTab === 'globale' ? 'active' : ''}`} onClick={() => navigateToTab('globale')}>
+            <Globe size={18} />
+            <span className="pl-top-icon-label">Globale</span>
+          </button>
+        </div>
         {arenaSessionId && <div className="pl-arena-pill"><span className="pl-live-dot"></span> Arena attiva</div>}
       </div>
 
@@ -618,13 +647,28 @@ export default function App() {
           <LiveRanking arenaSessionId={null} currentUserId={userId} isGlobal onSelectSelf={() => setActiveTab('profilo')} />
         )}
 
+        {activeTab === 'chat_list' && (
+          <ChatCenter
+            pendingMatches={pendingMatches}
+            activeChats={activeChats}
+            onOpenMatch={openMatch}
+            arenaSessionId={arenaSessionId}
+          />
+        )}
+
+        {activeTab === 'notification_center' && (
+          <div className="pl-hint" style={{ textAlign: 'center', marginTop: 40 }}>
+            Centro Notifiche — in arrivo.
+          </div>
+        )}
+
         {activeTab === 'pulse' && (
           <MyPulses userId={userId} venueId={venueId} onOpenPulse={(pulse) => setPendingPulseNotification(pulse)} onPulseListChanged={refreshPulseBadge} />
         )}
 
         {activeTab === 'profilo' && (
           <>
-            <MyProfile userId={userId} arenaSessionId={arenaSessionId} onOpenSettings={() => setShowSettings(true)} pendingMatches={pendingMatches} onOpenMatch={openMatch} />
+            <MyProfile userId={userId} arenaSessionId={arenaSessionId} onOpenSettings={() => setShowSettings(true)} />
             <ComingSoonSection />
           </>
         )}
@@ -640,8 +684,8 @@ export default function App() {
 
       <div className="pl-bottom-nav">
         <NavItem icon={RadarIcon} label="Radar" active={activeTab === 'radar'} onClick={() => navigateToTab('radar')} />
-        <NavItem icon={Trophy} label="Locale" active={activeTab === 'locale'} onClick={() => navigateToTab('locale')} />
-        <NavItem icon={Globe} label="Globale" active={activeTab === 'globale'} onClick={() => navigateToTab('globale')} />
+        <NavItem icon={MessageCircle} label="Chat" active={activeTab === 'chat_list'} onClick={() => navigateToTab('chat_list')} badge={activeChats.filter((c) => !pendingMatches.some((m) => m.conversationId === c.conversationId)).length} />
+        <NavItem icon={Bell} label="Notifiche" active={activeTab === 'notification_center'} onClick={() => navigateToTab('notification_center')} />
         <NavItem icon={PulseWaveIcon} label="Pulse" active={activeTab === 'pulse'} onClick={() => navigateToTab('pulse')} badge={pulseBadgeCount} />
         <NavItem icon={User} label="Profilo" active={activeTab === 'profilo'} onClick={() => navigateToTab('profilo')} badge={pendingMatches.length} />
       </div>

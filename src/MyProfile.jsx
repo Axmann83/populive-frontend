@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Settings as SettingsIcon, Zap, BadgeCheck, PulseWaveIcon } from './PopuLiveIcons';
+import { Settings as SettingsIcon, Zap, BadgeCheck } from './PopuLiveIcons';
 
 import { apiFetch } from './apiClient';
 

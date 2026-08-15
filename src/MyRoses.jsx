@@ -22,6 +22,7 @@ import { apiFetch } from './apiClient';
  */
 export default function MyPulses({ userId, venueId, onOpenPulse, onPulseListChanged }) {
   const [pulses, setPulses] = useState([]);
+  const [sentPulses, setSentPulses] = useState([]); // visione complessiva richiesta dall'utente — anche le inviate, non solo ricevute
   const [balance, setBalance] = useState(null);
   const [loading, setLoading] = useState(true);
   const [purchasing, setPurchasing] = useState(null); // null | 1 | 5, quale quantità è in corso
@@ -31,13 +32,16 @@ export default function MyPulses({ userId, venueId, onOpenPulse, onPulseListChan
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [pulsesRes, balanceRes] = await Promise.all([
+      const [pulsesRes, sentRes, balanceRes] = await Promise.all([
         apiFetch(`/api/users/${userId}/pulses`),
+        apiFetch(`/api/users/${userId}/sent-pulses`),
         apiFetch(`/api/users/${userId}/pulse-balance`),
       ]);
       const pulsesData = await pulsesRes.json();
+      const sentData = await sentRes.json();
       const balanceData = await balanceRes.json();
       if (pulsesData.success) setPulses(pulsesData.pulses);
+      if (sentData.success) setSentPulses(sentData.pulses);
       if (balanceData.success) setBalance(balanceData);
     } catch (err) {
       console.error('Errore nel caricamento dei Pulse:', err);
@@ -97,15 +101,20 @@ export default function MyPulses({ userId, venueId, onOpenPulse, onPulseListChan
 
   // Nasconde solo QUESTA Pulse dalla lista di lavoro — mai la riga
   // vera sottostante (serve anche per punti/storico altrove). Sparisce
-  // subito, senza aspettare la risposta del server.
+  // subito, senza aspettare la risposta del server. Una Pulse vive
+  // SOLO in una delle due liste (mai inviata E ricevuta insieme, non
+  // ci si può mandare qualcosa da soli) — filtrare entrambe è
+  // innocuo, tocca solo quella giusta.
   function handleDismiss(pulseId) {
     setPulses((prev) => prev.filter((p) => p.pulseId !== pulseId));
+    setSentPulses((prev) => prev.filter((p) => p.pulseId !== pulseId));
     apiFetch(`/api/users/${userId}/pulses/${pulseId}/dismiss`, { method: 'POST' }).catch(() => {});
   }
 
   function handleClearAll() {
     if (!window.confirm('Vuoi davvero eliminare tutte le notifiche Pulse?')) return;
     setPulses([]);
+    setSentPulses([]);
     apiFetch(`/api/users/${userId}/pulses/clear-all`, { method: 'POST' }).catch(() => {});
   }
 
@@ -117,6 +126,15 @@ export default function MyPulses({ userId, venueId, onOpenPulse, onPulseListChan
   const toRedeemPulses = pulses.filter((p) => p.status === 'accepted');
   const redeemedPulses = pulses.filter((p) => p.status === 'redeemed');
   const otherPulses = pulses.filter((p) => !['pending', 'accepted', 'redeemed'].includes(p.status));
+
+  // Stessa suddivisione lato INVIATE — ma qui "riscattare" non è
+  // un'azione possibile (solo chi riceve può farlo al bancone), è
+  // solo uno stato da osservare: "in attesa di una decisione",
+  // "accettata ma non ancora ritirata", "ritirata", "altro".
+  const pendingSentPulses = sentPulses.filter((p) => p.status === 'pending');
+  const acceptedSentPulses = sentPulses.filter((p) => p.status === 'accepted');
+  const redeemedSentPulses = sentPulses.filter((p) => p.status === 'redeemed');
+  const otherSentPulses = sentPulses.filter((p) => !['pending', 'accepted', 'redeemed'].includes(p.status));
 
   function renderPulseRow(r) {
     return (
@@ -145,6 +163,24 @@ export default function MyPulses({ userId, venueId, onOpenPulse, onPulseListChan
           ) : (
             <StatusBadge status={r.status} />
           )}
+        </div>
+      </SwipeableRow>
+    );
+  }
+
+  // Riga per le INVIATE — niente da toccare (non c'è nessuna azione
+  // possibile su qualcosa che si è già mandato), solo da vedere: chi
+  // l'ha ricevuta (sempre visibile, l'hai scelto tu) e a che punto è.
+  function renderSentPulseRow(r) {
+    return (
+      <SwipeableRow key={r.pulseId} onDismiss={() => handleDismiss(r.pulseId)}>
+        <div className="pl-pulse-option" style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 0 }}>
+          <PulseWaveIcon size={22} color="var(--cyan)" />
+          <div style={{ flex: 1 }}>
+            <div className="pl-pulse-title">{r.drinkType}</div>
+            <div className="pl-pulse-price">{r.receiverName} · {r.venueName}</div>
+          </div>
+          <StatusBadge status={r.status} />
         </div>
       </SwipeableRow>
     );
@@ -233,7 +269,7 @@ export default function MyPulses({ userId, venueId, onOpenPulse, onPulseListChan
       )}
       {purchaseError && <p className="pl-error" style={{ marginBottom: 10 }}>{purchaseError}</p>}
 
-      {pulses.length > 0 && (
+      {(pulses.length > 0 || sentPulses.length > 0) && (
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
           <button
             onClick={handleClearAll}
@@ -244,35 +280,79 @@ export default function MyPulses({ userId, venueId, onOpenPulse, onPulseListChan
         </div>
       )}
 
-      {pulses.length === 0 && (
-        <div className="pl-hint" style={{ textAlign: 'center', marginTop: 20 }}>Ancora nessun Pulse ricevuto stasera.</div>
+      {pulses.length === 0 && sentPulses.length === 0 && (
+        <div className="pl-hint" style={{ textAlign: 'center', marginTop: 20 }}>Ancora nessun Pulse stasera, né ricevuto né inviato.</div>
       )}
 
-      {pendingPulses.length > 0 && (
-        <div style={{ marginBottom: 14 }}>
-          <div className="pl-section-label" style={{ marginTop: 0, marginBottom: 8 }}>Da decidere</div>
-          {pendingPulses.map(renderPulseRow)}
+      {pulses.length > 0 && (
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ fontFamily: "'Unbounded',sans-serif", fontWeight: 700, fontSize: 13.5, marginBottom: 4 }}>Ricevuti</div>
+
+          {pendingPulses.length > 0 && (
+            <div style={{ marginBottom: 14 }}>
+              <div className="pl-section-label" style={{ marginTop: 0, marginBottom: 8 }}>Da decidere</div>
+              {pendingPulses.map(renderPulseRow)}
+            </div>
+          )}
+
+          {toRedeemPulses.length > 0 && (
+            <div style={{ marginBottom: 14 }}>
+              <div className="pl-section-label" style={{ marginTop: 0, marginBottom: 8 }}>Da riscattare</div>
+              {toRedeemPulses.map(renderPulseRow)}
+            </div>
+          )}
+
+          {redeemedPulses.length > 0 && (
+            <div style={{ marginBottom: 14 }}>
+              <div className="pl-section-label" style={{ marginTop: 0, marginBottom: 8 }}>Riscattati</div>
+              {redeemedPulses.map(renderPulseRow)}
+            </div>
+          )}
+
+          {otherPulses.length > 0 && (
+            <div style={{ marginBottom: 14 }}>
+              <div className="pl-section-label" style={{ marginTop: 0, marginBottom: 8 }}>Altri</div>
+              {otherPulses.map(renderPulseRow)}
+            </div>
+          )}
         </div>
       )}
 
-      {toRedeemPulses.length > 0 && (
-        <div style={{ marginBottom: 14 }}>
-          <div className="pl-section-label" style={{ marginTop: 0, marginBottom: 8 }}>Da riscattare</div>
-          {toRedeemPulses.map(renderPulseRow)}
-        </div>
-      )}
+      {/* Visione complessiva richiesta dall'utente — non solo cosa
+          arriva, anche cosa si è mandato, sulla stessa pagina.
+          Nessuna azione possibile qui (Riscatta è solo per chi
+          riceve), solo lo stato a colpo d'occhio. */}
+      {sentPulses.length > 0 && (
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ fontFamily: "'Unbounded',sans-serif", fontWeight: 700, fontSize: 13.5, marginBottom: 4 }}>Inviati</div>
 
-      {redeemedPulses.length > 0 && (
-        <div style={{ marginBottom: 14 }}>
-          <div className="pl-section-label" style={{ marginTop: 0, marginBottom: 8 }}>Riscattati</div>
-          {redeemedPulses.map(renderPulseRow)}
-        </div>
-      )}
+          {pendingSentPulses.length > 0 && (
+            <div style={{ marginBottom: 14 }}>
+              <div className="pl-section-label" style={{ marginTop: 0, marginBottom: 8 }}>In attesa di una decisione</div>
+              {pendingSentPulses.map(renderSentPulseRow)}
+            </div>
+          )}
 
-      {otherPulses.length > 0 && (
-        <div style={{ marginBottom: 14 }}>
-          <div className="pl-section-label" style={{ marginTop: 0, marginBottom: 8 }}>Altri</div>
-          {otherPulses.map(renderPulseRow)}
+          {acceptedSentPulses.length > 0 && (
+            <div style={{ marginBottom: 14 }}>
+              <div className="pl-section-label" style={{ marginTop: 0, marginBottom: 8 }}>Accettati, non ancora ritirati</div>
+              {acceptedSentPulses.map(renderSentPulseRow)}
+            </div>
+          )}
+
+          {redeemedSentPulses.length > 0 && (
+            <div style={{ marginBottom: 14 }}>
+              <div className="pl-section-label" style={{ marginTop: 0, marginBottom: 8 }}>Ritirati</div>
+              {redeemedSentPulses.map(renderSentPulseRow)}
+            </div>
+          )}
+
+          {otherSentPulses.length > 0 && (
+            <div style={{ marginBottom: 14 }}>
+              <div className="pl-section-label" style={{ marginTop: 0, marginBottom: 8 }}>Altri</div>
+              {otherSentPulses.map(renderSentPulseRow)}
+            </div>
+          )}
         </div>
       )}
 

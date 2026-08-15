@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Heart, Star, PulseWaveIcon, Bell, PartyPopper } from './PopuLiveIcons';
 import { apiFetch } from './apiClient';
 
@@ -61,6 +61,68 @@ function describeEntry(entry) {
   return entry.otherPerson
     ? `${who} ti ha mandato un ${kindLabel}`
     : `Hai ricevuto un ${kindLabel}`;
+}
+
+/**
+ * Riga scorrevole verso sinistra per eliminare — stesso gesto già
+ * familiare da Mail/Gmail/WhatsApp, pensato per essere più immediato
+ * della sola "x" per chi arriva nuovo. Segue il dito mentre si
+ * scorre; superata una certa soglia al rilascio, la notifica si
+ * elimina da sola con una piccola animazione di uscita — sotto la
+ * soglia, torna semplicemente al suo posto.
+ */
+function SwipeableRow({ onDismiss, children }) {
+  const [dragX, setDragX] = useState(0);
+  const [dragging, setDragging] = useState(false);
+  const [removing, setRemoving] = useState(false);
+  const startXRef = useRef(0);
+  const DELETE_THRESHOLD = -70;
+  const MAX_DRAG = -96;
+
+  function handleTouchStart(e) {
+    startXRef.current = e.touches[0].clientX;
+    setDragging(true);
+  }
+  function handleTouchMove(e) {
+    if (!dragging) return;
+    const delta = e.touches[0].clientX - startXRef.current;
+    setDragX(Math.max(MAX_DRAG, Math.min(0, delta))); // mai verso destra, mai oltre il limite
+  }
+  function handleTouchEnd() {
+    setDragging(false);
+    if (dragX <= DELETE_THRESHOLD) {
+      setRemoving(true);
+      setTimeout(onDismiss, 220); // lascia respirare l'animazione di uscita prima di sparire davvero dalla lista
+    } else {
+      setDragX(0);
+    }
+  }
+
+  return (
+    <div style={{ position: 'relative', marginBottom: 8, borderRadius: 14, overflow: 'hidden' }}>
+      <div
+        style={{
+          position: 'absolute', inset: 0, background: '#C4302B',
+          display: 'flex', alignItems: 'center', justifyContent: 'flex-end', paddingRight: 24,
+          color: '#fff', fontSize: 16,
+        }}
+      >
+        ✕
+      </div>
+      <div
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        style={{
+          transform: `translateX(${removing ? -420 : dragX}px)`,
+          transition: dragging ? 'none' : 'transform 0.22s ease',
+          opacity: removing ? 0 : 1,
+        }}
+      >
+        {children}
+      </div>
+    </div>
+  );
 }
 
 export default function NotificationCenter({ userId, onSeen }) {
@@ -136,46 +198,39 @@ export default function NotificationCenter({ userId, onSeen }) {
         const Icon = meta.icon || Bell;
         const statusLabel = STATUS_LABELS[entry.status];
         return (
-          <div
-            key={`${entry.kind}-${entry.id}`}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 12,
-              background: 'var(--surface-2)', borderRadius: 14,
-              padding: '12px 14px', marginBottom: 8,
-            }}
-          >
-            <div style={{ width: 38, height: 38, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              {entry.otherPerson?.photoUrl ? (
-                <img src={entry.otherPerson.photoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              ) : (
-                <Icon size={18} color={meta.color || 'var(--text-muted)'} />
-              )}
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 12.5, fontWeight: 600 }}>{describeEntry(entry)}</div>
-              <div style={{ fontSize: 10.5, color: 'var(--text-muted)', marginTop: 2, display: 'flex', gap: 6, alignItems: 'center' }}>
-                {entry.direction === 'match' ? (
-                  <span style={{ color: meta.color }}>🎉 Match</span>
+          <SwipeableRow key={`${entry.kind}-${entry.id}`} onDismiss={() => handleDismiss(entry)}>
+            <div
+              style={{
+                display: 'flex', alignItems: 'center', gap: 12,
+                background: 'var(--surface-2)', padding: '12px 14px',
+              }}
+            >
+              <div style={{ width: 38, height: 38, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {entry.otherPerson?.photoUrl ? (
+                  <img src={entry.otherPerson.photoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 ) : (
-                  <span style={{ color: entry.direction === 'sent' ? 'var(--text-muted)' : meta.color }}>
-                    {entry.direction === 'sent' ? '↗ Inviata' : '↘ Ricevuta'}
-                  </span>
+                  <Icon size={18} color={meta.color || 'var(--text-muted)'} />
                 )}
-                {entry.direction !== 'match' && statusLabel && <span>· {statusLabel}</span>}
-                {entry.drinkType && <span>· {entry.drinkType}</span>}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 12.5, fontWeight: 600 }}>{describeEntry(entry)}</div>
+                <div style={{ fontSize: 10.5, color: 'var(--text-muted)', marginTop: 2, display: 'flex', gap: 6, alignItems: 'center' }}>
+                  {entry.direction === 'match' ? (
+                    <span style={{ color: meta.color }}>🎉 Match</span>
+                  ) : (
+                    <span style={{ color: entry.direction === 'sent' ? 'var(--text-muted)' : meta.color }}>
+                      {entry.direction === 'sent' ? '↗ Inviata' : '↘ Ricevuta'}
+                    </span>
+                  )}
+                  {entry.direction !== 'match' && statusLabel && <span>· {statusLabel}</span>}
+                  {entry.drinkType && <span>· {entry.drinkType}</span>}
+                </div>
+              </div>
+              <div style={{ fontSize: 10, color: 'var(--text-muted)', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                {timeAgo(entry.createdAt)}
               </div>
             </div>
-            <div style={{ fontSize: 10, color: 'var(--text-muted)', whiteSpace: 'nowrap', flexShrink: 0 }}>
-              {timeAgo(entry.createdAt)}
-            </div>
-            <button
-              onClick={() => handleDismiss(entry)}
-              aria-label="Rimuovi notifica"
-              style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: 15, cursor: 'pointer', padding: '2px 4px', flexShrink: 0 }}
-            >
-              ✕
-            </button>
-          </div>
+          </SwipeableRow>
         );
       })}
     </div>

@@ -318,7 +318,7 @@ export default function App() {
 
   // Il numero sulla Pulse conta insieme due cose diverse — quante
   // sono ancora da decidere (accetta/rifiuta) E quante sono già
-  // accettate ma non ancora riscattate al bancone — sempre letto
+  // accettati ma non ancora riscattati al bancone — sempre letto
   // fresco dal server invece che tenuto a mano con incrementi e
   // decrementi locali, che con due stati diversi da tracciare
   // insieme rischiano facilmente di andare fuori sincrono.

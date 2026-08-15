@@ -264,14 +264,14 @@ export default function MyPulses({ userId, venueId, onOpenPulse, onPulseListChan
 
       {redeemedPulses.length > 0 && (
         <div style={{ marginBottom: 14 }}>
-          <div className="pl-section-label" style={{ marginTop: 0, marginBottom: 8 }}>Riscattate</div>
+          <div className="pl-section-label" style={{ marginTop: 0, marginBottom: 8 }}>Riscattati</div>
           {redeemedPulses.map(renderPulseRow)}
         </div>
       )}
 
       {otherPulses.length > 0 && (
         <div style={{ marginBottom: 14 }}>
-          <div className="pl-section-label" style={{ marginTop: 0, marginBottom: 8 }}>Altre</div>
+          <div className="pl-section-label" style={{ marginTop: 0, marginBottom: 8 }}>Altri</div>
           {otherPulses.map(renderPulseRow)}
         </div>
       )}
@@ -293,11 +293,11 @@ export default function MyPulses({ userId, venueId, onOpenPulse, onPulseListChan
 function StatusBadge({ status }) {
   const labels = {
     pending: { text: 'Da decidere', color: 'var(--cyan)' },
-    accepted: { text: 'Accettata', color: 'var(--teak)' },
-    redeemed: { text: 'Riscattata', color: 'var(--text-muted)' },
-    rejected: { text: 'Rifiutata', color: 'var(--text-muted)' },
+    accepted: { text: 'Accettato', color: 'var(--teak)' },
+    redeemed: { text: 'Riscattato', color: 'var(--text-muted)' },
+    rejected: { text: 'Rifiutato', color: 'var(--text-muted)' },
     ignored: { text: 'In sospeso', color: 'var(--text-muted)' },
-    expired: { text: 'Scaduta', color: 'var(--text-muted)' },
+    expired: { text: 'Scaduto', color: 'var(--text-muted)' },
   };
   const label = labels[status] || { text: status, color: 'var(--text-muted)' };
   return (

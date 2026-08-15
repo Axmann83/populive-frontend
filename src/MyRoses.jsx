@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { PulseWaveIcon } from './PopuLiveIcons';
 import { PulseRedeemSeal } from './RosaFlow';
+import SwipeableRow from './SwipeableRow';
 
 import { apiFetch } from './apiClient';
 
@@ -94,6 +95,61 @@ export default function MyPulses({ userId, venueId, onOpenPulse, onPulseListChan
   const totalAvailable = (balance?.freeBalance || 0) + (balance?.paidCredits || 0);
   const hasAnyPriceSet = venuePrices.singlePriceCents || venuePrices.bundle5PriceCents;
 
+  // Nasconde solo QUESTA Pulse dalla lista di lavoro — mai la riga
+  // vera sottostante (serve anche per punti/storico altrove). Sparisce
+  // subito, senza aspettare la risposta del server.
+  function handleDismiss(pulseId) {
+    setPulses((prev) => prev.filter((p) => p.pulseId !== pulseId));
+    apiFetch(`/api/users/${userId}/pulses/${pulseId}/dismiss`, { method: 'POST' }).catch(() => {});
+  }
+
+  function handleClearAll() {
+    if (!window.confirm('Vuoi davvero eliminare tutte le notifiche Pulse?')) return;
+    setPulses([]);
+    apiFetch(`/api/users/${userId}/pulses/clear-all`, { method: 'POST' }).catch(() => {});
+  }
+
+  // Tre gruppi separati, per capire al volo la situazione reale: cosa
+  // aspetta ancora una decisione, cosa è pronto per il bancone, e cosa
+  // è già stato riscattato. Il resto (rifiutate/in sospeso/scadute) in
+  // un quarto gruppo più defilato, meno urgente da vedere.
+  const pendingPulses = pulses.filter((p) => p.status === 'pending');
+  const toRedeemPulses = pulses.filter((p) => p.status === 'accepted');
+  const redeemedPulses = pulses.filter((p) => p.status === 'redeemed');
+  const otherPulses = pulses.filter((p) => !['pending', 'accepted', 'redeemed'].includes(p.status));
+
+  function renderPulseRow(r) {
+    return (
+      <SwipeableRow key={r.pulseId} onDismiss={() => handleDismiss(r.pulseId)}>
+        <div
+          className="pl-pulse-option"
+          style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12, marginBottom: 0 }}
+          onClick={() => {
+            if (r.status === 'pending') onOpenPulse(r);
+          }}
+        >
+          <PulseWaveIcon size={22} color="var(--cyan)" />
+          <div style={{ flex: 1 }}>
+            <div className="pl-pulse-title">{r.drinkType}</div>
+            <div className="pl-pulse-price">
+              {r.senderName ? r.senderName : 'Ammiratore misterioso'} · {r.venueName}
+            </div>
+          </div>
+          {r.status === 'accepted' && r.redeemCode ? (
+            <button
+              onClick={(e) => { e.stopPropagation(); setRedeemingPulse({ pulseId: r.pulseId, redeemCode: r.redeemCode }); }}
+              style={{ padding: '6px 12px', borderRadius: 999, border: 'none', background: 'var(--cyan)', color: '#fff', fontSize: 10.5, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}
+            >
+              Riscatta
+            </button>
+          ) : (
+            <StatusBadge status={r.status} />
+          )}
+        </div>
+      </SwipeableRow>
+    );
+  }
+
   return (
     <div className="pl-screen">
       {/* Momento editoriale — stesso linguaggio della striscia in
@@ -177,38 +233,48 @@ export default function MyPulses({ userId, venueId, onOpenPulse, onPulseListChan
       )}
       {purchaseError && <p className="pl-error" style={{ marginBottom: 10 }}>{purchaseError}</p>}
 
+      {pulses.length > 0 && (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+          <button
+            onClick={handleClearAll}
+            style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: 11, fontWeight: 600, cursor: 'pointer', padding: 4 }}
+          >
+            Ripulisci tutto
+          </button>
+        </div>
+      )}
+
       {pulses.length === 0 && (
         <div className="pl-hint" style={{ textAlign: 'center', marginTop: 20 }}>Ancora nessun Pulse ricevuto stasera.</div>
       )}
 
-      {pulses.map((r) => (
-        <div
-          key={r.pulseId}
-          className="pl-pulse-option"
-          style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12 }}
-          onClick={() => {
-            if (r.status === 'pending') onOpenPulse(r);
-          }}
-        >
-          <PulseWaveIcon size={22} color="var(--cyan)" />
-          <div style={{ flex: 1 }}>
-            <div className="pl-pulse-title">{r.drinkType}</div>
-            <div className="pl-pulse-price">
-              {r.senderName ? r.senderName : 'Ammiratore misterioso'} · {r.venueName}
-            </div>
-          </div>
-          {r.status === 'accepted' && r.redeemCode ? (
-            <button
-              onClick={(e) => { e.stopPropagation(); setRedeemingPulse({ pulseId: r.pulseId, redeemCode: r.redeemCode }); }}
-              style={{ padding: '6px 12px', borderRadius: 999, border: 'none', background: 'var(--cyan)', color: '#fff', fontSize: 10.5, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}
-            >
-              Riscatta
-            </button>
-          ) : (
-            <StatusBadge status={r.status} />
-          )}
+      {pendingPulses.length > 0 && (
+        <div style={{ marginBottom: 14 }}>
+          <div className="pl-section-label" style={{ marginTop: 0, marginBottom: 8 }}>Da decidere</div>
+          {pendingPulses.map(renderPulseRow)}
         </div>
-      ))}
+      )}
+
+      {toRedeemPulses.length > 0 && (
+        <div style={{ marginBottom: 14 }}>
+          <div className="pl-section-label" style={{ marginTop: 0, marginBottom: 8 }}>Da riscattare</div>
+          {toRedeemPulses.map(renderPulseRow)}
+        </div>
+      )}
+
+      {redeemedPulses.length > 0 && (
+        <div style={{ marginBottom: 14 }}>
+          <div className="pl-section-label" style={{ marginTop: 0, marginBottom: 8 }}>Riscattate</div>
+          {redeemedPulses.map(renderPulseRow)}
+        </div>
+      )}
+
+      {otherPulses.length > 0 && (
+        <div style={{ marginBottom: 14 }}>
+          <div className="pl-section-label" style={{ marginTop: 0, marginBottom: 8 }}>Altre</div>
+          {otherPulses.map(renderPulseRow)}
+        </div>
+      )}
 
       {redeemingPulse && (
         <div className="pl-fullscreen-modal" style={{ position: 'fixed', inset: 0, background: 'var(--bg, #14100F)', zIndex: 70 }}>

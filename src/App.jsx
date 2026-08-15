@@ -241,6 +241,31 @@ export default function App() {
     if (authState === 'app' && userId) refreshActiveChats();
   }, [authState, userId, refreshActiveChats]);
 
+  // Nome vero di chi c'è dall'altra parte della chat aperta — prima
+  // era un segnaposto scritto a mano ("Chat", mai collegato a
+  // nessuno) — trovato dall'utente leggendo il messaggio "Anche
+  // Chat ha scelto di conservarla". Cerchiamo l'ID dell'altra
+  // persona in ciò che l'app sa già (activeChats, o pendingMatches
+  // se il match è così recente che activeChats non ha ancora fatto
+  // in tempo ad aggiornarsi), poi recuperiamo il nome vero.
+  const [activeChatOtherUserName, setActiveChatOtherUserName] = useState('');
+  useEffect(() => {
+    if (!activeChatConversationId) { setActiveChatOtherUserName(''); return; }
+    const fromActive = activeChats.find((c) => c.conversationId === activeChatConversationId);
+    const fromPending = pendingMatches.find((m) => m.conversationId === activeChatConversationId);
+    const otherUserId = fromActive?.withUserId || fromPending?.withUserId;
+    if (!otherUserId) return;
+
+    let cancelled = false;
+    apiFetch(`/api/users/${otherUserId}/public-profile?arenaSessionId=${arenaSessionId || ''}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (!cancelled && data.success) setActiveChatOtherUserName(data.profile.displayName);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [activeChatConversationId, activeChats, pendingMatches, arenaSessionId]);
+
   // Pallino sulla scheda Chat — PRIMA contava semplicemente quante
   // conversazioni erano aperte in totale, restando acceso anche a
   // chat già lette e in corso (bug vero segnalato dal vivo). Ora
@@ -735,7 +760,7 @@ export default function App() {
           <ChatWindow
             conversationId={activeChatConversationId}
             currentUserId={userId}
-            otherUserName="Chat"
+            otherUserName={activeChatOtherUserName || 'questa persona'}
             onMarkedRead={refreshUnreadChatCount}
           />
         )}

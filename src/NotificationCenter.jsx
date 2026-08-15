@@ -29,11 +29,11 @@ const KIND_META = {
 
 const STATUS_LABELS = {
   pending: 'Da decidere',
-  accepted: 'Accettata',
-  redeemed: 'Riscattata',
-  rejected: 'Rifiutata',
+  accepted: 'Accettato',
+  redeemed: 'Riscattato',
+  rejected: 'Rifiutato',
   ignored: 'In sospeso',
-  expired: 'Scaduta',
+  expired: 'Scaduto',
   sent: null, // per Like/Superlike lo stato "sent" è il default, non serve mostrarlo
   matched: 'Match',
 };

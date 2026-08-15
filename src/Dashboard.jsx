@@ -622,7 +622,7 @@ function ExistingMissionRow({ mission, onGenerateQr }) {
  * SEZIONE "COMMISSIONI" — per ciascun locale partner, due campi
  * che si completano a vicenda (Locale % + PopuLive % = sempre
  * 100, mai possono disallinearsi) più il conto già fatto di
- * quanto spetta davvero al locale, in base alle Pulse riscattate
+ * quanto spetta davvero al locale, in base ai Pulse riscattati
  * lì e al prezzo di riferimento attuale.
  * ============================================================
  */
@@ -1000,7 +1000,7 @@ function VenueOrganizePanel({ venue, onVenueUpdate }) {
     <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 12 }}>
       <MetricCard title={`${venue.venueName} — commissione`}>
         <div style={{ fontSize: 10.5, color: 'var(--text-muted)', marginBottom: 10 }}>
-          {venue.redeemedCount} Pulse riscattate finora · {(venue.venueOwedCents / 100).toFixed(2)}€ dovuti al locale
+          {venue.redeemedCount} Pulse riscattati finora · {(venue.venueOwedCents / 100).toFixed(2)}€ dovuti al locale
         </div>
         <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
           <div style={{ flex: 1 }}>

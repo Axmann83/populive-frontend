@@ -137,7 +137,7 @@ export default function ChatWindow({ conversationId, currentUserId, otherUserNam
       )}
       {myWantsKeep && theirWantsKeep && !isClosed && (
         <div className="pl-chat-hint pl-chat-hint-success" style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-          Anche {otherUserName} ha scelto di conservarla — questa chat resterà vostra anche dopo stasera. <Sparkles size={12} />
+          Anche {otherUserName} ha scelto di conservare questa chat — continuerà a restare attiva e visibile anche dopo stasera. <Sparkles size={12} />
         </div>
       )}
 

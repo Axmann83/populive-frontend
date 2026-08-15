@@ -88,10 +88,38 @@ export default function NotificationCenter({ userId, onSeen }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
+  // Nasconde solo QUESTA riga — mai la riga vera sottostante (Like/
+  // Superlike/Pulse restano intatti, servono anche altrove). Sparisce
+  // subito dalla lista, senza aspettare la risposta del server.
+  function handleDismiss(entry) {
+    setHistory((prev) => prev.filter((h) => !(h.kind === entry.kind && h.id === entry.id)));
+    apiFetch(`/api/users/${userId}/notifications/dismiss`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ kind: entry.kind, entryId: entry.id }),
+    }).catch(() => {});
+  }
+
+  function handleClearAll() {
+    if (!window.confirm('Svuotare tutto il Centro Notifiche? Quelle nuove che arriveranno dopo restano visibili.')) return;
+    setHistory([]);
+    apiFetch(`/api/users/${userId}/notifications/clear-all`, { method: 'POST' }).catch(() => {});
+  }
+
   return (
     <div className="pl-screen">
-      <div style={{ fontFamily: "'Unbounded',sans-serif", fontWeight: 700, fontSize: 18, marginBottom: 16 }}>
-        Centro Notifiche
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+        <div style={{ fontFamily: "'Unbounded',sans-serif", fontWeight: 700, fontSize: 18 }}>
+          Centro Notifiche
+        </div>
+        {!loading && history.length > 0 && (
+          <button
+            onClick={handleClearAll}
+            style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: 11, fontWeight: 600, cursor: 'pointer', padding: 4 }}
+          >
+            Ripulisci tutto
+          </button>
+        )}
       </div>
 
       {loading && <p className="pl-hint" style={{ textAlign: 'center', marginTop: 30 }}>Caricamento…</p>}
@@ -140,6 +168,13 @@ export default function NotificationCenter({ userId, onSeen }) {
             <div style={{ fontSize: 10, color: 'var(--text-muted)', whiteSpace: 'nowrap', flexShrink: 0 }}>
               {timeAgo(entry.createdAt)}
             </div>
+            <button
+              onClick={() => handleDismiss(entry)}
+              aria-label="Rimuovi notifica"
+              style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: 15, cursor: 'pointer', padding: '2px 4px', flexShrink: 0 }}
+            >
+              ✕
+            </button>
           </div>
         );
       })}

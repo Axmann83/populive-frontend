@@ -241,6 +241,23 @@ export default function App() {
     if (authState === 'app' && userId) refreshActiveChats();
   }, [authState, userId, refreshActiveChats]);
 
+  // Pallino sulla scheda Chat — PRIMA contava semplicemente quante
+  // conversazioni erano aperte in totale, restando acceso anche a
+  // chat già lette e in corso (bug vero segnalato dal vivo). Ora
+  // conta solo quelle con davvero qualcosa di nuovo mai visto.
+  const [unreadChatCount, setUnreadChatCount] = useState(0);
+  const refreshUnreadChatCount = useCallback(async () => {
+    if (!userId) return;
+    try {
+      const res = await apiFetch(`/api/users/${userId}/unread-chat-count`);
+      const data = await res.json();
+      if (data.success) setUnreadChatCount(data.count);
+    } catch { /* ignorato — il numero resta quello di prima */ }
+  }, [userId]);
+  useEffect(() => {
+    if (authState === 'app' && userId) refreshUnreadChatCount();
+  }, [authState, userId, refreshUnreadChatCount]);
+
   // Pallino sulla scheda Notifiche — quante interazioni ricevute da
   // quando si è aperto DAVVERO il Centro Notifiche l'ultima volta.
   // Stesso principio degli altri numeretti stanotte: sempre letto
@@ -471,6 +488,14 @@ export default function App() {
     socketRef.current = socket;
     socket.emit('join_private_room', { userId });
 
+    // Un nuovo messaggio in una chat che NON si sta guardando in
+    // questo momento (ChatWindow ha il suo ascoltatore a sé per
+    // quando è aperta) — qui serve solo per tenere aggiornato il
+    // pallino in diretta, senza aspettare il prossimo avvio dell'app.
+    socket.on('chat_message', () => {
+      refreshUnreadChatCount();
+    });
+
     socket.on('pulse_received', (payload) => {
       setPendingPulseNotification(payload);
       refreshPulseBadge();
@@ -529,7 +554,7 @@ export default function App() {
       socket.disconnect();
       socketRef.current = null;
     };
-  }, [authState, userId, showPointsToast, pointsIconFor, pointsLabelFor, offerLikeCreditsPurchase, refreshPulseBadge, refreshNotificationBadge]);
+  }, [authState, userId, showPointsToast, pointsIconFor, pointsLabelFor, offerLikeCreditsPurchase, refreshPulseBadge, refreshNotificationBadge, refreshUnreadChatCount]);
 
   // Appena conosciamo l'Arena in cui siamo (dopo il check-in),
   // colleghiamo QUESTA STESSA connessione anche alla sua stanza —
@@ -711,13 +736,14 @@ export default function App() {
             conversationId={activeChatConversationId}
             currentUserId={userId}
             otherUserName="Chat"
+            onMarkedRead={refreshUnreadChatCount}
           />
         )}
       </div>
 
       <div className="pl-bottom-nav">
         <NavItem icon={RadarIcon} label="Radar" active={activeTab === 'radar'} onClick={() => navigateToTab('radar')} />
-        <NavItem icon={MessageCircle} label="Chat" active={activeTab === 'chat_list'} onClick={() => navigateToTab('chat_list')} badge={activeChats.filter((c) => !pendingMatches.some((m) => m.conversationId === c.conversationId)).length} />
+        <NavItem icon={MessageCircle} label="Chat" active={activeTab === 'chat_list'} onClick={() => navigateToTab('chat_list')} badge={unreadChatCount} />
         <NavItem icon={Bell} label="Notifiche" active={activeTab === 'notification_center'} onClick={() => navigateToTab('notification_center')} badge={notificationBadgeCount} />
         <NavItem icon={PulseWaveIcon} label="Pulse" active={activeTab === 'pulse'} onClick={() => navigateToTab('pulse')} badge={pulseBadgeCount} />
         <NavItem icon={User} label="Profilo" active={activeTab === 'profilo'} onClick={() => navigateToTab('profilo')} badge={pendingMatches.length} />

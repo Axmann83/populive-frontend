@@ -303,10 +303,10 @@ export function PulseNotification({ pulse, currentUserId, arenaSessionId, venueI
   const copy = {
     standalone: {
       title: 'Un ammiratore misterioso ti ha inviato un Pulse',
-      sub: `Vuoi accettarla? Riscattabile al bancone.`,
+      sub: `Vuoi accettarlo? Riscattabile al bancone.`,
     },
     like: {
-      title: 'Un ammiratore misterioso ti ha inviato una Pulse + Like',
+      title: 'Un ammiratore misterioso ti ha inviato un Pulse + Like',
       sub: 'Se accetti, il Pulse è comunque tuo — poi potrai provare a indovinare chi è per sbloccare la chat.',
     },
     super: {

@@ -15,7 +15,7 @@ import { API_BASE, apiFetch } from './apiClient';
  * cronologia resta leggibile finché la schermata è aperta.
  * ============================================================
  */
-export default function ChatWindow({ conversationId, currentUserId, otherUserName }) {
+export default function ChatWindow({ conversationId, currentUserId, otherUserName, onMarkedRead }) {
   const [messages, setMessages] = useState([]);
   const [isClosed, setIsClosed] = useState(false);
   const [myWantsKeep, setMyWantsKeep] = useState(false);
@@ -38,7 +38,15 @@ export default function ChatWindow({ conversationId, currentUserId, otherUserNam
       setLoading(false);
     }
     load();
+    // Aprire davvero questa chat segna come letta — il pallino sulla
+    // scheda Chat prima restava acceso anche a chat già in corso e
+    // letta, contava semplicemente "quante conversazioni ho aperte",
+    // non "quante hanno davvero qualcosa di nuovo".
+    apiFetch(`/api/chat/${conversationId}/mark-read`, { method: 'POST' })
+      .then(() => onMarkedRead?.())
+      .catch(() => {});
     return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conversationId, currentUserId]);
 
   useEffect(() => {
@@ -53,6 +61,10 @@ export default function ChatWindow({ conversationId, currentUserId, otherUserNam
         body: payload.body,
         created_at: payload.createdAt,
       }]);
+      // Il messaggio arriva mentre la chat è già aperta e sotto gli
+      // occhi — segnato come letto subito, senza aspettare che la
+      // persona esca e rientri.
+      apiFetch(`/api/chat/${conversationId}/mark-read`, { method: 'POST' }).catch(() => {});
     });
 
     socket.on('chat_closed', (payload) => {

@@ -217,7 +217,7 @@ export default function MyPulses({ userId, venueId, arenaSessionId, onOpenPulse,
               <div style={{ fontSize: 8.5, color: 'var(--text-muted)', marginTop: 3 }}>Solo a {r.venueName}</div>
             </div>
           )}
-          {!canRedeemHere && !readyButBlocked && <StatusBadge status={r.status} />}
+          {!canRedeemHere && !readyButBlocked && r.status !== 'redeemed' && <StatusBadge status={r.status} />}
         </div>
       </SwipeableRow>
     );
@@ -235,7 +235,6 @@ export default function MyPulses({ userId, venueId, arenaSessionId, onOpenPulse,
             <div className="pl-pulse-title">{r.drinkType}</div>
             <div className="pl-pulse-price">A {r.receiverName} · {r.venueName}</div>
           </div>
-          <StatusBadge status={r.status} context="sent" />
         </div>
       </SwipeableRow>
     );

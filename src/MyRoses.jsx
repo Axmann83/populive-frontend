@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { PulseWaveIcon } from './PopuLiveIcons';
 import { PulseRedeemSeal } from './RosaFlow';
 import SwipeableRow from './SwipeableRow';
+import ProfileFullScreen from './ProfileFullScreen';
 
 import { apiFetch } from './apiClient';
 
@@ -20,7 +21,7 @@ import { apiFetch } from './apiClient';
  * Pulse extra era pagarlo uno alla volta al momento dell'invio.
  * ============================================================
  */
-export default function MyPulses({ userId, venueId, onOpenPulse, onPulseListChanged }) {
+export default function MyPulses({ userId, venueId, arenaSessionId, onOpenPulse, onPulseListChanged }) {
   const [pulses, setPulses] = useState([]);
   const [sentPulses, setSentPulses] = useState([]); // visione complessiva richiesta dall'utente — anche le inviate, non solo ricevute
   const [balance, setBalance] = useState(null);
@@ -28,6 +29,7 @@ export default function MyPulses({ userId, venueId, onOpenPulse, onPulseListChan
   const [purchasing, setPurchasing] = useState(null); // null | 1 | 5, quale quantità è in corso
   const [purchaseError, setPurchaseError] = useState(null);
   const [redeemingPulse, setRedeemingPulse] = useState(null); // { pulseId, redeemCode } | null — riscatto rimandato, attivato da qui quando si è pronti
+  const [viewingSenderId, setViewingSenderId] = useState(null); // profilo del mittente aperto per decidere in modo ragionato — solo dove l'identità è già svelata
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -131,10 +133,13 @@ export default function MyPulses({ userId, venueId, onOpenPulse, onPulseListChan
   // un'azione possibile (solo chi riceve può farlo al bancone), è
   // solo uno stato da osservare: "in attesa di una decisione",
   // "accettata ma non ancora ritirata", "ritirata", "altro".
-  const pendingSentPulses = sentPulses.filter((p) => p.status === 'pending');
-  const acceptedSentPulses = sentPulses.filter((p) => p.status === 'accepted');
-  const redeemedSentPulses = sentPulses.filter((p) => p.status === 'redeemed');
-  const otherSentPulses = sentPulses.filter((p) => !['pending', 'accepted', 'redeemed'].includes(p.status));
+  // Lato INVIATO semplificato (14/8, richiesta esplicita): tre
+  // gruppi soli, non quattro come nei ricevuti — accettata e
+  // ritirata contano come la stessa cosa qui, i dettagli restano
+  // tra le due persone nella chat che si apre appena si accetta.
+  const awaitingSentPulses = sentPulses.filter((p) => ['pending', 'ignored'].includes(p.status));
+  const acceptedSentPulses = sentPulses.filter((p) => ['accepted', 'redeemed'].includes(p.status));
+  const rejectedSentPulses = sentPulses.filter((p) => ['rejected', 'expired'].includes(p.status));
 
   function renderPulseRow(r) {
     // Il bottone "Riscatta" funziona solo nel locale dove il Pulse è
@@ -155,7 +160,16 @@ export default function MyPulses({ userId, venueId, onOpenPulse, onPulseListChan
             if (r.status === 'pending') onOpenPulse(r);
           }}
         >
-          <PulseWaveIcon size={22} color="var(--cyan)" />
+          {r.senderId && r.senderPhotoUrl ? (
+            <div
+              onClick={(e) => { e.stopPropagation(); setViewingSenderId(r.senderId); }}
+              style={{ width: 32, height: 32, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, border: '1.5px solid var(--cyan)' }}
+            >
+              <img src={r.senderPhotoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            </div>
+          ) : (
+            <PulseWaveIcon size={22} color="var(--cyan)" />
+          )}
           <div style={{ flex: 1 }}>
             <div className="pl-pulse-title">{r.drinkType}</div>
             <div className="pl-pulse-price">
@@ -344,31 +358,24 @@ export default function MyPulses({ userId, venueId, onOpenPulse, onPulseListChan
         <div style={{ marginBottom: 20 }}>
           <div style={{ fontFamily: "'Unbounded',sans-serif", fontWeight: 700, fontSize: 13.5, marginBottom: 4 }}>Inviati</div>
 
-          {pendingSentPulses.length > 0 && (
+          {awaitingSentPulses.length > 0 && (
             <div style={{ marginBottom: 14 }}>
-              <div className="pl-section-label" style={{ marginTop: 0, marginBottom: 8 }}>In attesa di una decisione</div>
-              {pendingSentPulses.map(renderSentPulseRow)}
+              <div className="pl-section-label" style={{ marginTop: 0, marginBottom: 8 }}>In attesa di decisione</div>
+              {awaitingSentPulses.map(renderSentPulseRow)}
             </div>
           )}
 
           {acceptedSentPulses.length > 0 && (
             <div style={{ marginBottom: 14 }}>
-              <div className="pl-section-label" style={{ marginTop: 0, marginBottom: 8 }}>Accettati, non ancora ritirati</div>
+              <div className="pl-section-label" style={{ marginTop: 0, marginBottom: 8 }}>Accettato</div>
               {acceptedSentPulses.map(renderSentPulseRow)}
             </div>
           )}
 
-          {redeemedSentPulses.length > 0 && (
+          {rejectedSentPulses.length > 0 && (
             <div style={{ marginBottom: 14 }}>
-              <div className="pl-section-label" style={{ marginTop: 0, marginBottom: 8 }}>Ritirati</div>
-              {redeemedSentPulses.map(renderSentPulseRow)}
-            </div>
-          )}
-
-          {otherSentPulses.length > 0 && (
-            <div style={{ marginBottom: 14 }}>
-              <div className="pl-section-label" style={{ marginTop: 0, marginBottom: 8 }}>Altri</div>
-              {otherSentPulses.map(renderSentPulseRow)}
+              <div className="pl-section-label" style={{ marginTop: 0, marginBottom: 8 }}>Rifiutato</div>
+              {rejectedSentPulses.map(renderSentPulseRow)}
             </div>
           )}
         </div>
@@ -384,30 +391,48 @@ export default function MyPulses({ userId, venueId, onOpenPulse, onPulseListChan
           />
         </div>
       )}
+
+      {viewingSenderId && (
+        <ProfileFullScreen
+          userId={viewingSenderId}
+          arenaSessionId={arenaSessionId}
+          currentUserId={userId}
+          venueId={venueId}
+          onClose={() => setViewingSenderId(null)}
+        />
+      )}
     </div>
   );
 }
 
 function StatusBadge({ status, context = 'received' }) {
-  const labels = {
+  const receivedLabels = {
     pending: { text: 'Da decidere', color: 'var(--cyan)' },
-    // Stesso stato del database (accepted/redeemed), ma due lessici
-    // diversi a seconda del lato: lato ricevuto non serve nemmeno
-    // mostrare questa etichetta per "accepted" (c'è già il bottone
-    // "Riscatta" al suo posto, più diretto di una scritta) — lato
-    // inviato invece non c'è nessun bottone possibile (solo chi
-    // riceve può riscattare al bancone), quindi la parola qui deve
-    // dirlo chiaramente da sola.
-    accepted: context === 'sent'
-      ? { text: 'Non ancora ritirato', color: 'var(--teak)' }
-      : { text: 'Accettato', color: 'var(--teak)' },
-    redeemed: context === 'sent'
-      ? { text: 'Ritirato', color: 'var(--text-muted)' }
-      : { text: 'Riscattato', color: 'var(--text-muted)' },
+    accepted: { text: 'Accettato', color: 'var(--teak)' },
+    redeemed: { text: 'Riscattato', color: 'var(--text-muted)' },
     rejected: { text: 'Rifiutato', color: 'var(--text-muted)' },
     ignored: { text: 'In sospeso', color: 'var(--text-muted)' },
     expired: { text: 'Scaduto', color: 'var(--text-muted)' },
   };
+
+  // Lato INVIATO semplificato su richiesta esplicita (14/8): una
+  // volta accettata, la chat si apre e le due persone si parlano
+  // lì — sapere esattamente SE/QUANDO l'altra persona ha ritirato
+  // il drink non aggiunge nulla, rischia solo di far sentire "in
+  // debito" chi l'ha ricevuta. Tre stati soli, non sei: quello che
+  // conta per chi ha inviato è solo "deve ancora decidere", "ha
+  // detto sì" (poi i dettagli restano tra loro in chat) o "ha detto
+  // no" (rimborso già arrivato in entrambi i casi rejected/expired).
+  const sentLabels = {
+    pending: { text: 'In attesa di decisione', color: 'var(--cyan)' },
+    ignored: { text: 'In attesa di decisione', color: 'var(--cyan)' },
+    accepted: { text: 'Accettato', color: 'var(--teak)' },
+    redeemed: { text: 'Accettato', color: 'var(--teak)' },
+    rejected: { text: 'Rifiutato', color: 'var(--text-muted)' },
+    expired: { text: 'Rifiutato', color: 'var(--text-muted)' },
+  };
+
+  const labels = context === 'sent' ? sentLabels : receivedLabels;
   const label = labels[status] || { text: status, color: 'var(--text-muted)' };
   return (
     <span style={{ fontSize: 9.5, fontWeight: 700, textTransform: 'uppercase', color: label.color, whiteSpace: 'nowrap' }}>

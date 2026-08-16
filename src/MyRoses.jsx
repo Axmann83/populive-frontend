@@ -137,6 +137,15 @@ export default function MyPulses({ userId, venueId, onOpenPulse, onPulseListChan
   const otherSentPulses = sentPulses.filter((p) => !['pending', 'accepted', 'redeemed'].includes(p.status));
 
   function renderPulseRow(r) {
+    // Il bottone "Riscatta" funziona solo nel locale dove il Pulse è
+    // stato ricevuto — se si è altrove (o non si è fatto check-in da
+    // nessuna parte), resta visibile ma spento, con scritto dove
+    // andare per attivarlo davvero. Cambia solo l'aspetto, MAI lo
+    // stato reale: appena si torna nel locale giusto si riattiva da
+    // solo, senza bisogno di ricaricare nulla a mano.
+    const canRedeemHere = r.status === 'accepted' && r.redeemCode && venueId && r.venueId === venueId;
+    const readyButBlocked = r.status === 'accepted' && r.redeemCode && !canRedeemHere;
+
     return (
       <SwipeableRow key={r.pulseId} onDismiss={() => handleDismiss(r.pulseId)}>
         <div
@@ -150,19 +159,28 @@ export default function MyPulses({ userId, venueId, onOpenPulse, onPulseListChan
           <div style={{ flex: 1 }}>
             <div className="pl-pulse-title">{r.drinkType}</div>
             <div className="pl-pulse-price">
-              {r.senderName ? r.senderName : 'Ammiratore misterioso'} · {r.venueName}
+              DA {r.senderName ? r.senderName : 'Ammiratore misterioso'} · {r.venueName}
             </div>
           </div>
-          {r.status === 'accepted' && r.redeemCode ? (
+          {canRedeemHere && (
             <button
               onClick={(e) => { e.stopPropagation(); setRedeemingPulse({ pulseId: r.pulseId, redeemCode: r.redeemCode }); }}
               style={{ padding: '6px 12px', borderRadius: 999, border: 'none', background: 'var(--cyan)', color: '#fff', fontSize: 10.5, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}
             >
               Riscatta
             </button>
-          ) : (
-            <StatusBadge status={r.status} />
           )}
+          {readyButBlocked && (
+            <div style={{ textAlign: 'right', flexShrink: 0 }}>
+              <div
+                style={{ padding: '6px 12px', borderRadius: 999, border: '1px solid rgba(228,212,200,0.16)', background: 'transparent', color: 'var(--text-muted)', fontSize: 10.5, fontWeight: 700, whiteSpace: 'nowrap' }}
+              >
+                Riscatta
+              </div>
+              <div style={{ fontSize: 8.5, color: 'var(--text-muted)', marginTop: 3 }}>Solo a {r.venueName}</div>
+            </div>
+          )}
+          {!canRedeemHere && !readyButBlocked && <StatusBadge status={r.status} />}
         </div>
       </SwipeableRow>
     );
@@ -178,9 +196,9 @@ export default function MyPulses({ userId, venueId, onOpenPulse, onPulseListChan
           <PulseWaveIcon size={22} color="var(--cyan)" />
           <div style={{ flex: 1 }}>
             <div className="pl-pulse-title">{r.drinkType}</div>
-            <div className="pl-pulse-price">{r.receiverName} · {r.venueName}</div>
+            <div className="pl-pulse-price">A {r.receiverName} · {r.venueName}</div>
           </div>
-          <StatusBadge status={r.status} />
+          <StatusBadge status={r.status} context="sent" />
         </div>
       </SwipeableRow>
     );
@@ -370,11 +388,22 @@ export default function MyPulses({ userId, venueId, onOpenPulse, onPulseListChan
   );
 }
 
-function StatusBadge({ status }) {
+function StatusBadge({ status, context = 'received' }) {
   const labels = {
     pending: { text: 'Da decidere', color: 'var(--cyan)' },
-    accepted: { text: 'Accettato', color: 'var(--teak)' },
-    redeemed: { text: 'Riscattato', color: 'var(--text-muted)' },
+    // Stesso stato del database (accepted/redeemed), ma due lessici
+    // diversi a seconda del lato: lato ricevuto non serve nemmeno
+    // mostrare questa etichetta per "accepted" (c'è già il bottone
+    // "Riscatta" al suo posto, più diretto di una scritta) — lato
+    // inviato invece non c'è nessun bottone possibile (solo chi
+    // riceve può riscattare al bancone), quindi la parola qui deve
+    // dirlo chiaramente da sola.
+    accepted: context === 'sent'
+      ? { text: 'Non ancora ritirato', color: 'var(--teak)' }
+      : { text: 'Accettato', color: 'var(--teak)' },
+    redeemed: context === 'sent'
+      ? { text: 'Ritirato', color: 'var(--text-muted)' }
+      : { text: 'Riscattato', color: 'var(--text-muted)' },
     rejected: { text: 'Rifiutato', color: 'var(--text-muted)' },
     ignored: { text: 'In sospeso', color: 'var(--text-muted)' },
     expired: { text: 'Scaduto', color: 'var(--text-muted)' },

@@ -746,7 +746,7 @@ export default function App() {
         )}
 
         {activeTab === 'pulse' && (
-          <MyPulses userId={userId} venueId={venueId} onOpenPulse={(pulse) => setPendingPulseNotification(pulse)} onPulseListChanged={refreshPulseBadge} />
+          <MyPulses userId={userId} venueId={venueId} arenaSessionId={arenaSessionId} onOpenPulse={(pulse) => setPendingPulseNotification(pulse)} onPulseListChanged={refreshPulseBadge} />
         )}
 
         {activeTab === 'profilo' && (

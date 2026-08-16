@@ -342,6 +342,11 @@ export function PulseNotification({ pulse, currentUserId, arenaSessionId, venueI
           currentUserId={currentUserId}
           venueId={venueId}
           onClose={() => setShowFullProfile(false)}
+          decisionActions={{
+            onAccept: () => { setShowFullProfile(false); respond('accept'); },
+            onReject: () => { setShowFullProfile(false); respond('reject'); },
+            onIgnore: () => { setShowFullProfile(false); respond('ignore'); },
+          }}
         />
       )}
       <h3 style={{ textAlign: pulse.tier === 'super' ? 'center' : 'left' }}>{copy.title}</h3>

@@ -29,7 +29,7 @@ export default function MyPulses({ userId, venueId, arenaSessionId, onOpenPulse,
   const [purchasing, setPurchasing] = useState(null); // null | 1 | 5, quale quantità è in corso
   const [purchaseError, setPurchaseError] = useState(null);
   const [redeemingPulse, setRedeemingPulse] = useState(null); // { pulseId, redeemCode } | null — riscatto rimandato, attivato da qui quando si è pronti
-  const [viewingSenderId, setViewingSenderId] = useState(null); // profilo del mittente aperto per decidere in modo ragionato — solo dove l'identità è già svelata
+  const [viewingProfile, setViewingProfile] = useState(null); // { senderId, pulseId, isPending } | null — profilo aperto per decidere in modo ragionato, solo dove l'identità è già svelata
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -120,6 +120,29 @@ export default function MyPulses({ userId, venueId, arenaSessionId, onOpenPulse,
     apiFetch(`/api/users/${userId}/pulses/clear-all`, { method: 'POST' }).catch(() => {});
   }
 
+  // Decisione presa direttamente dal profilo a tutto schermo (aperto
+  // toccando la foto sulla riga "Da decidere") — sempre e solo per
+  // tier 'super', l'unico caso in cui l'identità è già svelata
+  // mentre si sta ancora decidendo. Chiude il profilo e aggiorna
+  // subito la lista, stesso comportamento della schermata di
+  // decisione originale.
+  async function respondFromProfile(action) {
+    const pulseId = viewingProfile?.pulseId;
+    setViewingProfile(null);
+    if (!pulseId) return;
+    try {
+      await apiFetch(`/api/pulses/${pulseId}/respond`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action }),
+      });
+    } catch (err) {
+      console.error('Errore rispondendo alla Pulse dal profilo:', err);
+    }
+    load();
+    onPulseListChanged?.();
+  }
+
   // Tre gruppi separati, per capire al volo la situazione reale: cosa
   // aspetta ancora una decisione, cosa è pronto per il bancone, e cosa
   // è già stato riscattato. Il resto (rifiutate/in sospeso/scadute) in
@@ -162,7 +185,7 @@ export default function MyPulses({ userId, venueId, arenaSessionId, onOpenPulse,
         >
           {r.senderId && r.senderPhotoUrl ? (
             <div
-              onClick={(e) => { e.stopPropagation(); setViewingSenderId(r.senderId); }}
+              onClick={(e) => { e.stopPropagation(); setViewingProfile({ senderId: r.senderId, pulseId: r.pulseId, isPending: r.status === 'pending' }); }}
               style={{ width: 32, height: 32, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, border: '1.5px solid var(--cyan)' }}
             >
               <img src={r.senderPhotoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -392,13 +415,19 @@ export default function MyPulses({ userId, venueId, arenaSessionId, onOpenPulse,
         </div>
       )}
 
-      {viewingSenderId && (
+      {viewingProfile && (
         <ProfileFullScreen
-          userId={viewingSenderId}
+          userId={viewingProfile.senderId}
           arenaSessionId={arenaSessionId}
           currentUserId={userId}
           venueId={venueId}
-          onClose={() => setViewingSenderId(null)}
+          onClose={() => setViewingProfile(null)}
+          decisionActions={viewingProfile.isPending ? {
+            onAccept: () => respondFromProfile('accept'),
+            onReject: () => respondFromProfile('reject'),
+            onIgnore: () => respondFromProfile('ignore'),
+          } : null}
+          hideActionButtons={!viewingProfile.isPending}
         />
       )}
     </div>

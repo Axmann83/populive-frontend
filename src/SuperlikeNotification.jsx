@@ -63,6 +63,11 @@ export default function SuperlikeNotification({ superlike, currentUserId, arenaS
                 currentUserId={currentUserId}
                 venueId={venueId}
                 onClose={() => setShowFullProfile(false)}
+                decisionActions={{
+                  onAccept: () => { setShowFullProfile(false); respond('accept'); },
+                  onReject: () => { setShowFullProfile(false); respond('reject'); },
+                  onIgnore: () => { setShowFullProfile(false); respond('ignore'); },
+                }}
               />
             )}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 4 }}>

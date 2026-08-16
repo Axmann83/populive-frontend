@@ -17,7 +17,7 @@ import { Heart, Star, PulseWaveIcon, Link2, Coins, Crown, Sparkles } from './Pop
  * schermata".
  * ============================================================
  */
-export default function ProfileFullScreen({ userId, arenaSessionId, currentUserId, venueId, onClose, viaHistoricalBoard }) {
+export default function ProfileFullScreen({ userId, arenaSessionId, currentUserId, venueId, onClose, viaHistoricalBoard, decisionActions, hideActionButtons }) {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [actionState, setActionState] = useState(null); // null | 'liked' | 'superliked' | 'sending'
@@ -219,36 +219,66 @@ export default function ProfileFullScreen({ userId, arenaSessionId, currentUserI
               </div>
             )}
 
-            {/* Dalla Bacheca Storica: SOLO Superlike — niente Like
-                (l'anonimato non protegge nessuno, non è più in
-                tempo reale) né Pulse (non sei fisicamente lì, non
-                potresti mai riscattarlo). */}
-            <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
-              {!viaHistoricalBoard && (
-                <ActionButton
-                  icon={Heart}
-                  label={actionState === 'liked' ? 'Inviato' : 'Like'}
-                  onClick={() => sendQuickInteraction('like')}
-                  disabled={actionState !== null}
-                  active={actionState === 'liked'}
-                />
-              )}
-              <ActionButton
-                icon={Star}
-                label={actionState === 'superliked' ? 'Inviato' : 'Superlike'}
-                onClick={() => sendQuickInteraction('superlike')}
-                disabled={actionState !== null}
-                active={actionState === 'superliked'}
-              />
-              {!viaHistoricalBoard && (
-                <ActionButton
-                  icon={PulseWaveIcon}
-                  label="Pulse"
-                  onClick={() => setShowPulseSend(true)}
-                  disabled={actionState === 'sending'}
-                />
-              )}
-            </div>
+            {/* Aperto per decidere su una Pulse+Superlike ricevuta
+                (dalla riga "Da decidere") — qui non ha senso offrire
+                di mandare un NUOVO Like/Superlike/Pulse, servono
+                invece le stesse tre scelte già viste nella notifica
+                originale, così si può decidere subito senza dover
+                chiudere il profilo e tornare indietro. */}
+            {hideActionButtons ? null : decisionActions ? (
+              <div style={{ marginTop: 16 }}>
+                <button className="pl-send-btn" onClick={decisionActions.onAccept} style={{ marginBottom: 8 }}>
+                  Accetta — apri la chat
+                </button>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button
+                    onClick={decisionActions.onIgnore}
+                    style={{ flex: 1, padding: '10px', borderRadius: 10, border: '1px solid rgba(228,212,200,0.2)', background: 'transparent', color: 'var(--text-muted)', fontSize: 11.5, fontWeight: 600, cursor: 'pointer' }}
+                  >
+                    Lascia in sospeso
+                  </button>
+                  <button
+                    onClick={decisionActions.onReject}
+                    style={{ flex: 1, padding: '10px', borderRadius: 10, border: '1px solid rgba(228,212,200,0.2)', background: 'transparent', color: 'var(--text-muted)', fontSize: 11.5, fontWeight: 600, cursor: 'pointer' }}
+                  >
+                    Rifiuta
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <>
+                {/* Dalla Bacheca Storica: SOLO Superlike — niente Like
+                    (l'anonimato non protegge nessuno, non è più in
+                    tempo reale) né Pulse (non sei fisicamente lì, non
+                    potresti mai riscattarlo). */}
+                <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
+                  {!viaHistoricalBoard && (
+                    <ActionButton
+                      icon={Heart}
+                      label={actionState === 'liked' ? 'Inviato' : 'Like'}
+                      onClick={() => sendQuickInteraction('like')}
+                      disabled={actionState !== null}
+                      active={actionState === 'liked'}
+                    />
+                  )}
+                  <ActionButton
+                    icon={Star}
+                    label={actionState === 'superliked' ? 'Inviato' : 'Superlike'}
+                    onClick={() => sendQuickInteraction('superlike')}
+                    disabled={actionState !== null}
+                    active={actionState === 'superliked'}
+                  />
+                  {!viaHistoricalBoard && (
+                    <ActionButton
+                      icon={PulseWaveIcon}
+                      label="Pulse"
+                      onClick={() => setShowPulseSend(true)}
+                      disabled={actionState === 'sending'}
+                    />
+                  )}
+                </div>
+              </>
+            )}
           </div>
         </>
       )}

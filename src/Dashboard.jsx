@@ -2,7 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import QRCode from 'qrcode';
 import QrScannerModal from './QrScannerModal';
 import { apiFetch } from './apiClient';
-import { Target, Settings as SettingsIcon, TrendingUp, Coins, Search, Armchair } from './PopuLiveIcons';
+import { Target, Settings as SettingsIcon, TrendingUp, Coins, Search, Armchair, Crown } from './PopuLiveIcons';
+import LiveRanking from './LiveRanking';
 
 /**
  * ============================================================
@@ -80,6 +81,7 @@ export default function Dashboard({ userId }) {
         <div style={{ display: 'flex', gap: 5, marginBottom: 18 }}>
           <SectionTab icon={Target} label="Missioni" active={activeSection === 'missioni'} onClick={() => setActiveSection('missioni')} />
           <SectionTab icon={Armchair} label="Serata" active={activeSection === 'organizza'} onClick={() => setActiveSection('organizza')} />
+          <SectionTab icon={Crown} label="Classifiche" active={activeSection === 'classifiche'} onClick={() => setActiveSection('classifiche')} />
           <SectionTab icon={TrendingUp} label="Locali" active={activeSection === 'locali'} onClick={() => setActiveSection('locali')} />
           <SectionTab icon={Coins} label="Prezzi" active={activeSection === 'prezzi'} onClick={() => setActiveSection('prezzi')} />
           <SectionTab icon={Search} label="Persone" active={activeSection === 'persone'} onClick={() => setActiveSection('persone')} />
@@ -88,6 +90,7 @@ export default function Dashboard({ userId }) {
 
         {activeSection === 'missioni' && <MissionsSection />}
         {activeSection === 'organizza' && <OrganizeNightSection />}
+        {activeSection === 'classifiche' && <RankingsSection currentUserId={userId} />}
         {activeSection === 'persone' && (
           <>
             <PeopleSearchSection />
@@ -120,6 +123,93 @@ function SectionTab({ icon: Icon, label, active, onClick }) {
       <Icon size={15} style={{ flexShrink: 0 }} />
       <span style={{ fontSize: 8.5, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>{label}</span>
     </button>
+  );
+}
+
+/**
+ * ============================================================
+ * SEZIONE "CLASSIFICHE" — la stessa classifica vera che vedono gli
+ * utenti (riusa LiveRanking.jsx così com'è, nessuna logica
+ * duplicata), utile per seguire i profili più interessanti in
+ * ottica Instant Influencer. Due modalità:
+ *   - Generale: sempre disponibile, nessuna selezione richiesta.
+ *   - Locale: richiede un locale ATTUALMENTE attivo (arenaActive
+ *     vero) — senza una serata in corso lì, non esiste nessuna
+ *     classifica locale da vedere in tempo reale.
+ * ============================================================
+ */
+function RankingsSection({ currentUserId }) {
+  const [view, setView] = useState('generale'); // 'generale' | 'locale'
+  const [venues, setVenues] = useState([]);
+  const [selectedVenueId, setSelectedVenueId] = useState('');
+
+  useEffect(() => {
+    apiFetch('/api/venues/map')
+      .then((r) => r.json())
+      .then((data) => { if (data.success) setVenues(data.venues); });
+  }, []);
+
+  const activeVenues = venues.filter((v) => v.arenaActive && v.arenaSessionId);
+  const selectedVenue = activeVenues.find((v) => v.venueId === selectedVenueId);
+
+  return (
+    <div>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+        <button
+          onClick={() => setView('generale')}
+          style={{
+            padding: '8px 16px', borderRadius: 999, cursor: 'pointer', fontSize: 12.5, fontWeight: 700,
+            border: view === 'generale' ? '1.5px solid var(--cyan)' : '1.5px solid rgba(228,212,200,0.16)',
+            background: view === 'generale' ? 'rgba(255,61,110,0.1)' : 'transparent',
+            color: view === 'generale' ? 'var(--cyan)' : 'var(--text-muted)',
+          }}
+        >
+          Generale
+        </button>
+        <button
+          onClick={() => setView('locale')}
+          style={{
+            padding: '8px 16px', borderRadius: 999, cursor: 'pointer', fontSize: 12.5, fontWeight: 700,
+            border: view === 'locale' ? '1.5px solid var(--cyan)' : '1.5px solid rgba(228,212,200,0.16)',
+            background: view === 'locale' ? 'rgba(255,61,110,0.1)' : 'transparent',
+            color: view === 'locale' ? 'var(--cyan)' : 'var(--text-muted)',
+          }}
+        >
+          Locale
+        </button>
+      </div>
+
+      {view === 'generale' && (
+        <LiveRanking isGlobal currentUserId={currentUserId} />
+      )}
+
+      {view === 'locale' && (
+        <>
+          <select
+            value={selectedVenueId}
+            onChange={(e) => setSelectedVenueId(e.target.value)}
+            style={{ marginBottom: 14 }}
+          >
+            <option value="">Scegli un locale con una serata attiva ora…</option>
+            {activeVenues.map((v) => (
+              <option key={v.venueId} value={v.venueId}>{v.name}</option>
+            ))}
+          </select>
+
+          {activeVenues.length === 0 && (
+            <p className="pl-hint">Nessun locale ha una serata attiva in questo momento.</p>
+          )}
+
+          {selectedVenue && (
+            <LiveRanking
+              arenaSessionId={selectedVenue.arenaSessionId}
+              venueId={selectedVenue.venueId}
+              currentUserId={currentUserId}
+            />
+          )}
+        </>
+      )}
+    </div>
   );
 }
 

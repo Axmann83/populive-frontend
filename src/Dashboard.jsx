@@ -78,7 +78,7 @@ export default function Dashboard({ userId }) {
       </div>
 
       <div className="pl-content">
-        <div style={{ display: 'flex', gap: 5, marginBottom: 18 }}>
+        <div style={{ display: 'flex', gap: 5, marginBottom: 18, overflowX: 'auto', WebkitOverflowScrolling: 'touch', paddingBottom: 2 }}>
           <SectionTab icon={Target} label="Missioni" active={activeSection === 'missioni'} onClick={() => setActiveSection('missioni')} />
           <SectionTab icon={Armchair} label="Serata" active={activeSection === 'organizza'} onClick={() => setActiveSection('organizza')} />
           <SectionTab icon={Crown} label="Classifiche" active={activeSection === 'classifiche'} onClick={() => setActiveSection('classifiche')} />
@@ -111,17 +111,16 @@ function SectionTab({ icon: Icon, label, active, onClick }) {
     <button
       onClick={onClick}
       style={{
-        flex: '1 1 0', minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
-        padding: '9px 2px', borderRadius: 12,
+        flexShrink: 0, minWidth: 68, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
+        padding: '9px 8px', borderRadius: 12,
         border: active ? '1px solid var(--cyan)' : '1px solid rgba(228,212,200,0.14)',
         background: active ? 'rgba(255,61,110,0.12)' : 'var(--surface)',
         color: active ? 'var(--cyan)' : 'var(--text-muted)',
         cursor: 'pointer',
-        overflow: 'hidden',
       }}
     >
       <Icon size={15} style={{ flexShrink: 0 }} />
-      <span style={{ fontSize: 8.5, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>{label}</span>
+      <span style={{ fontSize: 8.5, fontWeight: 600, whiteSpace: 'nowrap' }}>{label}</span>
     </button>
   );
 }

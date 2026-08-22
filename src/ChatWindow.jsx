@@ -82,21 +82,50 @@ export default function ChatWindow({ conversationId, currentUserId, otherUserNam
   const handleSend = useCallback(async () => {
     if (!draft.trim() || isClosed) return;
     const body = draft.trim();
+    const localId = `local-${Date.now()}`;
     setDraft('');
 
     setMessages((prev) => [...prev, {
-      id: `local-${Date.now()}`, sender_id: currentUserId, body, created_at: new Date().toISOString(),
+      id: localId, sender_id: currentUserId, body, created_at: new Date().toISOString(),
     }]);
 
-    await apiFetch(`/api/chat/${conversationId}/messages`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ body }),
-    });
+    // Controlliamo DAVVERO la risposta — prima non veniva mai letta,
+    // quindi un rifiuto del server (bug vero capitato dal vivo, 22/8)
+    // restava invisibile: il messaggio sembrava inviato sullo
+    // schermo di chi scriveva, ma non arrivava mai all'altra parte
+    // né sopravviveva a un refresh, senza nessun avviso del perché.
+    try {
+      const res = await apiFetch(`/api/chat/${conversationId}/messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ body }),
+      });
+      const data = await res.json();
+      if (!data.success) {
+        setMessages((prev) => prev.filter((m) => m.id !== localId));
+        setDraft(body);
+        window.alert('Il messaggio non è stato inviato. Riprova.');
+      }
+    } catch {
+      setMessages((prev) => prev.filter((m) => m.id !== localId));
+      setDraft(body);
+      window.alert('Il messaggio non è stato inviato — controlla la connessione e riprova.');
+    }
   }, [draft, isClosed, conversationId, currentUserId]);
 
   const toggleKeep = useCallback(async () => {
     const newValue = !myWantsKeep;
+    // Solo la direzione rischiosa chiede conferma: tornare indietro
+    // da "conserva" può chiudere la chat SUBITO e senza rimedio, se
+    // la serata originale è già finita — un secondo tocco per
+    // sbaglio sullo stesso interruttore (capitato davvero) non deve
+    // poter cancellare una chat conservata senza nessun avviso.
+    // Scegliere di conservare per la prima volta resta invece un
+    // solo tocco, mai rischioso di suo.
+    if (myWantsKeep && !newValue) {
+      const confirmed = window.confirm('Se ritiri la scelta, questa chat potrebbe chiudersi subito per entrambi, senza possibilità di tornare indietro. Continuare davvero?');
+      if (!confirmed) return;
+    }
     setMyWantsKeep(newValue); // ottimistico
     const res = await apiFetch(`/api/chat/${conversationId}/keep-preference`, {
       method: 'POST',
@@ -119,14 +148,24 @@ export default function ChatWindow({ conversationId, currentUserId, otherUserNam
             successivi. Mostriamo anche se l'altra parte ha già scelto
             "conserva", per trasparenza (ma mai finché non lo sceglie
             anche lui/lei stesso/a: nessun modo di vedere la scelta
-            altrui prima di aver fatto la propria). */}
+            altrui prima di aver fatto la propria).
+            IMPORTANTE (bug vero capitato dal vivo): tornare indietro
+            da "conserva" DOPO che la serata originale è finita chiude
+            la chat SUBITO, senza rimedio — un secondo tocco per
+            sbaglio sullo stesso interruttore l'aveva già cancellata
+            una volta. Ora quella direzione specifica chiede sempre
+            conferma esplicita (v. toggleKeep sopra), e l'etichetta
+            del bottone da attivo dice chiaramente "Chat conservata ✓"
+            (uno STATO confermato) invece di una domanda ambigua
+            ("Vuoi conservarla?"), che si prestava a essere fraintesa
+            come "tocca di nuovo per confermare ancora". */}
         <button
           className={`pl-keep-toggle ${myWantsKeep ? 'pl-keep-on' : ''}`}
           onClick={toggleKeep}
           disabled={isClosed}
           style={{ display: 'flex', alignItems: 'center', gap: 5 }}
         >
-          {myWantsKeep && <BookmarkCheck size={12} />} {myWantsKeep ? 'Vuoi conservarla' : 'Conserva la chat'}
+          {myWantsKeep && <BookmarkCheck size={12} />} {myWantsKeep ? 'Chat conservata ✓' : 'Conserva la chat'}
         </button>
       </div>
 

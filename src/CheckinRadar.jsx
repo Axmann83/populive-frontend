@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { io } from 'socket.io-client';
 import { apiFetch, setLastVenueId, clearLastVenueId } from './apiClient';
 import ProfileFullScreen from './ProfileFullScreen';
@@ -28,6 +28,27 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
   const [status, setStatus] = useState('idle'); // 'idle' | 'checking_in' | 'checked_in' | 'error'
   const [errorReason, setErrorReason] = useState(null);
   const [socketInstance, setSocketRef] = useState(null);
+  // Invisibilità reciproca dopo un rifiuto (mai da un match — v.
+  // discussione con l'utente) — ogni telefono filtra da sé la
+  // propria lista del radar, più semplice e robusto che far
+  // scegliere al server chi escludere da una trasmissione broadcast.
+  const [blockedPairIds, setBlockedPairIds] = useState(new Set());
+  // L'effetto socket qui sotto si connette una volta sola ([] come
+  // dipendenze) — un riferimento tiene il valore sempre aggiornato
+  // per i suoi gestori eventi, che altrimenti vedrebbero per sempre
+  // l'insieme vuoto iniziale (stesso problema già risolto altrove
+  // nel codice con lo stesso schema, es. activeChatConversationIdRef
+  // in App.jsx).
+  const blockedPairIdsRef = useRef(new Set());
+  useEffect(() => {
+    blockedPairIdsRef.current = blockedPairIds;
+    // Se un rifiuto scatta MENTRE si sta già guardando il radar
+    // (es. si rifiuta un Superlike arrivato in diretta), la persona
+    // sparisce subito dalla vista, non solo dai prossimi arrivi.
+    if (blockedPairIds.size > 0) {
+      setRadarPeople((prev) => prev.filter((p) => !blockedPairIds.has(p.userId)));
+    }
+  }, [blockedPairIds]);
   // Stato per "Aggancia il tuo tavolo" — dichiarato qui in cima,
   // insieme a tutti gli altri, MAI dopo un return condizionale
   // (le regole di React sugli hook lo richiedono sempre).
@@ -63,6 +84,22 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
     }
   }, [tableCode, wantsConnector, arenaSessionId]);
 
+  // Lista di chi ha un rifiuto permanente con questa persona (in
+  // qualunque direzione) — letta una volta all'avvio del radar,
+  // usata per filtrare in locale sia l'istantanea iniziale sia
+  // ogni nuovo arrivo, senza appesantire il server con un controllo
+  // per ogni singola connessione in una trasmissione broadcast.
+  useEffect(() => {
+    let cancelled = false;
+    apiFetch(`/api/users/${userId}/blocked-pairs`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (!cancelled && data.success) setBlockedPairIds(new Set(data.blockedUserIds));
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [userId]);
+
   // --------------------------------------------------------
   // Connessione WebSocket — una sola volta, quando il
   // componente nasce, non a ogni render.
@@ -88,6 +125,9 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
       // scartarlo qui che sperare che il filtro alla visualizzazione
       // (più sotto, nel render) sia sempre sufficiente da solo.
       if (payload.userId === userId) return;
+      // Invisibilità reciproca dopo un rifiuto vero (mai da un
+      // match) — v. blockedPairIdsRef sopra.
+      if (blockedPairIdsRef.current.has(payload.userId)) return;
 
       setRadarPeople((prev) => {
         if (payload.type === 'joined') {
@@ -111,7 +151,7 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
         const seenInThisBatch = new Set(); // il server ora è già corretto, ma non ci fidiamo di un solo livello — se lo stesso id comparisse più volte nello stesso messaggio, lo prendiamo una volta sola
         const newEntries = userIds
           .filter((id) => {
-            if (id === userId || existingIds.has(id) || seenInThisBatch.has(id)) return false;
+            if (id === userId || existingIds.has(id) || seenInThisBatch.has(id) || blockedPairIdsRef.current.has(id)) return false;
             seenInThisBatch.add(id);
             return true;
           })

@@ -136,6 +136,20 @@ export default function ChatWindow({ conversationId, currentUserId, otherUserNam
     if (data.chatNowClosed) setIsClosed(true);
   }, [myWantsKeep, conversationId]);
 
+  // Bottone "Blocca utente" — richiesta esplicita dell'utente
+  // (22/8), consolidata insieme all'idea di "cancellazione della
+  // chat": bloccare qualcuno chiude per forza anche questa
+  // conversazione, non avrebbe senso restasse aperta. A differenza
+  // di un rifiuto (a senso unico), il blocco manuale è SEMPRE
+  // bidirezionale — nessuna delle due parti potrà più contattare
+  // l'altra né vederla nel radar, in nessun locale futuro.
+  const handleBlock = useCallback(async () => {
+    const confirmed = window.confirm(`Vuoi davvero bloccare ${otherUserName}? Non potrete più contattarvi né vedervi nel radar, in nessun locale — questa scelta non si può annullare.`);
+    if (!confirmed) return;
+    await apiFetch(`/api/chat/${conversationId}/block`, { method: 'POST' });
+    setIsClosed(true);
+  }, [conversationId, otherUserName]);
+
   if (loading) return <div className="pl-chat-loading">Caricamento…</div>;
 
   return (
@@ -167,6 +181,14 @@ export default function ChatWindow({ conversationId, currentUserId, otherUserNam
         >
           {myWantsKeep && <BookmarkCheck size={12} />} {myWantsKeep ? 'Chat conservata ✓' : 'Conserva la chat'}
         </button>
+        {!isClosed && (
+          <button
+            onClick={handleBlock}
+            style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: 10.5, cursor: 'pointer', padding: '4px 6px' }}
+          >
+            Blocca
+          </button>
+        )}
       </div>
 
       {myWantsKeep && !theirWantsKeep && !isClosed && (

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { io } from 'socket.io-client';
 
 import Login from './Login';
@@ -801,13 +802,24 @@ export default function App() {
         )}
       </div>
 
-      <div className="pl-bottom-nav">
-        <NavItem icon={RadarIcon} label="Radar" active={activeTab === 'radar'} onClick={() => navigateToTab('radar')} />
-        <NavItem icon={MessageCircle} label="Chat" active={activeTab === 'chat_list'} onClick={() => navigateToTab('chat_list')} badge={unreadChatCount} />
-        <NavItem icon={Heart} label="Like" active={activeTab === 'like_center'} onClick={() => navigateToTab('like_center')} badge={likeCenterBadgeCount} />
-        <NavItem icon={PulseWaveIcon} label="Pulse" active={activeTab === 'pulse'} onClick={() => navigateToTab('pulse')} badge={pulseBadgeCount} />
-        <NavItem icon={User} label="Profilo" active={activeTab === 'profilo'} onClick={() => navigateToTab('profilo')} badge={pendingMatches.length} />
-      </div>
+      {/* Portale (24/8) — stesso identico motivo del profilo a
+          tutto schermo: una barra "fissa" annidata dentro .pl-content
+          (che scorre) può agganciarsi a QUELLO invece che al vero
+          schermo su Safari iOS, lasciando intravedere il contenuto
+          scorrere "dietro" durante lo scorrimento — mai una vera
+          questione di opacità/spazio, come i tentativi precedenti
+          avevano ipotizzato. Montata direttamente su document.body,
+          fuori da qualunque contenitore che scorre. */}
+      {createPortal(
+        <div className="pl-bottom-nav">
+          <NavItem icon={RadarIcon} label="Radar" active={activeTab === 'radar'} onClick={() => navigateToTab('radar')} />
+          <NavItem icon={MessageCircle} label="Chat" active={activeTab === 'chat_list'} onClick={() => navigateToTab('chat_list')} badge={unreadChatCount} />
+          <NavItem icon={Heart} label="Like" active={activeTab === 'like_center'} onClick={() => navigateToTab('like_center')} badge={likeCenterBadgeCount} />
+          <NavItem icon={PulseWaveIcon} label="Pulse" active={activeTab === 'pulse'} onClick={() => navigateToTab('pulse')} badge={pulseBadgeCount} />
+          <NavItem icon={User} label="Profilo" active={activeTab === 'profilo'} onClick={() => navigateToTab('profilo')} badge={pendingMatches.length} />
+        </div>,
+        document.body
+      )}
 
       {/* "Bentornato" appare per prima, appena entrati in app — e
           quando sparisce (con o senza notizie), apre in automatico

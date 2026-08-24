@@ -179,7 +179,6 @@ export default function LikeCenter({ userId, arenaSessionId, venueId, onOpenChat
 
       {!loading && tab === 'ricevuti' && items.map((item) => {
         const meta = KIND_META[item.kind] || {};
-        const Icon = meta.icon || Bell;
         const hasPhoto = !!item.sender?.photoUrl;
         const responding = respondingIds.has(`${item.kind}-${item.id}`);
         return (

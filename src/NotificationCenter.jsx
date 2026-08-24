@@ -1,25 +1,30 @@
 import { useState, useEffect } from 'react';
 import SwipeableRow from './SwipeableRow';
-import { Heart, Star, PulseWaveIcon, Bell, PartyPopper } from './PopuLiveIcons';
+import ProfileFullScreen from './ProfileFullScreen';
+import { Star, PulseWaveIcon, Bell, PartyPopper } from './PopuLiveIcons';
 import { apiFetch } from './apiClient';
 
 /**
  * ============================================================
  * POPULIVE — CENTRO NOTIFICHE
  * ============================================================
- * Storico cronologico completo — Like, Superlike, Pulse (tutte le
- * varianti), sia inviate sia ricevute, in un unico elenco. Prima
- * non esisteva nulla di simile: le uniche tracce erano le notifiche
- * "a caldo" del momento, mai una lista da poter riguardare dopo.
+ * Ristretto (23/8) al puro STORICO DEGLI ESITI, dopo l'introduzione
+ * della nuova schermata "Like" (icona a sé in basso): le interazioni
+ * INVIATE e quelle RICEVUTE ancora da decidere vivono ora
+ * ESCLUSIVAMENTE lì. Qui restano solo due cose:
+ *   - Match confermati da Like reciproco — resta QUI finché nessuno
+ *     dei due interagisce davvero (stile "Nuovi match" di Tinder).
+ *     Toccare la foto apre direttamente la chat.
+ *   - Ricevute che ERANO in sospeso e ora hanno un esito finale
+ *     (accettata/rifiutata/riscattata/scaduta) — un registro di
+ *     cosa è già successo, senza più nessun bottone d'azione.
  *
- * L'identità di chi ha mandato/ricevuto viene mostrata SOLO quando
- * le regole di anonimato dell'app lo permettono già altrove (deciso
- * lato server, mai qui) — altrimenti resta "Qualcuno".
+ * L'identità viene mostrata SOLO quando le regole di anonimato
+ * dell'app lo permettono già altrove (deciso lato server, mai qui).
  * ============================================================
  */
 
 const KIND_META = {
-  like: { icon: Heart, color: 'var(--cyan)', label: 'Like' },
   like_match: { icon: PartyPopper, color: 'var(--gold-medal, #D4A85C)', label: 'Match' },
   superlike: { icon: Star, color: 'var(--gold-medal, #D4A85C)', label: 'Superlike' },
   pulse_standalone: { icon: PulseWaveIcon, color: 'var(--cyan)', label: 'Pulse' },
@@ -28,14 +33,11 @@ const KIND_META = {
 };
 
 const STATUS_LABELS = {
-  pending: 'Da decidere',
   accepted: 'Accettato',
   redeemed: 'Riscattato',
   rejected: 'Rifiutato',
   ignored: 'In sospeso',
   expired: 'Scaduto',
-  sent: null, // per Like/Superlike lo stato "sent" è il default, non serve mostrarlo
-  matched: 'Match',
 };
 
 function timeAgo(dateString) {
@@ -56,17 +58,15 @@ function describeEntry(entry) {
   }
   const kindLabel = KIND_META[entry.kind]?.label || entry.kind;
   const who = entry.otherPerson ? entry.otherPerson.displayName : 'Qualcuno';
-  if (entry.direction === 'sent') {
-    return `Hai mandato un ${kindLabel} a ${entry.otherPerson ? who : 'una persona'}`;
-  }
   return entry.otherPerson
     ? `${who} ti ha mandato un ${kindLabel}`
     : `Hai ricevuto un ${kindLabel}`;
 }
 
-export default function NotificationCenter({ userId, onSeen }) {
+export default function NotificationCenter({ userId, onSeen, arenaSessionId, venueId, onOpenChat }) {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [viewingUserId, setViewingUserId] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -107,6 +107,18 @@ export default function NotificationCenter({ userId, onSeen }) {
     apiFetch(`/api/users/${userId}/notifications/clear-all`, { method: 'POST' }).catch(() => {});
   }
 
+  // Foto cliccabile — comportamento diverso a seconda del tipo:
+  // su un match apre DIRETTAMENTE la chat (stile Tinder: tocchi la
+  // foto del match, parti a scriverle), su tutto il resto apre il
+  // profilo completo di quella persona.
+  function handlePhotoClick(entry) {
+    if (entry.kind === 'like_match') {
+      if (entry.conversationId) onOpenChat?.(entry.conversationId);
+      return;
+    }
+    if (entry.otherPerson?.userId) setViewingUserId(entry.otherPerson.userId);
+  }
+
   return (
     <div className="pl-screen">
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
@@ -128,7 +140,7 @@ export default function NotificationCenter({ userId, onSeen }) {
       {!loading && history.length === 0 && (
         <div style={{ textAlign: 'center', marginTop: 60, color: 'var(--text-muted)' }}>
           <Bell size={32} style={{ marginBottom: 10, opacity: 0.5 }} />
-          <p className="pl-hint">Ancora nessuna interazione — arriveranno qui appena succede qualcosa.</p>
+          <p className="pl-hint">Ancora nessun esito — arriveranno qui appena succede qualcosa.</p>
         </div>
       )}
 
@@ -136,6 +148,8 @@ export default function NotificationCenter({ userId, onSeen }) {
         const meta = KIND_META[entry.kind] || {};
         const Icon = meta.icon || Bell;
         const statusLabel = STATUS_LABELS[entry.status];
+        const photoClickable = entry.kind === 'like_match' ? !!entry.conversationId : !!entry.otherPerson?.userId;
+
         return (
           <SwipeableRow key={`${entry.kind}-${entry.id}`} onDismiss={() => handleDismiss(entry)}>
             <div
@@ -144,7 +158,15 @@ export default function NotificationCenter({ userId, onSeen }) {
                 background: 'var(--surface-2)', padding: '12px 14px',
               }}
             >
-              <div style={{ width: 38, height: 38, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div
+                onClick={photoClickable ? () => handlePhotoClick(entry) : undefined}
+                style={{
+                  width: 38, height: 38, borderRadius: '50%', overflow: 'hidden', flexShrink: 0,
+                  background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  cursor: photoClickable ? 'pointer' : 'default',
+                  border: photoClickable ? '1.5px solid var(--cyan)' : 'none',
+                }}
+              >
                 {entry.otherPerson?.photoUrl ? (
                   <img src={entry.otherPerson.photoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 ) : (
@@ -157,9 +179,7 @@ export default function NotificationCenter({ userId, onSeen }) {
                   {entry.direction === 'match' ? (
                     <span style={{ color: meta.color }}>🎉 Match</span>
                   ) : (
-                    <span style={{ color: entry.direction === 'sent' ? 'var(--text-muted)' : meta.color }}>
-                      {entry.direction === 'sent' ? '↗ Inviata' : '↘ Ricevuta'}
-                    </span>
+                    <span style={{ color: meta.color }}>↘ Ricevuta</span>
                   )}
                   {entry.direction !== 'match' && statusLabel && <span>· {statusLabel}</span>}
                   {entry.drinkType && <span>· {entry.drinkType}</span>}
@@ -172,6 +192,17 @@ export default function NotificationCenter({ userId, onSeen }) {
           </SwipeableRow>
         );
       })}
+
+      {viewingUserId && (
+        <ProfileFullScreen
+          userId={viewingUserId}
+          arenaSessionId={arenaSessionId}
+          currentUserId={userId}
+          venueId={venueId}
+          onClose={() => setViewingUserId(null)}
+          hideActionButtons
+        />
+      )}
     </div>
   );
 }

@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { createPortal } from 'react-dom';
 import { io } from 'socket.io-client';
 
 import Login from './Login';
@@ -802,24 +801,24 @@ export default function App() {
         )}
       </div>
 
-      {/* Portale (24/8) — stesso identico motivo del profilo a
-          tutto schermo: una barra "fissa" annidata dentro .pl-content
-          (che scorre) può agganciarsi a QUELLO invece che al vero
-          schermo su Safari iOS, lasciando intravedere il contenuto
-          scorrere "dietro" durante lo scorrimento — mai una vera
-          questione di opacità/spazio, come i tentativi precedenti
-          avevano ipotizzato. Montata direttamente su document.body,
-          fuori da qualunque contenitore che scorre. */}
-      {createPortal(
-        <div className="pl-bottom-nav">
-          <NavItem icon={RadarIcon} label="Radar" active={activeTab === 'radar'} onClick={() => navigateToTab('radar')} />
-          <NavItem icon={MessageCircle} label="Chat" active={activeTab === 'chat_list'} onClick={() => navigateToTab('chat_list')} badge={unreadChatCount} />
-          <NavItem icon={Heart} label="Like" active={activeTab === 'like_center'} onClick={() => navigateToTab('like_center')} badge={likeCenterBadgeCount} />
-          <NavItem icon={PulseWaveIcon} label="Pulse" active={activeTab === 'pulse'} onClick={() => navigateToTab('pulse')} badge={pulseBadgeCount} />
-          <NavItem icon={User} label="Profilo" active={activeTab === 'profilo'} onClick={() => navigateToTab('profilo')} badge={pendingMatches.length} />
-        </div>,
-        document.body
-      )}
+      {/* Niente più portale né position:fixed (24/8, terzo
+          ripensamento) — dopo diversi tentativi di "inseguire" la
+          barra dinamica di Safari con CSS/JS sempre più elaborati,
+          la soluzione più robusta è evitare del tutto position:fixed
+          per questo elemento: resta un normale elemento del flusso
+          flessibile di .pl-app-shell (che già usa 100dvh, l'altezza
+          vera dello schermo), ultimo figlio dopo .pl-content — non
+          deve più "inseguire" nessun bordo, ci sta semplicemente
+          perché il contenitore che lo ospita è già dimensionato
+          bene. Elimina alla radice l'intera classe di bug di Safari
+          con gli elementi fissi dentro contenitori che scorrono. */}
+      <div className="pl-bottom-nav">
+        <NavItem icon={RadarIcon} label="Radar" active={activeTab === 'radar'} onClick={() => navigateToTab('radar')} />
+        <NavItem icon={MessageCircle} label="Chat" active={activeTab === 'chat_list'} onClick={() => navigateToTab('chat_list')} badge={unreadChatCount} />
+        <NavItem icon={Heart} label="Like" active={activeTab === 'like_center'} onClick={() => navigateToTab('like_center')} badge={likeCenterBadgeCount} />
+        <NavItem icon={PulseWaveIcon} label="Pulse" active={activeTab === 'pulse'} onClick={() => navigateToTab('pulse')} badge={pulseBadgeCount} />
+        <NavItem icon={User} label="Profilo" active={activeTab === 'profilo'} onClick={() => navigateToTab('profilo')} badge={pendingMatches.length} />
+      </div>
 
       {/* "Bentornato" appare per prima, appena entrati in app — e
           quando sparisce (con o senza notizie), apre in automatico

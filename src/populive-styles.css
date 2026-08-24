@@ -162,7 +162,7 @@ body.pl-day-mode .pl-brand-live{
 }
 
 /* --- Contenuto centrale, scorrevole --- */
-.pl-content{ flex:1; overflow-y:auto; padding:6px 18px 90px; }
+.pl-content{ flex:1; overflow-y:auto; padding:6px 18px calc(100px + env(safe-area-inset-bottom, 0px)); }
 
 /* ============================================================
    SCORRIMENTO FLUIDO TRA SCHEDE — stile "storie" (Instagram) invece

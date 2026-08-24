@@ -160,10 +160,21 @@ export default function ProfileFullScreen({ userId, arenaSessionId, currentUserI
         <>
           {/* Foto grande sullo sfondo — il pezzo chiave per
               riconoscere qualcuno al buio, in un locale affollato.
-              Se non ha una foto, un grande sfondo con l'emoji. */}
+              Se non ha una foto, un grande sfondo con l'emoji.
+              Bug vero trovato dal vivo (24/8): un tag <img> con
+              object-fit:cover qui dentro mostrava la foto alla sua
+              grandezza NATIVA su alcuni telefoni (le foto di uno
+              smartphone sono enormi, migliaia di pixel) invece di
+              ritagliarla correttamente — visibile solo aprendo il
+              profilo dalla scheda Inviati della schermata Like,
+              mai dalla lista stessa (che usa già lo stesso metodo
+              qui sotto, sempre corretto). Sistemato passando dallo
+              stesso <img> a un div con background-image, esattamente
+              lo stesso approccio già collaudato e funzionante nei
+              riquadri della lista. */}
           <div style={photoContainerStyle}>
             {profile.photoUrl ? (
-              <img src={profile.photoUrl} alt={profile.displayName} style={photoImgStyle} />
+              <div style={{ ...photoImgStyle, backgroundImage: `url(${profile.photoUrl})` }} role="img" aria-label={profile.displayName} />
             ) : (
               <div style={{ ...photoImgStyle, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 120 }}>
                 {profile.avatarEmoji}
@@ -409,8 +420,9 @@ const photoContainerStyle = {
 const photoImgStyle = {
   width: '100%',
   height: '100%',
-  objectFit: 'cover',
-  background: 'var(--surface-2)',
+  backgroundSize: 'cover',
+  backgroundPosition: 'center',
+  backgroundColor: 'var(--surface-2)',
 };
 
 const gradientOverlayStyle = {

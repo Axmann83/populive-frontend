@@ -319,35 +319,6 @@ export default function App() {
     if (authState === 'app' && userId) refreshLikeCenterBadge();
   }, [authState, userId, refreshLikeCenterBadge]);
   const [showMatchBanner, setShowMatchBanner] = useState(false);
-
-  // Video reale mandato dall'utente (24/8) ha mostrato la barra in
-  // basso SPARIRE del tutto durante lo scorrimento attivo, non solo
-  // "restare indietro" — coerente con un problema noto di Safari
-  // iOS: la barra degli indirizzi del telefono si nasconde da sola
-  // durante lo scorrimento (allargando lo schermo visibile), e un
-  // elemento position:fixed + bottom:0 puro a volte non riesce a
-  // tenere il passo con quel cambiamento in tempo reale. Invece di
-  // continuare a fidarci del solo CSS, usiamo l'API visualViewport
-  // (pensata apposta per questo) per calcolare NOI STESSI, in
-  // JavaScript, quanto spazio "mancante" c'è tra il vero fondo
-  // dello schermo visibile e il fondo del documento — e lo
-  // applichiamo come distanza reale della barra, sempre aggiornata.
-  const [navBottomOffset, setNavBottomOffset] = useState(0);
-  useEffect(() => {
-    if (!window.visualViewport) return; // browser senza questa API — resta il normale bottom:0 via CSS
-    function updateOffset() {
-      const vv = window.visualViewport;
-      const gap = window.innerHeight - (vv.height + vv.offsetTop);
-      setNavBottomOffset(Math.max(0, gap));
-    }
-    updateOffset();
-    window.visualViewport.addEventListener('resize', updateOffset);
-    window.visualViewport.addEventListener('scroll', updateOffset);
-    return () => {
-      window.visualViewport.removeEventListener('resize', updateOffset);
-      window.visualViewport.removeEventListener('scroll', updateOffset);
-    };
-  }, []);
   // Notifica a schermo dedicata per un Like ricevuto — stile
   // Facebook, più ricca del semplice popup punti generico. Il Like
   // resta anonimo (nessun nome/foto da mostrare, coerente con tutto
@@ -840,7 +811,7 @@ export default function App() {
           avevano ipotizzato. Montata direttamente su document.body,
           fuori da qualunque contenitore che scorre. */}
       {createPortal(
-        <div className="pl-bottom-nav" style={{ bottom: navBottomOffset }}>
+        <div className="pl-bottom-nav">
           <NavItem icon={RadarIcon} label="Radar" active={activeTab === 'radar'} onClick={() => navigateToTab('radar')} />
           <NavItem icon={MessageCircle} label="Chat" active={activeTab === 'chat_list'} onClick={() => navigateToTab('chat_list')} badge={unreadChatCount} />
           <NavItem icon={Heart} label="Like" active={activeTab === 'like_center'} onClick={() => navigateToTab('like_center')} badge={likeCenterBadgeCount} />

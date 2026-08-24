@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { apiFetch } from './apiClient';
 import { PulseSend } from './RosaFlow';
 import ProfileDetail from './ProfileDetail';
@@ -127,7 +128,7 @@ export default function ProfileFullScreen({ userId, arenaSessionId, currentUserI
   }
 
   if (showPulseSend) {
-    return (
+    return createPortal(
       <div className="pl-fullscreen-modal" style={overlayStyle}>
         <div style={{ width: '100%', maxWidth: 420, background: 'var(--surface)', borderRadius: '24px 24px 0 0', padding: 20, boxSizing: 'border-box', maxHeight: '85vh', overflowY: 'auto', boxShadow: 'var(--shadow-lg)' }}>
           <PulseSend
@@ -143,11 +144,12 @@ export default function ProfileFullScreen({ userId, arenaSessionId, currentUserI
             }}
           />
         </div>
-      </div>
+      </div>,
+      document.body
     );
   }
 
-  return (
+  return createPortal(
     <div className="pl-fullscreen-modal" style={fullScreenStyle}>
       {/* X per chiudere — sempre in alto, sempre raggiungibile */}
       <button onClick={onClose} style={closeButtonStyle} aria-label="Chiudi">✕</button>
@@ -308,7 +310,8 @@ export default function ProfileFullScreen({ userId, arenaSessionId, currentUserI
           onClose={() => { setShowProfileDetail(false); onClose(); }}
         />
       )}
-    </div>
+    </div>,
+    document.body
   );
 }
 

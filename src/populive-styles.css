@@ -203,8 +203,16 @@ body.pl-day-mode .pl-brand-live{
    invece di restare semplicemente "sotto". Marcatore comune:
    .pl-fullscreen-modal, aggiunto sul contenitore di quelle
    schermate. Così non può più esserci nessuna sovrapposizione
-   visibile, qualunque cosa succeda con lo stacking. */
-.pl-app-shell:has(.pl-fullscreen-modal) .pl-bottom-nav{
+   visibile, qualunque cosa succeda con lo stacking.
+   Ambito spostato da .pl-app-shell a body (24/8): ProfileFullScreen
+   ora si monta con un portale React direttamente su document.body
+   (serviva per un bug di Safari con position:fixed dentro liste che
+   scorrono) — il modale non è più DENTRO .pl-app-shell, ma un suo
+   fratello. La regola vecchia (:has() ristretto a .pl-app-shell) non
+   vedeva più il modale in quel caso, lasciando la barra visibile
+   per sbaglio. body contiene entrambi, qualunque sia la struttura
+   interna. */
+body:has(.pl-fullscreen-modal) .pl-bottom-nav{
   display:none;
 }
 .pl-nav-item{

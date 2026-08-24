@@ -319,32 +319,6 @@ export default function App() {
     if (authState === 'app' && userId) refreshLikeCenterBadge();
   }, [authState, userId, refreshLikeCenterBadge]);
   const [showMatchBanner, setShowMatchBanner] = useState(false);
-
-  // Ripristinato (24/8, dopo un tentativo col solo margine fisso
-  // che aveva peggiorato le cose ovunque nell'app) — il calcolo
-  // dinamico via visualViewport aveva DAVVERO migliorato la
-  // situazione nel secondo video mandato dall'utente (la barra si
-  // vedeva quasi sempre), restava solo un piccolo difetto residuo.
-  // Stavolta un ibrido: lo stesso calcolo dinamico di prima, MA con
-  // un piccolo margine di sicurezza fisso aggiunto sopra (12px),
-  // per coprire quel residuo senza perdere il beneficio del calcolo
-  // in tempo reale.
-  const [navBottomOffset, setNavBottomOffset] = useState(0);
-  useEffect(() => {
-    if (!window.visualViewport) return;
-    function updateOffset() {
-      const vv = window.visualViewport;
-      const gap = window.innerHeight - (vv.height + vv.offsetTop);
-      setNavBottomOffset(Math.max(0, gap) + 12);
-    }
-    updateOffset();
-    window.visualViewport.addEventListener('resize', updateOffset);
-    window.visualViewport.addEventListener('scroll', updateOffset);
-    return () => {
-      window.visualViewport.removeEventListener('resize', updateOffset);
-      window.visualViewport.removeEventListener('scroll', updateOffset);
-    };
-  }, []);
   // Notifica a schermo dedicata per un Like ricevuto — stile
   // Facebook, più ricca del semplice popup punti generico. Il Like
   // resta anonimo (nessun nome/foto da mostrare, coerente con tutto
@@ -837,7 +811,7 @@ export default function App() {
           avevano ipotizzato. Montata direttamente su document.body,
           fuori da qualunque contenitore che scorre. */}
       {createPortal(
-        <div className="pl-bottom-nav" style={{ bottom: navBottomOffset }}>
+        <div className="pl-bottom-nav">
           <NavItem icon={RadarIcon} label="Radar" active={activeTab === 'radar'} onClick={() => navigateToTab('radar')} />
           <NavItem icon={MessageCircle} label="Chat" active={activeTab === 'chat_list'} onClick={() => navigateToTab('chat_list')} badge={unreadChatCount} />
           <NavItem icon={Heart} label="Like" active={activeTab === 'like_center'} onClick={() => navigateToTab('like_center')} badge={likeCenterBadgeCount} />

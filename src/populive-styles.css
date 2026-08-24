@@ -191,8 +191,7 @@ body.pl-day-mode .pl-brand-live{
   display:flex; justify-content:space-around; align-items:center;
   padding:10px 10px calc(14px + env(safe-area-inset-bottom, 0px));
   border-top:1px solid rgba(217,204,192,0.1);
-  background:rgba(20,16,15,0.95);
-  backdrop-filter:blur(8px);
+  background:#14100F; /* completamente opaca (24/8) — prima era rgba(...,0.95) + sfocatura, ma su Safari l'effetto "vetro satinato" può comportarsi male (specie con un transform sullo stesso elemento, come qui) lasciando intravedere il contenuto che scorre sotto */
   box-shadow:0 -8px 24px -8px rgba(0,0,0,0.5);
 }
 /* Invece di fidarci solo dell'ordine di sovrapposizione (z-index) —

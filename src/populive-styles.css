@@ -185,15 +185,15 @@ body.pl-day-mode .pl-brand-live{
 
 /* --- Bottom nav --- */
 .pl-bottom-nav{
-  position:fixed; bottom:0; left:50%;
-  transform:translate3d(-50%, 0, 0); /* 3D invece di 2D (24/8) — su Safari iOS un transform 2D non basta sempre a "promuovere" l'elemento a un proprio livello grafico separato, causando un ritardo visibile nel ridisegnarlo durante lo scorrimento di un contenitore vicino (si "sistema" solo quando lo scorrimento si ferma del tutto) — un transform 3D è più affidabile per questo scopo specifico */
-  will-change:transform; /* suggerimento esplicito al browser di tenere pronto questo livello, invece di scoprirlo solo quando serve */
+  position:fixed; bottom:40px; left:50%; /* margine fisso e generoso (24/8, scelta esplicita dell'utente dopo diversi tentativi falliti di inseguire con precisione il vero fondo dinamico dello schermo su Safari) — 40px per stare comodamente sopra la zona sicura tipica di un iPhone moderno (circa 34px), sacrifica un po' di eleganza (resta uno spazio vuoto visibile sotto) in cambio di affidabilità: mai più nascosta o "in ritardo" durante lo scorrimento, qualunque cosa faccia la barra degli indirizzi del telefono */
+  transform:translate3d(-50%, 0, 0);
+  will-change:transform;
   z-index:5; /* sempre sotto qualunque schermata a tutto schermo (profilo, impostazioni, ecc. usano 60+) — senza questo, un elemento fisso senza ordine esplicito può finire sopra per puro caso di struttura del codice, coprendo quello che c'è sotto */
   width:100%; max-width:420px;
   display:flex; justify-content:space-around; align-items:center;
-  padding:10px 10px calc(14px + env(safe-area-inset-bottom, 0px));
+  padding:10px 10px 14px;
   border-top:1px solid rgba(217,204,192,0.1);
-  background:#14100F; /* completamente opaca (24/8) — prima era rgba(...,0.95) + sfocatura, ma su Safari l'effetto "vetro satinato" può comportarsi male (specie con un transform sullo stesso elemento, come qui) lasciando intravedere il contenuto che scorre sotto */
+  background:#14100F;
   box-shadow:0 -8px 24px -8px rgba(0,0,0,0.5);
 }
 /* Invece di fidarci solo dell'ordine di sovrapposizione (z-index) —

@@ -26,6 +26,21 @@ export default function ProfileFullScreen({ userId, arenaSessionId, currentUserI
   const [pulseSentConfirmation, setPulseSentConfirmation] = useState(false);
   const [showProfileDetail, setShowProfileDetail] = useState(false);
 
+  // Bug vero capitato dal vivo (24/8), subito dopo il portale: con
+  // il profilo ora montato correttamente fuori dalla lista che
+  // scorre, restava comunque possibile scorrere la pagina di sfondo
+  // sotto — un problema separato (mai il blocco dello scorrimento
+  // della pagina), probabilmente "nascosto" prima da quello più
+  // grande delle dimensioni. Blocchiamo lo scorrimento del corpo
+  // della pagina finché il profilo resta aperto, e lo ripristiniamo
+  // sempre alla chiusura — anche se il componente si smonta in modo
+  // imprevisto, mai lasciare la pagina bloccata per sbaglio.
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = previousOverflow; };
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
     async function load() {

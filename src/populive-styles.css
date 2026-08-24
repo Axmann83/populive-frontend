@@ -185,7 +185,7 @@ body.pl-day-mode .pl-brand-live{
 
 /* --- Bottom nav --- */
 .pl-bottom-nav{
-  position:fixed; bottom:40px; left:50%; /* margine fisso e generoso (24/8, scelta esplicita dell'utente dopo diversi tentativi falliti di inseguire con precisione il vero fondo dinamico dello schermo su Safari) — 40px per stare comodamente sopra la zona sicura tipica di un iPhone moderno (circa 34px), sacrifica un po' di eleganza (resta uno spazio vuoto visibile sotto) in cambio di affidabilità: mai più nascosta o "in ritardo" durante lo scorrimento, qualunque cosa faccia la barra degli indirizzi del telefono */
+  position:fixed; bottom:0; left:50%; /* tornato a 0 (24/8) — il tentativo di margine fisso a 40px ha peggiorato le cose: essendo una classe condivisa da TUTTA l'app, quel margine si vedeva ovunque, anche sulle schermate corte dove prima non c'era alcun problema (il difetto originale riguardava solo la schermata Like, con liste lunghe da scorrere) */
   transform:translate3d(-50%, 0, 0);
   will-change:transform;
   z-index:5; /* sempre sotto qualunque schermata a tutto schermo (profilo, impostazioni, ecc. usano 60+) — senza questo, un elemento fisso senza ordine esplicito può finire sopra per puro caso di struttura del codice, coprendo quello che c'è sotto */

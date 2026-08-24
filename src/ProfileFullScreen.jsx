@@ -371,6 +371,8 @@ function ActionButton({ icon: Icon, label, onClick, disabled, active }) {
 const fullScreenStyle = {
   position: 'fixed',
   inset: 0,
+  height: '100dvh',
+  width: '100vw',
   background: '#000',
   zIndex: 60,
   overflow: 'hidden',
@@ -379,6 +381,8 @@ const fullScreenStyle = {
 const overlayStyle = {
   position: 'fixed',
   inset: 0,
+  height: '100dvh',
+  width: '100vw',
   background: 'rgba(0,0,0,0.85)',
   zIndex: 61,
   display: 'flex',

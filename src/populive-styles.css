@@ -162,7 +162,7 @@ body.pl-day-mode .pl-brand-live{
 }
 
 /* --- Contenuto centrale, scorrevole --- */
-.pl-content{ flex:1; overflow-y:auto; padding:6px 18px calc(100px + env(safe-area-inset-bottom, 0px)); }
+.pl-content{ flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:6px 18px calc(100px + env(safe-area-inset-bottom, 0px)); }
 
 /* ============================================================
    SCORRIMENTO FLUIDO TRA SCHEDE — stile "storie" (Instagram) invece
@@ -185,7 +185,9 @@ body.pl-day-mode .pl-brand-live{
 
 /* --- Bottom nav --- */
 .pl-bottom-nav{
-  position:fixed; bottom:0; left:50%; transform:translateX(-50%);
+  position:fixed; bottom:0; left:50%;
+  transform:translate3d(-50%, 0, 0); /* 3D invece di 2D (24/8) — su Safari iOS un transform 2D non basta sempre a "promuovere" l'elemento a un proprio livello grafico separato, causando un ritardo visibile nel ridisegnarlo durante lo scorrimento di un contenitore vicino (si "sistema" solo quando lo scorrimento si ferma del tutto) — un transform 3D è più affidabile per questo scopo specifico */
+  will-change:transform; /* suggerimento esplicito al browser di tenere pronto questo livello, invece di scoprirlo solo quando serve */
   z-index:5; /* sempre sotto qualunque schermata a tutto schermo (profilo, impostazioni, ecc. usano 60+) — senza questo, un elemento fisso senza ordine esplicito può finire sopra per puro caso di struttura del codice, coprendo quello che c'è sotto */
   width:100%; max-width:420px;
   display:flex; justify-content:space-around; align-items:center;

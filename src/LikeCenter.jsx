@@ -35,6 +35,7 @@ const KIND_META = {
   superlike: { icon: Star, label: 'Superlike', color: 'var(--gold-medal, #D4A85C)' },
   pulse_standalone: { icon: PulseWaveIcon, label: 'Pulse', color: 'var(--cyan)' },
   pulse_like: { icon: PulseWaveIcon, label: 'Pulse+Like', color: 'var(--cyan)' },
+  pulse_simple: { icon: PulseWaveIcon, label: 'Pulse', color: 'var(--gold-medal, #D4A85C)' },
   pulse_super: { icon: PulseWaveIcon, label: 'Pulse+Superlike', color: 'var(--gold-medal, #D4A85C)' },
 };
 

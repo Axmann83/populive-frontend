@@ -7,7 +7,8 @@ import { apiFetch } from './apiClient';
 const TIER_META = {
   standalone: { label: 'Solo Pulse', sub: 'Anonima al 100% — nessun contatto' },
   like: { label: 'Pulse + Like', sub: 'Mistero — si svela solo con reciprocità' },
-  super: { label: 'Pulse + Superlike', sub: 'Il tuo profilo sarà subito visibile' },
+  simple: { label: 'Pulse', sub: 'Il tuo profilo sarà subito visibile' },
+  super: { label: 'Pulse + Superlike', sub: 'Il tuo profilo sarà subito visibile, con un Superlike incluso' },
 };
 
 /**
@@ -30,12 +31,14 @@ export function PulseSend({ senderId, receiverId, arenaSessionId, venueId, onSen
   const [drinks, setDrinks] = useState([]);
   const [selectedDrink, setSelectedDrink] = useState(null);
   // Quali modalità mostrare dipende dagli interruttori decisi dagli
-  // Architetti in dashboard (scheda Funzionalità) — "Pulse +
-  // Superlike" resta SEMPRE disponibile per definizione (il cuore
-  // della funzionalità), le altre due si accendono/spengono da lì,
-  // senza bisogno di toccare il codice o rifare un deploy.
-  const [availableTiers, setAvailableTiers] = useState(['super']);
-  const [tier, setTier] = useState('super');
+  // Architetti in dashboard (scheda Funzionalità) — TUTTE e quattro
+  // le varianti sono ora interruttori veri (25/8: prima "Pulse +
+  // Superlike" era sempre acceso per definizione, scritto fisso nel
+  // codice — ora è un interruttore come gli altri, spento di
+  // default). "Pulse" (semplice, slegato dal Superlike) parte
+  // acceso, pensato per la massima immediatezza delle prime serate.
+  const [availableTiers, setAvailableTiers] = useState(['simple']);
+  const [tier, setTier] = useState('simple');
   const [sending, setSending] = useState(false);
   const [error, setError] = useState(null);
 
@@ -44,10 +47,14 @@ export function PulseSend({ senderId, receiverId, arenaSessionId, venueId, onSen
       .then((r) => r.json())
       .then((data) => {
         if (!data.success) return;
-        const tiers = ['super'];
-        if (data.flags.pulse_standalone) tiers.unshift('standalone');
-        if (data.flags.pulse_like) tiers.splice(1, 0, 'like');
+        const tiers = [];
+        if (data.flags.pulse_standalone) tiers.push('standalone');
+        if (data.flags.pulse_like) tiers.push('like');
+        if (data.flags.pulse_simple) tiers.push('simple');
+        if (data.flags.pulse_super) tiers.push('super');
+        if (tiers.length === 0) tiers.push('simple'); // difesa: mai una lista vuota, anche se per errore tutti gli interruttori finissero spenti
         setAvailableTiers(tiers);
+        setTier(tiers[0]); // segue davvero ciò che è disponibile, non resta bloccato sul valore di partenza
       })
       .catch(() => {});
   }, []);
@@ -258,7 +265,7 @@ export function PulseNotification({ pulse, currentUserId, arenaSessionId, venueI
           const candData = await candRes.json();
           setGuessCandidates(candData.candidates || []);
           setShowGuessGame(true);
-        } else if (pulse.tier === 'super') {
+        } else if (pulse.tier === 'super' || pulse.tier === 'simple') {
           // Nessuna schermata intermedia apposta: la chat si sblocca
           // da sola (v. banner/lista match), e la Pulse resta in
           // lista pronta da riscattare quando si vuole — un
@@ -309,6 +316,10 @@ export function PulseNotification({ pulse, currentUserId, arenaSessionId, venueI
       title: 'Un ammiratore misterioso ti ha inviato un Pulse + Like',
       sub: 'Se accetti, il Pulse è comunque tuo — poi potrai provare a indovinare chi è per sbloccare la chat.',
     },
+    simple: {
+      title: `${pulse.senderName || 'Qualcuno'} ti ha inviato un Pulse`,
+      sub: `Vuoi accettarlo? Il tuo profilo è già visibile a chi l'ha inviato.`,
+    },
     super: {
       title: `${pulse.senderName || 'Qualcuno'} ti ha inviato un Pulse`,
       sub: `Ha anche inviato un Superlike: se non accetti, non potrà più contattarti.`,
@@ -317,11 +328,10 @@ export function PulseNotification({ pulse, currentUserId, arenaSessionId, venueI
 
   return (
     <div className="pl-sheet">
-      {/* Solo per il Pulse+Superlike: anteprima vera del profilo,
-          stessa esperienza già costruita per il Superlike puro —
-          prima erano incoerenti tra loro (lì foto, qui solo un nome
-          scritto nel titolo). */}
-      {pulse.tier === 'super' && (
+      {/* Per Pulse+Superlike e Pulse semplice: anteprima vera del
+          profilo, stessa esperienza già costruita per il Superlike
+          puro — entrambe le varianti svelano subito l'identità. */}
+      {(pulse.tier === 'super' || pulse.tier === 'simple') && (
         <div
           onClick={() => pulse.senderId && setShowFullProfile(true)}
           style={{ width: 84, height: 84, borderRadius: '50%', overflow: 'hidden', margin: '0 auto 14px', border: '2px solid var(--cyan)', cursor: pulse.senderId ? 'pointer' : 'default' }}
@@ -349,15 +359,15 @@ export function PulseNotification({ pulse, currentUserId, arenaSessionId, venueI
           }}
         />
       )}
-      <h3 style={{ textAlign: pulse.tier === 'super' ? 'center' : 'left' }}>{copy.title}</h3>
-      <p className="pl-hint" style={{ textAlign: pulse.tier === 'super' ? 'center' : 'left' }}>{copy.sub}</p>
+      <h3 style={{ textAlign: (pulse.tier === 'super' || pulse.tier === 'simple') ? 'center' : 'left' }}>{copy.title}</h3>
+      <p className="pl-hint" style={{ textAlign: (pulse.tier === 'super' || pulse.tier === 'simple') ? 'center' : 'left' }}>{copy.sub}</p>
 
       <div className="pl-redeem-actions">
         <button disabled={loading} onClick={() => respond('ignore')}>Lascia in sospeso</button>
         <button disabled={loading} onClick={() => respond('reject')} className="pl-btn-reject">Rifiuta</button>
       </div>
       <button className="pl-send-btn" disabled={loading} onClick={() => respond('accept')}>
-        {pulse.tier === 'super' ? 'Apri la chat' : 'Accetta il Pulse'}
+        {(pulse.tier === 'super' || pulse.tier === 'simple') ? 'Apri la chat' : 'Accetta il Pulse'}
       </button>
     </div>
   );

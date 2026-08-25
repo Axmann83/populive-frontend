@@ -127,6 +127,27 @@ body{
 }
 .pl-top-icon.active{ color:var(--cyan); }
 .pl-top-icon-label{ font-size:8px; font-weight:600; }
+/* Le classifiche sono il cuore differenziante di PopuLive rispetto
+   a tutto il resto — meritano di risaltare SEMPRE a colpo d'occhio,
+   non solo quando già selezionate (25/8, richiesta esplicita: la
+   maggior parte del tempo non si è su quella scheda, quindi uno
+   stile visibile solo da attivi si noterebbe raramente). Oro
+   (--gold-medal) invece del solito rosa/oro automatico di --cyan,
+   così restano coerenti sia di giorno sia di notte — a tema, dato
+   che l'oro è proprio il colore del podio. */
+.pl-top-icon.pl-ranking-icon{
+  color:rgba(212,168,92,0.75);
+}
+.pl-top-icon.pl-ranking-icon.active{
+  color:var(--gold-medal, #D4A85C);
+  transform:scale(1.15);
+}
+.pl-top-icon.pl-ranking-icon .pl-top-icon-label{
+  font-weight:700;
+}
+.pl-top-icon.pl-ranking-icon.active .pl-top-icon-label{
+  font-weight:800;
+}
 .pl-brand{
   display:flex; align-items:center; gap:2px;
   font-family:'Unbounded',sans-serif; font-weight:700; font-size:16px;

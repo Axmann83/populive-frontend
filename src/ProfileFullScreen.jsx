@@ -217,6 +217,25 @@ export default function ProfileFullScreen({ userId, arenaSessionId, currentUserI
                   scelto di mostrarla. */}
               <button onClick={() => setShowProfileDetail(true)} style={arrowButtonStyle} aria-label="Profilo completo">›</button>
             </div>
+            {/* "Ci siamo già incontrati" (25/8) — solo per la vera
+                seconda occasione: una chat GIÀ CHIUSA in passato con
+                questa persona, mai mentre si sta ancora chattando
+                attivamente (sarebbe ridondante). Un piccolo
+                promemoria caldo, non un dato freddo — l'obiettivo è
+                far ricordare che c'era già stata una scintilla,
+                senza scomodare l'account/statistiche di nessuno. */}
+            {profile.pastMatch && (
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 6, marginTop: 8,
+                background: 'rgba(255,61,110,0.16)', border: '1px solid rgba(255,61,110,0.35)',
+                borderRadius: 999, padding: '6px 12px', width: 'fit-content',
+              }}>
+                <Heart size={12} color="var(--cyan)" fill="var(--cyan)" />
+                <span style={{ fontSize: 11.5, fontWeight: 600 }}>
+                  Match presso {profile.pastMatch.venueName} il {new Date(profile.pastMatch.matchedAt).toLocaleDateString('it-IT', { day: 'numeric', month: 'long' })}
+                </span>
+              </div>
+            )}
             {/* Status Instant Influencer — un accordo commerciale
                 vero (impostato solo dai founder, mai auto-dichiarato
                 come gli hashtag liberi), quindi merita un trattamento

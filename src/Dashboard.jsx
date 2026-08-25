@@ -1304,8 +1304,10 @@ function FeatureFlagsSection() {
     historical_board: 'Bacheca storica',
     venues_map: 'Mappa di tutti i locali',
     instant_influencer: 'Instant Influencer',
-    pulse_standalone: 'Pulse semplice (anonimo)',
+    pulse_standalone: 'Pulse anonimo (nessun contatto)',
     pulse_like: 'Pulse + Like (minigioco)',
+    pulse_simple: 'Pulse (svela subito, senza Superlike)',
+    pulse_super: 'Pulse + Superlike (svela subito, richiede un Superlike)',
     big_spender: 'Big Spender (soglia di spesa)',
   };
 
@@ -1314,7 +1316,7 @@ function FeatureFlagsSection() {
   return (
     <div>
       <p className="pl-hint" style={{ marginBottom: 12 }}>
-        Spegni una funzionalità per offrire un'app "lite" nelle prime serate test — Like, Superlike, Pulse, classifiche e check-in restano sempre accesi, non sono qui. L'effetto è immediato per tutti, senza bisogno di ricaricare nulla lato codice.
+        Spegni una funzionalità per offrire un'app "lite" nelle prime serate test — Like, Superlike, classifiche e check-in restano sempre accesi, non sono qui. Le varianti di Pulse invece sono tutte qui sotto, comprese "Pulse" e "Pulse + Superlike" (prima quest'ultima era sempre accesa per definizione — ora è un interruttore come le altre). L'effetto è immediato per tutti, senza bisogno di ricaricare nulla lato codice.
       </p>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>

@@ -165,7 +165,18 @@ export default function App() {
   // principali (.pl-content qui sotto) — le schermate a tutto
   // schermo (profilo, chat, impostazioni) sono elementi separati
   // sopra di esso, quindi non ne risentono.
-  const TAB_ORDER = ['radar', 'locale', 'globale', 'pulse', 'profilo'];
+  // Due gruppi di scorrimento SEPARATI (25/8, richiesta esplicita —
+  // prima un unico elenco saltava del tutto Chat/Like, aggiunte
+  // dopo e mai collegate qui): scorrere tra le icone della barra in
+  // basso (Radar/Like/Chat/Pulse/Profilo) è un gruppo; scorrere tra
+  // le due classifiche (Locale/Globale) è un gruppo a sé, mai
+  // mescolato col primo. ANIMATION_ORDER serve SOLO a calcolare se
+  // l'animazione deve andare avanti o indietro quando si passa da
+  // un gruppo all'altro con un tocco diretto (mai usato per lo
+  // scorrimento vero e proprio).
+  const ANIMATION_ORDER = ['radar', 'locale', 'globale', 'like_center', 'chat_list', 'pulse', 'profilo'];
+  const MAIN_TAB_ORDER = ['radar', 'like_center', 'chat_list', 'pulse', 'profilo'];
+  const RANKING_TAB_ORDER = ['locale', 'globale'];
   const swipeStart = useRef(null);
   const [tabSlideDirection, setTabSlideDirection] = useState('forward'); // 'forward' | 'back'
 
@@ -174,8 +185,8 @@ export default function App() {
   // dell'animazione è sempre corretta ovunque, mai calcolata due
   // volte in due posti diversi.
   function navigateToTab(newTab) {
-    const currentIndex = TAB_ORDER.indexOf(activeTab);
-    const newIndex = TAB_ORDER.indexOf(newTab);
+    const currentIndex = ANIMATION_ORDER.indexOf(activeTab);
+    const newIndex = ANIMATION_ORDER.indexOf(newTab);
     setTabSlideDirection(newIndex > currentIndex ? 'forward' : 'back');
     setActiveTab(newTab);
   }
@@ -197,13 +208,17 @@ export default function App() {
     // intenzionale, non un tocco tremolante per sbaglio.
     if (Math.abs(deltaX) < 60 || Math.abs(deltaX) < Math.abs(deltaY) * 1.5) return;
 
-    const currentIndex = TAB_ORDER.indexOf(activeTab);
+    // Quale dei due gruppi scorrere dipende da dove ci si trova ORA
+    // — sulle classifiche si scorre solo tra le due classifiche,
+    // ovunque altro si scorre tra le cinque icone della barra.
+    const order = RANKING_TAB_ORDER.includes(activeTab) ? RANKING_TAB_ORDER : MAIN_TAB_ORDER;
+    const currentIndex = order.indexOf(activeTab);
     if (currentIndex === -1) return;
 
-    if (deltaX < 0 && currentIndex < TAB_ORDER.length - 1) {
-      navigateToTab(TAB_ORDER[currentIndex + 1]); // sinistra -> avanti
+    if (deltaX < 0 && currentIndex < order.length - 1) {
+      navigateToTab(order[currentIndex + 1]); // sinistra -> avanti
     } else if (deltaX > 0 && currentIndex > 0) {
-      navigateToTab(TAB_ORDER[currentIndex - 1]); // destra -> indietro
+      navigateToTab(order[currentIndex - 1]); // destra -> indietro
     }
   }
   const [pendingPulseNotification, setPendingPulseNotification] = useState(null);
@@ -684,12 +699,12 @@ export default function App() {
       <div className="pl-top-bar">
         <div className="pl-top-bar-left">
           <div className="pl-brand">Popu<span className="pl-brand-live">Live</span></div>
-          <button className={`pl-top-icon ${activeTab === 'locale' ? 'active' : ''}`} onClick={() => navigateToTab('locale')}>
-            <Trophy size={18} />
+          <button className={`pl-top-icon pl-ranking-icon ${activeTab === 'locale' ? 'active' : ''}`} onClick={() => navigateToTab('locale')}>
+            <Trophy size={22} />
             <span className="pl-top-icon-label">Locale</span>
           </button>
-          <button className={`pl-top-icon ${activeTab === 'globale' ? 'active' : ''}`} onClick={() => navigateToTab('globale')}>
-            <Globe size={18} />
+          <button className={`pl-top-icon pl-ranking-icon ${activeTab === 'globale' ? 'active' : ''}`} onClick={() => navigateToTab('globale')}>
+            <Globe size={22} />
             <span className="pl-top-icon-label">Globale</span>
           </button>
         </div>
@@ -814,8 +829,8 @@ export default function App() {
           con gli elementi fissi dentro contenitori che scorrono. */}
       <div className="pl-bottom-nav">
         <NavItem icon={RadarIcon} label="Radar" active={activeTab === 'radar'} onClick={() => navigateToTab('radar')} />
-        <NavItem icon={MessageCircle} label="Chat" active={activeTab === 'chat_list'} onClick={() => navigateToTab('chat_list')} badge={unreadChatCount} />
         <NavItem icon={Heart} label="Like" active={activeTab === 'like_center'} onClick={() => navigateToTab('like_center')} badge={likeCenterBadgeCount} />
+        <NavItem icon={MessageCircle} label="Chat" active={activeTab === 'chat_list'} onClick={() => navigateToTab('chat_list')} badge={unreadChatCount} />
         <NavItem icon={PulseWaveIcon} label="Pulse" active={activeTab === 'pulse'} onClick={() => navigateToTab('pulse')} badge={pulseBadgeCount} />
         <NavItem icon={User} label="Profilo" active={activeTab === 'profilo'} onClick={() => navigateToTab('profilo')} badge={pendingMatches.length} />
       </div>

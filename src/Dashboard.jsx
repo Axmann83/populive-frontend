@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import QRCode from 'qrcode';
 import QrScannerModal from './QrScannerModal';
+import VenueSearchSelect from './VenueSearchSelect';
 import { apiFetch } from './apiClient';
 import { Target, Settings as SettingsIcon, TrendingUp, Coins, Search, Armchair, Crown } from './PopuLiveIcons';
 import LiveRanking from './LiveRanking';
@@ -184,16 +185,12 @@ function RankingsSection({ currentUserId }) {
 
       {view === 'locale' && (
         <>
-          <select
+          <VenueSearchSelect
+            venues={activeVenues}
             value={selectedVenueId}
-            onChange={(e) => setSelectedVenueId(e.target.value)}
-            style={{ marginBottom: 14 }}
-          >
-            <option value="">Scegli un locale con una serata attiva ora…</option>
-            {activeVenues.map((v) => (
-              <option key={v.venueId} value={v.venueId}>{v.name}</option>
-            ))}
-          </select>
+            onChange={setSelectedVenueId}
+            placeholder="Scegli un locale con una serata attiva ora…"
+          />
 
           {activeVenues.length === 0 && (
             <p className="pl-hint">Nessun locale ha una serata attiva in questo momento.</p>
@@ -240,8 +237,7 @@ function VenueMetricsSection() {
       .finally(() => setLoading(false));
   }, []);
 
-  function handleSelect(e) {
-    const id = e.target.value;
+  function handleSelect(id) {
     setSelectedVenueId(id);
     setReport(null);
     loadReport(id);
@@ -253,12 +249,7 @@ function VenueMetricsSection() {
         Dati aggregati degli ultimi 30 giorni — pensati per essere mostrati ai proprietari, mai singoli profili individuali.
       </p>
 
-      <select value={selectedVenueId} onChange={handleSelect} style={{ marginBottom: 14 }}>
-        <option value="">Scegli un locale…</option>
-        {venues.map((v) => (
-          <option key={v.venueId} value={v.venueId}>{v.name}{v.isPartner ? ' · partner' : ''}</option>
-        ))}
-      </select>
+      <VenueSearchSelect venues={venues} value={selectedVenueId} onChange={handleSelect} />
 
       {loading && <p className="pl-hint">Caricamento…</p>}
 
@@ -612,12 +603,7 @@ function MissionsSection() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <input placeholder="Nome sponsor (es. Profumeria Bianchi)" value={form.sponsorName} onChange={(e) => updateField('sponsorName', e.target.value)} style={{ marginBottom: 0 }} />
 
-          <select value={form.venueId} onChange={(e) => updateField('venueId', e.target.value)} style={{ marginBottom: 0 }}>
-            <option value="">Scegli il locale…</option>
-            {venues.map((v) => (
-              <option key={v.venueId} value={v.venueId}>{v.name}</option>
-            ))}
-          </select>
+          <VenueSearchSelect venues={venues} value={form.venueId} onChange={(id) => updateField('venueId', id)} placeholder="Scegli il locale…" />
 
           <textarea
             placeholder='Claim (es. "Recati oggi da Profumeria Bianchi per 30 punti")'
@@ -758,8 +744,7 @@ function OrganizeNightSection() {
       .finally(() => setLoadingVenue(false));
   }, []);
 
-  function handleSelect(e) {
-    const id = e.target.value;
+  function handleSelect(id) {
     setSelectedVenueId(id);
     setAddingManually(false);
     loadVenue(id);
@@ -807,16 +792,15 @@ function OrganizeNightSection() {
         Scegli un locale già presente, o aggiungine uno nuovo — poi trovi qui sotto tutte le sue impostazioni in un posto solo.
       </p>
 
-      <select value={addingManually ? '__manual__' : selectedVenueId} onChange={(e) => {
-        if (e.target.value === '__manual__') { setAddingManually(true); setSelectedVenueId(''); setVenue(null); }
-        else handleSelect(e);
-      }} style={{ marginBottom: 12 }}>
-        <option value="">Scegli un locale…</option>
-        {venues.map((v) => (
-          <option key={v.venueId} value={v.venueId}>{v.name}{v.isPartner ? ' · partner' : ''}</option>
-        ))}
-        <option value="__manual__">+ Inserisci manualmente…</option>
-      </select>
+      <VenueSearchSelect
+        venues={venues}
+        value={addingManually ? '__manual__' : selectedVenueId}
+        onChange={(id) => {
+          if (id === '__manual__') { setAddingManually(true); setSelectedVenueId(''); setVenue(null); }
+          else handleSelect(id);
+        }}
+        extraOptions={[{ value: '__manual__', label: '+ Inserisci manualmente…' }]}
+      />
 
       {addingManually && (
         <MetricCard title="Nuovo locale">

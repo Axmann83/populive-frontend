@@ -4,6 +4,7 @@ import 'leaflet/dist/leaflet.css';
 import { apiFetch } from './apiClient';
 import HistoricalBoard from './HistoricalBoard';
 import HistoricalStories from './HistoricalStories';
+import VenueSearchSelect from './VenueSearchSelect';
 
 /**
  * ============================================================
@@ -68,6 +69,7 @@ export default function VenuesMap({ currentUserId, onClose, mode = 'browse' }) {
   const mapContainerRef = useRef(null);
   const mapRef = useRef(null);
   const markersLayerRef = useRef(null);
+  const markersByIdRef = useRef({}); // venueId -> { marker, lat, lng } — per la ricerca (26/8): serve ritrovare il puntino giusto senza doverli ridisegnare tutti
   const newPinMarkerRef = useRef(null);
   const placingPinRef = useRef(false);
 
@@ -183,6 +185,7 @@ export default function VenuesMap({ currentUserId, onClose, mode = 'browse' }) {
   useEffect(() => {
     if (!mapRef.current || !markersLayerRef.current) return;
     markersLayerRef.current.clearLayers();
+    markersByIdRef.current = {};
 
     venues.forEach((v) => {
       // Difensivo: con centinaia di locali importati in blocco, è
@@ -200,6 +203,7 @@ export default function VenuesMap({ currentUserId, onClose, mode = 'browse' }) {
         const marker = L.marker([lat, lng], {
           icon: v.isPartner ? VERIFIED_ICON : UNVERIFIED_ICON,
         });
+        markersByIdRef.current[v.venueId] = { marker, lat, lng };
 
       if (mode === 'historical') {
         // Modalità bacheca storica — nessun popup intermedio: un
@@ -302,6 +306,18 @@ export default function VenuesMap({ currentUserId, onClose, mode = 'browse' }) {
     }
   }, [newPinCoords]);
 
+  // Cerca un locale per nome e ci centra la mappa sopra, aprendo
+  // subito il suo puntino — pensata per gli stessi 410 locali non
+  // in ordine alfabetico delle tendine in dashboard, ma qui il
+  // "selezionare" vuol dire portare la vista lì, non compilare un
+  // modulo (26/8, richiesta esplicita).
+  const handleVenueSearchSelect = useCallback((venueId) => {
+    const found = markersByIdRef.current[venueId];
+    if (!found || !mapRef.current) return;
+    mapRef.current.setView([found.lat, found.lng], 16);
+    found.marker.openPopup();
+  }, []);
+
   if (historicalVenueId) {
     return (
       <div className="pl-sheet">
@@ -341,6 +357,15 @@ export default function VenuesMap({ currentUserId, onClose, mode = 'browse' }) {
       </p>
 
       {loading && <p className="pl-hint">Caricamento…</p>}
+
+      {!loading && venues.length > 0 && (
+        <VenueSearchSelect
+          venues={venues}
+          value=""
+          onChange={handleVenueSearchSelect}
+          placeholder="Cerca un locale per nome…"
+        />
+      )}
 
       <div
         className="pl-map-dark-wrap"

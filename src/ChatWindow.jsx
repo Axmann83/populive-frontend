@@ -24,6 +24,23 @@ export default function ChatWindow({ conversationId, currentUserId, otherUserNam
   const [loading, setLoading] = useState(true);
   const bottomRef = useRef(null);
 
+  // Interruttore "Chat: richiedi Conserva esplicito" (26/8) — a
+  // interruttore spento, niente bottone Conserva da mostrare: le
+  // chat si comportano come su Tinder/Hinge, si conservano di
+  // default, meno un pulsante da capire per chi usa l'app per la
+  // prima volta in un locale buio. Default true finché arriva la
+  // risposta vera, per non far comparire/sparire il bottone con un
+  // lampo appena la schermata si apre.
+  const [keepButtonVisible, setKeepButtonVisible] = useState(true);
+  useEffect(() => {
+    apiFetch('/api/feature-flags')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.success) setKeepButtonVisible(data.flags.chat_keep_required !== false);
+      })
+      .catch(() => {});
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
     async function load() {
@@ -177,7 +194,7 @@ export default function ChatWindow({ conversationId, currentUserId, otherUserNam
           className={`pl-keep-toggle ${myWantsKeep ? 'pl-keep-on' : ''}`}
           onClick={toggleKeep}
           disabled={isClosed}
-          style={{ display: 'flex', alignItems: 'center', gap: 5 }}
+          style={{ display: keepButtonVisible ? 'flex' : 'none', alignItems: 'center', gap: 5 }}
         >
           {myWantsKeep && <BookmarkCheck size={12} />} {myWantsKeep ? 'Chat conservata ✓' : 'Conserva la chat'}
         </button>
@@ -191,12 +208,17 @@ export default function ChatWindow({ conversationId, currentUserId, otherUserNam
         )}
       </div>
 
-      {myWantsKeep && !theirWantsKeep && !isClosed && (
+      {/* Interruttore "Chat: richiedi Conserva esplicito" spento
+          (26/8, richiesta esplicita per le prime serate test) —
+          niente promemoria da mostrare, la chat si conserva già di
+          default, non c'è nessuna scelta in sospeso da ricordare a
+          nessuno. */}
+      {keepButtonVisible && myWantsKeep && !theirWantsKeep && !isClosed && (
         <div className="pl-chat-hint">
           Hai scelto di conservarla — se lo sceglie anche {otherUserName}, resterà disponibile anche nei prossimi giorni.
         </div>
       )}
-      {myWantsKeep && theirWantsKeep && !isClosed && (
+      {keepButtonVisible && myWantsKeep && theirWantsKeep && !isClosed && (
         <div className="pl-chat-hint pl-chat-hint-success" style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
           Anche {otherUserName} ha scelto di conservare questa chat — continuerà a restare attiva e visibile anche dopo stasera. <Sparkles size={12} />
         </div>
@@ -216,9 +238,9 @@ export default function ChatWindow({ conversationId, currentUserId, otherUserNam
 
       {isClosed ? (
         <div className="pl-chat-closed-notice">
-          Questa chat è chiusa — {myWantsKeep && !theirWantsKeep
-            ? `${otherUserName} non ha scelto di conservarla.`
-            : 'la serata è finita.'}
+          Questa chat è chiusa{keepButtonVisible
+            ? ` — ${myWantsKeep && !theirWantsKeep ? `${otherUserName} non ha scelto di conservarla.` : 'la serata è finita.'}`
+            : '.'}
         </div>
       ) : (
         <div className="pl-chat-input-row">

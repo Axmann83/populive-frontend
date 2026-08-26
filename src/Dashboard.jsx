@@ -1308,6 +1308,7 @@ function FeatureFlagsSection() {
     pulse_like: 'Pulse + Like (minigioco)',
     pulse_simple: 'Pulse (svela subito, senza Superlike)',
     pulse_super: 'Pulse + Superlike (svela subito, richiede un Superlike)',
+    chat_keep_required: 'Chat: richiedi "Conserva" esplicito (se spento, si conservano come su Tinder/Hinge)',
     big_spender: 'Big Spender (soglia di spesa)',
   };
 

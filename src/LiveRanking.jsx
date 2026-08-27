@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { io } from 'socket.io-client';
 import ProfileFullScreen from './ProfileFullScreen';
 import ProfileDetail from './ProfileDetail';
+import AdminChatPanel from './AdminChatPanel';
 import { Link2, Coins, Crown } from './PopuLiveIcons';
 
 /**
@@ -19,7 +20,7 @@ import { Link2, Coins, Crown } from './PopuLiveIcons';
 
 const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:3000';
 
-export default function LiveRanking({ arenaSessionId, currentUserId, isGlobal, venueId, onSelectSelf }) {
+export default function LiveRanking({ arenaSessionId, currentUserId, isGlobal, venueId, onSelectSelf, isDashboard }) {
   const [ranking, setRanking] = useState([]);
   const [loading, setLoading] = useState(true);
   const [thresholdInfo, setThresholdInfo] = useState(null); // { currentCount, minRequired } — solo per la classifica locale
@@ -28,6 +29,9 @@ export default function LiveRanking({ arenaSessionId, currentUserId, isGlobal, v
   // seconda di dove sei: locale → tutto schermo con interazioni,
   // globale → solo profilo di dettaglio (v. sotto il motivo).
   const [selectedProfileUserId, setSelectedProfileUserId] = useState(null);
+  // Chi si vuole contattare direttamente dalla dashboard, senza
+  // match — SOLO quando isDashboard è vero (26/8).
+  const [adminChatTarget, setAdminChatTarget] = useState(null);
   // Filtri — solo per la classifica GLOBALE, non ha senso restringere
   // quella locale (già piccola, legata a un solo locale).
   const [hashtagFilter, setHashtagFilter] = useState('');
@@ -182,6 +186,19 @@ export default function LiveRanking({ arenaSessionId, currentUserId, isGlobal, v
           isMe={entry.userId === currentUserId}
           delta={recentDeltas[entry.userId]}
           onClick={() => {
+            // In dashboard, mai i soliti Like/Superlike/Pulse — si
+            // apre direttamente la possibilità di scrivere, senza
+            // bisogno di nessun match (26/8, richiesta esplicita:
+            // per contattare chi si nota emergere in classifica,
+            // tipicamente per proporgli un accordo Instant
+            // Influencer). Anche toccare la PROPRIA riga qui non fa
+            // eccezione — non c'è motivo di escluderla, a differenza
+            // dell'app normale dove avrebbe aperto interazioni verso
+            // se stessi (qui non ce ne sono).
+            if (isDashboard) {
+              setAdminChatTarget({ userId: entry.userId, displayName: entry.displayName });
+              return;
+            }
             // Toccare la PROPRIA riga non apre i bottoni Like/Superlike/
             // Pulse puntati verso se stessi (non avrebbe senso) — ti
             // portiamo invece dritti alla tua tab Profilo, dove hai
@@ -218,6 +235,15 @@ export default function LiveRanking({ arenaSessionId, currentUserId, isGlobal, v
           arenaSessionId={null}
           onBack={() => setSelectedProfileUserId(null)}
           onClose={() => setSelectedProfileUserId(null)}
+        />
+      )}
+
+      {adminChatTarget && (
+        <AdminChatPanel
+          targetUserId={adminChatTarget.userId}
+          targetDisplayName={adminChatTarget.displayName}
+          currentUserId={currentUserId}
+          onClose={() => setAdminChatTarget(null)}
         />
       )}
     </div>

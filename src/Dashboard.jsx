@@ -180,7 +180,7 @@ function RankingsSection({ currentUserId }) {
       </div>
 
       {view === 'generale' && (
-        <LiveRanking isGlobal currentUserId={currentUserId} />
+        <LiveRanking isGlobal currentUserId={currentUserId} isDashboard />
       )}
 
       {view === 'locale' && (
@@ -201,6 +201,7 @@ function RankingsSection({ currentUserId }) {
               arenaSessionId={selectedVenue.arenaSessionId}
               venueId={selectedVenue.venueId}
               currentUserId={currentUserId}
+              isDashboard
             />
           )}
         </>

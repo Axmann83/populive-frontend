@@ -245,7 +245,7 @@ export default function ProfileFullScreen({ userId, arenaSessionId, currentUserI
                 e perderebbe peso. */}
             {profile.instantInfluencerCategory && (
               <div style={influencerPillStyle}>
-                <Sparkles size={12} style={{ verticalAlign: 'middle', marginRight: 4 }} /> Instant Influencer · {profile.instantInfluencerCategory}
+                <Sparkles size={12} style={{ verticalAlign: 'middle', marginRight: 4 }} /> Instant Influencer
               </div>
             )}
             {profile.bio && <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.85)', textShadow: '0 1px 3px rgba(0,0,0,0.6)', margin: '6px 0 0' }}>{profile.bio}</p>}

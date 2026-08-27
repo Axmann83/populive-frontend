@@ -82,7 +82,7 @@ export default function ProfileDetail({ userId, arenaSessionId, onClose, onBack 
             </div>
             {profile.instantInfluencerCategory && (
               <div style={{ ...influencerPillStyle, marginTop: 8 }}>
-                <Sparkles size={12} style={{ verticalAlign: 'middle', marginRight: 4 }} /> Instant Influencer · {profile.instantInfluencerCategory}
+                <Sparkles size={12} style={{ verticalAlign: 'middle', marginRight: 4 }} /> Instant Influencer
               </div>
             )}
           </div>

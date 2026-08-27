@@ -1,8 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { apiFetch } from './apiClient';
 
-const INFLUENCER_CATEGORY_OPTIONS = ['Moda', 'Fitness', 'Beauty', 'Nightlife'];
-
 /**
  * ============================================================
  * MESSAGGIO DIRETTO DEGLI ARCHITETTI DALLA CLASSIFICA (26/8)
@@ -177,10 +175,23 @@ export default function AdminChatPanel({ targetUserId, targetDisplayName, curren
 
               {showInfluencerForm && (
                 <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <select value={category} onChange={(e) => setCategory(e.target.value)} style={{ marginBottom: 0 }}>
-                    <option value="">Nessuno status</option>
-                    {INFLUENCER_CATEGORY_OPTIONS.map((c) => <option key={c} value={c}>{c}</option>)}
-                  </select>
+                  {/* Niente più categorie fisse (27/8) — stessa
+                      logica di Dashboard.jsx: la ricerca per hashtag
+                      già in classifica basta a trovare i candidati
+                      giusti per un brand, una categoria separata
+                      qui sarebbe stata ridondante. */}
+                  <button
+                    type="button"
+                    onClick={() => setCategory(category ? '' : 'attivo')}
+                    style={{
+                      padding: '9px', borderRadius: 10, border: 'none',
+                      fontSize: 11.5, fontWeight: 700, cursor: 'pointer',
+                      background: category ? 'var(--cyan)' : 'rgba(228,212,200,0.12)',
+                      color: category ? '#fff' : 'var(--text-muted)',
+                    }}
+                  >
+                    {category ? '✓ Instant Influencer attivo' : 'Attiva Instant Influencer'}
+                  </button>
 
                   {category && products.map((p, i) => (
                     <div key={i} style={{ display: 'flex', gap: 6 }}>

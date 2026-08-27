@@ -1415,8 +1415,6 @@ function PeopleSearchSection() {
  * confermato — nessun modo per un utente di attivarselo da solo.
  * ============================================================
  */
-const INFLUENCER_CATEGORY_OPTIONS = ['Moda', 'Fitness', 'Beauty', 'Nightlife'];
-
 function InstantInfluencerSection() {
   const [phoneInput, setPhoneInput] = useState('');
   const [searching, setSearching] = useState(false);
@@ -1508,10 +1506,24 @@ function InstantInfluencerSection() {
 
       {foundUser && (
         <MetricCard title={foundUser.displayName}>
-          <select value={category} onChange={(e) => setCategory(e.target.value)} style={{ marginBottom: 10 }}>
-            <option value="">Nessuno status (togli Instant Influencer)</option>
-            {INFLUENCER_CATEGORY_OPTIONS.map((c) => <option key={c} value={c}>{c}</option>)}
-          </select>
+          {/* Niente più categorie fisse (27/8, richiesta esplicita
+              dell'utente) — con la ricerca già presente in
+              classifica, basta scrivere l'hashtag del brand giusto
+              per trovare i candidati migliori: una categoria
+              separata sarebbe stata ridondante. Qui resta solo
+              acceso/spento, il "chi" e "per cosa" restano gli
+              hashtag liberi già scelti alla registrazione. */}
+          <button
+            onClick={() => setCategory(category ? '' : 'attivo')}
+            style={{
+              width: '100%', padding: '9px', borderRadius: 10, border: 'none', marginBottom: 10,
+              fontSize: 11.5, fontWeight: 700, cursor: 'pointer',
+              background: category ? 'var(--cyan)' : 'rgba(228,212,200,0.12)',
+              color: category ? '#fff' : 'var(--text-muted)',
+            }}
+          >
+            {category ? '✓ Instant Influencer attivo' : 'Attiva Instant Influencer'}
+          </button>
 
           {category && (
             <>

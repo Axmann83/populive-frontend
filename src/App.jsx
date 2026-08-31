@@ -737,6 +737,7 @@ export default function App() {
               venueId={venueId}
               onArenaSession={setArenaSessionId}
               autoCheckin={arrivedViaQr}
+              onVenueIdDetected={setVenueId}
             />
             {featureFlags.historical_board && (
               <button

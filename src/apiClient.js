@@ -131,3 +131,39 @@ function requestAndSendLocation(userId) {
 }
 
 export { requestAndSendLocation };
+
+/**
+ * ============================================================
+ * CARICAMENTO FOTO PROFILO (29/8)
+ * ============================================================
+ * Estratta da ProfileCreation.jsx (dove viveva da sola, mai
+ * condivisa) perché ora serve ANCHE da Settings.jsx — permettere di
+ * cambiare la foto anche DOPO la registrazione iniziale, non solo
+ * la prima volta. Stessa identica logica, un solo posto da
+ * mantenere invece di due copie che rischiano di disallinearsi.
+ * Non serve mai l'API Secret lato client, solo cloud name + preset
+ * (entrambi pubblici, sicuri da avere nel codice frontend).
+ * ============================================================
+ */
+const CLOUDINARY_CLOUD_NAME = 'rjkegdrp';
+const CLOUDINARY_UPLOAD_PRESET = 'populive_profile_photos';
+
+async function uploadPhotoToStorage(file) {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+
+  const res = await fetch(
+    `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
+    { method: 'POST', body: formData }
+  );
+
+  if (!res.ok) {
+    throw new Error('Upload verso Cloudinary non riuscito');
+  }
+
+  const data = await res.json();
+  return data.secure_url; // questo è l'URL da salvare in photo_url
+}
+
+export { uploadPhotoToStorage };

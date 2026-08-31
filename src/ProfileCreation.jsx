@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { apiFetch, requestAndSendLocation } from './apiClient';
+import { apiFetch, requestAndSendLocation, uploadPhotoToStorage } from './apiClient';
 
 /**
  * ============================================================
@@ -99,11 +99,10 @@ export default function ProfileCreation({ onComplete }) {
     try {
       let photoUrl = null;
       if (photoFile) {
-        // In produzione: upload reale verso S3/Cloudinary che
-        // restituisce l'URL. Qui il punto di innesto è pronto,
-        // la funzione uploadToStorage va scritta quando scegliamo
-        // il provider di storage definitivo.
-        photoUrl = await uploadToStorage(photoFile);
+        // Caricamento reale verso Cloudinary (v. uploadPhotoToStorage
+        // in apiClient.js, condivisa anche con Settings.jsx per
+        // cambiare la foto dopo la registrazione iniziale).
+        photoUrl = await uploadPhotoToStorage(photoFile);
         await apiFetch('/api/profile/me/photo', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -354,28 +353,4 @@ function ConsentToggle({ label, sub, checked, onChange }) {
       <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
     </div>
   );
-}
-
-// Upload reale verso Cloudinary tramite "unsigned upload preset" —
-// non serve mai l'API Secret lato client, solo cloud name + preset
-// (entrambi pubblici, sicuri da avere nel codice frontend).
-const CLOUDINARY_CLOUD_NAME = 'rjkegdrp';
-const CLOUDINARY_UPLOAD_PRESET = 'populive_profile_photos';
-
-async function uploadToStorage(file) {
-  const formData = new FormData();
-  formData.append('file', file);
-  formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-
-  const res = await fetch(
-    `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
-    { method: 'POST', body: formData }
-  );
-
-  if (!res.ok) {
-    throw new Error('Upload verso Cloudinary non riuscito');
-  }
-
-  const data = await res.json();
-  return data.secure_url; // questo è l'URL da salvare in photo_url
 }

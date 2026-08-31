@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { io } from 'socket.io-client';
+import { Html5Qrcode } from 'html5-qrcode';
 import { apiFetch, setLastVenueId, clearLastVenueId } from './apiClient';
 import ProfileFullScreen from './ProfileFullScreen';
 import { Armchair, Radar as RadarIcon } from './PopuLiveIcons';
@@ -18,7 +19,7 @@ import { Armchair, Radar as RadarIcon } from './PopuLiveIcons';
 
 const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:3000';
 
-export default function CheckinRadar({ userId, venueId, onArenaSession, autoCheckin }) {
+export default function CheckinRadar({ userId, venueId, onArenaSession, autoCheckin, onVenueIdDetected }) {
   const [arenaActive, setArenaActive] = useState(false);
   const [checkinCount, setCheckinCount] = useState(0);
   const [threshold, setThreshold] = useState(20);
@@ -194,8 +195,15 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
 
   // --------------------------------------------------------
   // Azione: scansiona il QR → chiama l'API reale di check-in
+  // Accetta un venueId "fresco" opzionale (venueIdOverride) — serve
+  // per la scansione DENTRO l'app (v. sotto): chiamare subito dopo
+  // aver aggiornato lo stato del genitore rischierebbe di usare
+  // ancora il valore vecchio, dato che gli aggiornamenti di stato
+  // React non sono immediati. Passandolo qui direttamente, invece,
+  // non c'è alcun rischio di questo tipo.
   // --------------------------------------------------------
-  const handleScanQr = useCallback(async () => {
+  const handleScanQr = useCallback(async (venueIdOverride) => {
+    const effectiveVenueId = venueIdOverride || venueId;
     setStatus('checking_in');
     setErrorReason(null);
 
@@ -203,7 +211,7 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
       const res = await apiFetch('/api/checkin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ venueId }),
+        body: JSON.stringify({ venueId: effectiveVenueId }),
       });
       const data = await res.json();
 
@@ -218,7 +226,7 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
       setThreshold(data.threshold);
       setArenaActive(data.arenaActive);
       setStatus('checked_in');
-      setLastVenueId(venueId); // sopravvive a un aggiornamento pagina, v. apiClient.js
+      setLastVenueId(effectiveVenueId); // sopravvive a un aggiornamento pagina, v. apiClient.js
 
       // Ora che sappiamo in quale sessione siamo, entriamo
       // davvero nella stanza WebSocket giusta, e avvisiamo la shell
@@ -234,6 +242,83 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
       setErrorReason('network_error');
     }
   }, [userId, venueId, socketInstance, onArenaSession]);
+
+  // --------------------------------------------------------
+  // Scanner DENTRO l'app (30/8, richiesta esplicita) — nato da un
+  // caso reale: chi si allontana dal Radar e torna semplicemente
+  // riaprendo l'app si ritrova su questa schermata senza nessuna
+  // azione disponibile, costretto a uscire dall'app e usare la
+  // fotocamera di sistema da capo. Questo bottone risolve il
+  // problema restando dentro l'app — usa html5-qrcode, GIÀ presente
+  // tra le dipendenze del progetto da tempo ma mai richiamata da
+  // nessuna parte (scoperto controllando package.json prima di
+  // aggiungere qualcosa di nuovo per sbaglio). La libreria gestisce
+  // da sola fotocamera/permessi/ricerca del codice — non serve più
+  // scrivere a mano il giro di lettura dei fotogrammi.
+  // --------------------------------------------------------
+  const [scannerOpen, setScannerOpen] = useState(false);
+  const [scannerError, setScannerError] = useState(null);
+  const html5QrCodeRef = useRef(null);
+  const SCANNER_REGION_ID = 'pl-qr-scanner-region';
+
+  async function openScanner() {
+    setScannerError(null);
+    setScannerOpen(true);
+    // Un istante per lasciare che il div del scanner (SCANNER_REGION_ID)
+    // compaia davvero nel DOM prima che la libreria provi ad
+    // agganciarcisi — reso vero solo appena sotto in JSX.
+    setTimeout(async () => {
+      try {
+        const html5QrCode = new Html5Qrcode(SCANNER_REGION_ID);
+        html5QrCodeRef.current = html5QrCode;
+        await html5QrCode.start(
+          { facingMode: 'environment' }, // fotocamera posteriore, mai quella frontale — si inquadra un codice davanti a sé, non un selfie
+          { fps: 10, qrbox: { width: 250, height: 250 } },
+          (decodedText) => {
+            // Stesso schema .../checkin/<venueId> già usato da
+            // App.jsx per chi arriva dalla fotocamera di sistema.
+            const match = decodedText.match(/\/checkin\/([a-zA-Z0-9-]+)/);
+            if (match) {
+              const scannedVenueId = match[1];
+              closeScanner();
+              onVenueIdDetected?.(scannedVenueId);
+              handleScanQr(scannedVenueId);
+            }
+            // Un QR vero ma non di PopuLive (es. un altro codice
+            // inquadrato per sbaglio) — continuiamo a cercare,
+            // nessun errore per un singolo fotogramma non valido.
+          },
+          () => { /* nessun codice in QUESTO fotogramma — normalissimo mentre si cerca, richiamato di continuo, mai un vero errore */ }
+        );
+      } catch {
+        // Permesso negato, o nessuna fotocamera disponibile — capita,
+        // niente di grave: resta comunque la strada di sempre (uscire
+        // e usare la fotocamera di sistema).
+        setScannerError('Impossibile accedere alla fotocamera — controlla i permessi, oppure esci e inquadra il QR con la fotocamera del telefono.');
+      }
+    }, 0);
+  }
+
+  function closeScanner() {
+    if (html5QrCodeRef.current) {
+      html5QrCodeRef.current.stop()
+        .then(() => html5QrCodeRef.current?.clear())
+        .catch(() => {}) // già fermata/mai partita davvero — nessun problema
+        .finally(() => { html5QrCodeRef.current = null; });
+    }
+    setScannerOpen(false);
+  }
+
+  // Se si esce dalla schermata con lo scanner ancora aperto (es.
+  // cambiando tab), spegniamo comunque la fotocamera — non deve mai
+  // restare accesa in sottofondo, né per la batteria né per la privacy.
+  useEffect(() => {
+    return () => {
+      if (html5QrCodeRef.current) {
+        html5QrCodeRef.current.stop().catch(() => {});
+      }
+    };
+  }, []);
 
   // --------------------------------------------------------
   // Se sei arrivato qui da un vero QR (link letto dalla fotocamera
@@ -287,11 +372,39 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
                     La serata sta per iniziare
                   </div>
                   <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)', marginTop: 3 }}>
-                    Scansiona per entrare
+                    Inquadra di nuovo il QR del locale per completare l'ingresso
                   </div>
                 </div>
               </div>
             </div>
+
+            <button className="pl-send-btn" onClick={openScanner}>
+              📷 Inquadra il QR dall'app
+            </button>
+            {scannerError && <p className="pl-error" style={{ textAlign: 'center' }}>{scannerError}</p>}
+          </div>
+        )}
+
+        {/* Scanner attivo — html5-qrcode disegna da sola il video
+            della fotocamera dentro questo div, identificato per id
+            (SCANNER_REGION_ID) — non dobbiamo più gestire noi il
+            flusso video a mano. */}
+        {scannerOpen && (
+          <div style={{ position: 'fixed', inset: 0, zIndex: 70, background: '#000', display: 'flex', flexDirection: 'column' }}>
+            <div id={SCANNER_REGION_ID} style={{ flex: 1, width: '100%' }} />
+            <div style={{ position: 'absolute', top: 20, left: 0, right: 0, textAlign: 'center', color: '#fff', fontSize: 13, textShadow: '0 1px 4px rgba(0,0,0,0.6)' }}>
+              Inquadra il QR del locale
+            </div>
+            <button
+              onClick={closeScanner}
+              style={{
+                position: 'absolute', top: 16, right: 16, width: 38, height: 38, borderRadius: '50%',
+                background: 'rgba(0,0,0,0.5)', border: 'none', color: '#fff', fontSize: 16, cursor: 'pointer',
+              }}
+              aria-label="Chiudi"
+            >
+              ✕
+            </button>
           </div>
         )}
       </div>
@@ -307,7 +420,7 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
     return (
       <div className="pl-screen">
         <p className="pl-error">{messages[errorReason] || 'Qualcosa è andato storto.'}</p>
-        <button className="pl-retry-btn" onClick={handleScanQr}>Riprova</button>
+        <button className="pl-retry-btn" onClick={() => handleScanQr()}>Riprova</button>
       </div>
     );
   }

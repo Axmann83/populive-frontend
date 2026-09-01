@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { apiFetch } from './apiClient';
+import { apiFetch, getOptimizedPhotoUrl } from './apiClient';
 import { Star } from './PopuLiveIcons';
 import ProfileFullScreen from './ProfileFullScreen';
 
@@ -49,7 +49,7 @@ export default function SuperlikeNotification({ superlike, currentUserId, arenaS
               style={{ width: 84, height: 84, borderRadius: '50%', overflow: 'hidden', margin: '0 auto 14px', border: '2px solid var(--cyan)', cursor: superlike.senderId ? 'pointer' : 'default' }}
             >
               {superlike.senderPhotoUrl ? (
-                <img src={superlike.senderPhotoUrl} alt={superlike.senderName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <img src={getOptimizedPhotoUrl(superlike.senderPhotoUrl, { width: 84, height: 84 })} alt={superlike.senderName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               ) : (
                 <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 38, background: 'var(--surface-2)' }}>
                   {superlike.senderAvatarEmoji || '🙂'}

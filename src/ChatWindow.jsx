@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { io } from 'socket.io-client';
 import { BookmarkCheck, Sparkles } from './PopuLiveIcons';
 
-import { API_BASE, apiFetch } from './apiClient';
+import { apiFetch } from './apiClient';
 
 /**
  * ============================================================
@@ -15,7 +14,7 @@ import { API_BASE, apiFetch } from './apiClient';
  * cronologia resta leggibile finché la schermata è aperta.
  * ============================================================
  */
-export default function ChatWindow({ conversationId, currentUserId, otherUserName, onMarkedRead }) {
+export default function ChatWindow({ conversationId, currentUserId, otherUserName, onMarkedRead, sharedSocket }) {
   const [messages, setMessages] = useState([]);
   const [isClosed, setIsClosed] = useState(false);
   const [myWantsKeep, setMyWantsKeep] = useState(false);
@@ -66,11 +65,15 @@ export default function ChatWindow({ conversationId, currentUserId, otherUserNam
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conversationId, currentUserId]);
 
+  // Connessione WebSocket CONDIVISA (31/8, prima ne apriva una
+  // tutta sua, con una seconda iscrizione ridondante alla STESSA
+  // stanza privata che App.jsx unisce già una volta sola per tutta
+  // l'app) — qui ci limitiamo ad aggiungere/togliere i nostri
+  // ascoltatori sopra la connessione già esistente.
   useEffect(() => {
-    const socket = io(API_BASE);
-    socket.emit('join_private_room', { userId: currentUserId });
+    if (!sharedSocket) return;
 
-    socket.on('chat_message', (payload) => {
+    function handleChatMessage(payload) {
       if (payload.conversationId !== conversationId) return;
       setMessages((prev) => [...prev, {
         id: payload.messageId,
@@ -82,15 +85,21 @@ export default function ChatWindow({ conversationId, currentUserId, otherUserNam
       // occhi — segnato come letto subito, senza aspettare che la
       // persona esca e rientri.
       apiFetch(`/api/chat/${conversationId}/mark-read`, { method: 'POST' }).catch(() => {});
-    });
+    }
 
-    socket.on('chat_closed', (payload) => {
+    function handleChatClosed(payload) {
       if (payload.conversationId !== conversationId) return;
       setIsClosed(true);
-    });
+    }
 
-    return () => socket.disconnect();
-  }, [conversationId, currentUserId]);
+    sharedSocket.on('chat_message', handleChatMessage);
+    sharedSocket.on('chat_closed', handleChatClosed);
+
+    return () => {
+      sharedSocket.off('chat_message', handleChatMessage);
+      sharedSocket.off('chat_closed', handleChatClosed);
+    };
+  }, [sharedSocket, conversationId, currentUserId]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });

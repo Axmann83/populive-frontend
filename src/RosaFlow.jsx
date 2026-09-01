@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { PartyPopper } from './PopuLiveIcons';
 import ProfileFullScreen from './ProfileFullScreen';
 
-import { apiFetch } from './apiClient';
+import { apiFetch, getOptimizedPhotoUrl } from './apiClient';
 
 const TIER_META = {
   standalone: { label: 'Solo Pulse', sub: 'Anonima al 100% — nessun contatto' },
@@ -414,7 +414,7 @@ export function PulseGuessGame({ pulseId, currentUserId, candidates, onFinished,
       <div className="pl-guess-grid">
         {candidates.map((c) => (
           <div key={c.userId} className="pl-guess-candidate" onClick={() => guess(c.userId)}>
-            {c.photoUrl ? <img src={c.photoUrl} alt={c.displayName} /> : (c.avatarEmoji || '🙂')}
+            {c.photoUrl ? <img src={getOptimizedPhotoUrl(c.photoUrl, { width: 40, height: 40 })} alt={c.displayName} /> : (c.avatarEmoji || '🙂')}
             <span>{c.displayName}</span>
           </div>
         ))}

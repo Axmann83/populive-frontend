@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { PulseWaveIcon, MessageCircle } from './PopuLiveIcons';
-import { apiFetch } from './apiClient';
+import { apiFetch, getOptimizedPhotoUrl } from './apiClient';
 
 /**
  * ============================================================
@@ -68,7 +68,7 @@ export default function ChatCenter({ pendingMatches, activeChats, onOpenMatch, a
       >
         <div style={{ width: 40, height: 40, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, background: 'var(--surface-2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           {info?.photoUrl ? (
-            <img src={info.photoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            <img src={getOptimizedPhotoUrl(info.photoUrl, { width: 40, height: 40 })} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           ) : (
             <PulseWaveIcon size={18} color="var(--cyan)" />
           )}

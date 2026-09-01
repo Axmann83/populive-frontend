@@ -16,8 +16,6 @@ import { Armchair, Radar as RadarIcon } from './PopuLiveIcons';
  * ============================================================
  */
 
-const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:3000';
-
 export default function CheckinRadar({ userId, venueId, onArenaSession, autoCheckin, onVenueIdDetected, sharedSocket }) {
   const [arenaActive, setArenaActive] = useState(false);
   const [checkinCount, setCheckinCount] = useState(0);

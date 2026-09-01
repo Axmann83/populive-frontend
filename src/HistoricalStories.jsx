@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { getOptimizedPhotoUrl } from './apiClient';
 import { Star } from './PopuLiveIcons';
 import ProfileFullScreen from './ProfileFullScreen';
 
@@ -64,7 +65,7 @@ export default function HistoricalStories({ people, currentUserId, onClose }) {
           Nessun tetto su quante volte si può tornare indietro. */}
       <div onClick={handleTap} style={{ position: 'absolute', inset: 0, cursor: 'pointer' }}>
         {current.photoUrl ? (
-          <img src={current.photoUrl} alt={current.displayName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          <img src={getOptimizedPhotoUrl(current.photoUrl, { width: 800, height: 1400, crop: false })} alt={current.displayName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         ) : (
           <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 140, background: 'var(--surface-2)' }}>
             {current.avatarEmoji || '🙂'}

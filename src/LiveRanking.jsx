@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { io } from 'socket.io-client';
+import { getOptimizedPhotoUrl } from './apiClient';
 import ProfileFullScreen from './ProfileFullScreen';
 import ProfileDetail from './ProfileDetail';
 import AdminChatPanel from './AdminChatPanel';
@@ -272,7 +273,7 @@ function RankRow({ entry, isMe, delta, onClick }) {
       <span className="pl-rank-avatar-wrap">
         <span className="pl-rank-avatar">
           {entry.photoUrl
-            ? <img src={entry.photoUrl} alt={entry.displayName} />
+            ? <img src={getOptimizedPhotoUrl(entry.photoUrl, { width: 38, height: 38 })} alt={entry.displayName} />
             : (entry.avatarEmoji || '🙂')}
         </span>
         <span className="pl-badge-stack">

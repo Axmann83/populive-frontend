@@ -536,6 +536,17 @@ export default function App() {
   // stanza dell'Arena appena la conosciamo, senza dover ricreare
   // da zero la connessione (che resta la stessa per tutta la sessione).
   const socketRef = useRef(null);
+  // Consolidamento connessioni (31/8, richiesta esplicita per
+  // alleggerire l'app su reti deboli): prima CheckinRadar.jsx e
+  // ChatWindow.jsx aprivano CIASCUNO una propria connessione
+  // separata, oltre a questa — tre "strette di mano" invece di
+  // una sola, tre volte il traffico di mantenimento. Ora questa
+  // stessa connessione viene condivisa con loro. Serve uno STATO
+  // vero in più (non solo il ref sopra) perché un ref non fa
+  // ripetere il render dei figli quando cambia — passare
+  // socketRef.current direttamente come prop non li avrebbe mai
+  // avvisati che la connessione era pronta.
+  const [sharedSocket, setSharedSocket] = useState(null);
 
   // --------------------------------------------------------
   // Connessione WebSocket "trasversale"
@@ -544,6 +555,7 @@ export default function App() {
     if (authState !== 'app' || !userId) return;
     const socket = io(API_BASE);
     socketRef.current = socket;
+    setSharedSocket(socket);
     socket.emit('join_private_room', { userId });
 
     // Un nuovo messaggio in una chat che NON si sta guardando in
@@ -611,6 +623,7 @@ export default function App() {
     return () => {
       socket.disconnect();
       socketRef.current = null;
+      setSharedSocket(null);
     };
   }, [authState, userId, showPointsToast, pointsIconFor, pointsLabelFor, offerLikeCreditsPurchase, refreshPulseBadge, refreshLikeCenterBadge, refreshUnreadChatCount]);
 
@@ -738,6 +751,7 @@ export default function App() {
               onArenaSession={setArenaSessionId}
               autoCheckin={arrivedViaQr}
               onVenueIdDetected={setVenueId}
+              sharedSocket={sharedSocket}
             />
             {featureFlags.historical_board && (
               <button
@@ -813,6 +827,7 @@ export default function App() {
             currentUserId={userId}
             otherUserName={activeChatOtherUserName || 'questa persona'}
             onMarkedRead={refreshUnreadChatCount}
+            sharedSocket={sharedSocket}
           />
         )}
       </div>

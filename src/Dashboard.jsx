@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import QRCode from 'qrcode';
 import QrScannerModal from './QrScannerModal';
 import VenueSearchSelect from './VenueSearchSelect';
-import { apiFetch } from './apiClient';
+import { apiFetch, getOptimizedPhotoUrl } from './apiClient';
 import { Target, Settings as SettingsIcon, TrendingUp, Coins, Search, Armchair, Crown } from './PopuLiveIcons';
 import LiveRanking from './LiveRanking';
 
@@ -1390,7 +1390,7 @@ function PeopleSearchSection() {
         {people?.map((p) => (
           <div key={p.userId} style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--surface)', border: '1px solid rgba(228,212,200,0.12)', borderRadius: 12, padding: 10 }}>
             <div style={{ width: 40, height: 40, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, background: 'var(--surface-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>
-              {p.photoUrl ? <img src={p.photoUrl} alt={p.displayName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : p.avatarEmoji}
+              {p.photoUrl ? <img src={getOptimizedPhotoUrl(p.photoUrl, { width: 40, height: 40 })} alt={p.displayName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : p.avatarEmoji}
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 12.5, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 5 }}>

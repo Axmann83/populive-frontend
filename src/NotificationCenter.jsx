@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import SwipeableRow from './SwipeableRow';
 import ProfileFullScreen from './ProfileFullScreen';
 import { Star, PulseWaveIcon, Bell, PartyPopper } from './PopuLiveIcons';
-import { apiFetch } from './apiClient';
+import { apiFetch, getOptimizedPhotoUrl } from './apiClient';
 
 /**
  * ============================================================
@@ -169,7 +169,7 @@ export default function NotificationCenter({ userId, onSeen, arenaSessionId, ven
                 }}
               >
                 {entry.otherPerson?.photoUrl ? (
-                  <img src={entry.otherPerson.photoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <img src={getOptimizedPhotoUrl(entry.otherPerson.photoUrl, { width: 38, height: 38 })} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 ) : (
                   <Icon size={18} color={meta.color || 'var(--text-muted)'} />
                 )}

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { apiFetch } from './apiClient';
+import { apiFetch, getOptimizedPhotoUrl } from './apiClient';
 import { History } from './PopuLiveIcons';
 import ProfileFullScreen from './ProfileFullScreen';
 
@@ -51,7 +51,7 @@ export default function HistoricalBoard({ venueId, currentUserId, onClose }) {
         {people.map((p) => (
           <div key={p.userId} className="pl-radar-card" onClick={() => setSelectedUserId(p.userId)} style={{ cursor: 'pointer' }}>
             <span className="pl-radar-card-avatar">
-              {p.photoUrl ? <img src={p.photoUrl} alt={p.displayName} /> : p.avatarEmoji}
+              {p.photoUrl ? <img src={getOptimizedPhotoUrl(p.photoUrl, { width: 32, height: 32 })} alt={p.displayName} /> : p.avatarEmoji}
             </span>
             <span className="pl-radar-card-id">{p.displayName}</span>
           </div>

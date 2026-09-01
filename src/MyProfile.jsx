@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Settings as SettingsIcon, Zap, BadgeCheck } from './PopuLiveIcons';
 
-import { apiFetch } from './apiClient';
+import { apiFetch, getOptimizedPhotoUrl } from './apiClient';
 
 const MAX_HASHTAGS = 5;
 
@@ -92,7 +92,7 @@ export default function MyProfile({ userId, arenaSessionId, onOpenSettings }) {
           style={{ width: 64, height: 64, fontSize: 28, border: '2px solid var(--teak)', overflow: 'hidden', cursor: ranking?.photoUrl ? 'pointer' : 'default' }}
         >
           {ranking?.photoUrl
-            ? <img src={ranking.photoUrl} alt={ranking.displayName || 'Tu'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ? <img src={getOptimizedPhotoUrl(ranking.photoUrl, { width: 64, height: 64 })} alt={ranking.displayName || 'Tu'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             : (ranking?.avatarEmoji || '🙂')}
         </div>
         <div style={{ fontFamily: "'Unbounded',sans-serif", fontWeight: 700, fontSize: 15, marginTop: 8 }}>{ranking?.displayName || 'Tu'}</div>
@@ -115,7 +115,7 @@ export default function MyProfile({ userId, arenaSessionId, onOpenSettings }) {
             ✕
           </button>
           <img
-            src={ranking.photoUrl}
+            src={getOptimizedPhotoUrl(ranking.photoUrl, { width: 1000, height: 1000, crop: false })}
             alt={ranking.displayName || 'Tu'}
             style={{ maxWidth: '92%', maxHeight: '80%', borderRadius: 16, objectFit: 'contain', boxShadow: 'var(--shadow-lg)' }}
           />

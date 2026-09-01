@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { apiFetch } from './apiClient';
+import { apiFetch, getOptimizedPhotoUrl } from './apiClient';
 import { Link2, Coins, Crown, Sparkles } from './PopuLiveIcons';
 
 /**
@@ -71,7 +71,7 @@ export default function ProfileDetail({ userId, arenaSessionId, onClose, onBack 
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
             <div style={{ width: 96, height: 96, borderRadius: '50%', overflow: 'hidden', border: '2px solid var(--teak)', background: 'var(--surface-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 42, boxShadow: 'var(--shadow-md)' }}>
               {profile.photoUrl
-                ? <img src={profile.photoUrl} alt={profile.displayName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ? <img src={getOptimizedPhotoUrl(profile.photoUrl, { width: 96, height: 96 })} alt={profile.displayName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 : profile.avatarEmoji}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 10 }}>

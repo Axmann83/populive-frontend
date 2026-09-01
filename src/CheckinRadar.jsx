@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { io } from 'socket.io-client';
 import { Html5Qrcode } from 'html5-qrcode';
 import { apiFetch, setLastVenueId, clearLastVenueId, getOptimizedPhotoUrl } from './apiClient';
 import ProfileFullScreen from './ProfileFullScreen';
@@ -19,7 +18,7 @@ import { Armchair, Radar as RadarIcon } from './PopuLiveIcons';
 
 const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:3000';
 
-export default function CheckinRadar({ userId, venueId, onArenaSession, autoCheckin, onVenueIdDetected }) {
+export default function CheckinRadar({ userId, venueId, onArenaSession, autoCheckin, onVenueIdDetected, sharedSocket }) {
   const [arenaActive, setArenaActive] = useState(false);
   const [checkinCount, setCheckinCount] = useState(0);
   const [threshold, setThreshold] = useState(20);
@@ -28,7 +27,6 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
   const [arenaSessionId, setArenaSessionId] = useState(null);
   const [status, setStatus] = useState('idle'); // 'idle' | 'checking_in' | 'checked_in' | 'error'
   const [errorReason, setErrorReason] = useState(null);
-  const [socketInstance, setSocketRef] = useState(null);
   // Invisibilità reciproca dopo un rifiuto (mai da un match — v.
   // discussione con l'utente) — ogni telefono filtra da sé la
   // propria lista del radar, più semplice e robusto che far
@@ -102,24 +100,26 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
   }, [userId]);
 
   // --------------------------------------------------------
-  // Connessione WebSocket — una sola volta, quando il
-  // componente nasce, non a ogni render.
-  // --------------------------------------------------------
+  // Connessione WebSocket CONDIVISA (31/8, prima ne apriva una
+  // tutta sua) — App.jsx possiede la connessione vera, qui ci
+  // limitiamo ad AGGIUNGERE i nostri ascoltatori sopra quella già
+  // esistente, e a TOGLIERLI alla chiusura — mai disconnettere noi
+  // la connessione condivisa, non è nostra.
   useEffect(() => {
-    const socket = io(API_BASE);
+    if (!sharedSocket) return; // aspettiamo che App.jsx l'abbia resa disponibile
 
-    socket.on('radar_update', (payload) => {
+    function handleRadarUpdate(payload) {
       if (payload.type === 'new_checkin') {
         setCheckinCount(payload.checkinCount);
         setThreshold(payload.threshold);
       }
-    });
+    }
 
-    socket.on('arena_activated', () => {
+    function handleArenaActivated() {
       setArenaActive(true);
-    });
+    }
 
-    socket.on('presence_update', (payload) => {
+    function handlePresenceUpdate(payload) {
       // Sicurezza in più, alla radice: non deve MAI finire nello
       // stato il proprio stesso userId, qualunque cosa succeda lato
       // server (seconda scheda, riconnessione, ecc.) — meglio
@@ -140,13 +140,13 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
         }
         return prev;
       });
-    });
+    }
 
     // L'istantanea di chi era già presente, ricevuta subito dopo
     // essere entrati in una stanza — senza questo, chi entra dopo
     // il primo vedrebbe sempre "0 persone connesse" finché non
     // arriva qualcun altro di nuovo.
-    socket.on('radar_snapshot', ({ userIds }) => {
+    function handleRadarSnapshot({ userIds }) {
       setRadarPeople((prev) => {
         const existingIds = new Set(prev.map((p) => p.userId));
         const seenInThisBatch = new Set(); // il server ora è già corretto, ma non ci fidiamo di un solo livello — se lo stesso id comparisse più volte nello stesso messaggio, lo prendiamo una volta sola
@@ -159,7 +159,7 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
           .map((id) => ({ userId: id, joinedAt: Date.now() }));
         return [...prev, ...newEntries];
       });
-    });
+    }
 
     // GHOST MODE — chi ha il Ghost Mode attivo non arriva mai via
     // radar_snapshot/presence_update (il server lo esclude apposta,
@@ -168,13 +168,13 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
     // interazione, e lo aggiunge al radar esattamente come un
     // arrivo normale — senza nessuna indicazione visibile che sia
     // un fantasma, resta un profilo come un altro.
-    socket.on('ghost_revealed', ({ userId: ghostUserId }) => {
+    function handleGhostRevealed({ userId: ghostUserId }) {
       if (ghostUserId === userId) return;
       setRadarPeople((prev) => {
         if (prev.some((p) => p.userId === ghostUserId)) return prev;
         return [...prev, { userId: ghostUserId, joinedAt: Date.now() }];
       });
-    });
+    }
 
     // RIORDINO DOPO UN LIKE — chi ha ricevuto un Like vede il
     // mittente comparire tra i primi del proprio radar (v. sotto,
@@ -183,15 +183,27 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
     // — non sappiamo QUI chi è stato, solo che qualcuno tra i
     // profili normalmente visibili merita una posizione più in
     // vista adesso.
-    socket.on('like_boost', ({ userId: boostedId }) => {
+    function handleLikeBoost({ userId: boostedId }) {
       if (boostedId === userId) return;
       setBoostedUserIds((prev) => [boostedId, ...prev.filter((id) => id !== boostedId)]);
-    });
+    }
 
-    setSocketRef(socket);
-    return () => socket.disconnect();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    sharedSocket.on('radar_update', handleRadarUpdate);
+    sharedSocket.on('arena_activated', handleArenaActivated);
+    sharedSocket.on('presence_update', handlePresenceUpdate);
+    sharedSocket.on('radar_snapshot', handleRadarSnapshot);
+    sharedSocket.on('ghost_revealed', handleGhostRevealed);
+    sharedSocket.on('like_boost', handleLikeBoost);
+
+    return () => {
+      sharedSocket.off('radar_update', handleRadarUpdate);
+      sharedSocket.off('arena_activated', handleArenaActivated);
+      sharedSocket.off('presence_update', handlePresenceUpdate);
+      sharedSocket.off('radar_snapshot', handleRadarSnapshot);
+      sharedSocket.off('ghost_revealed', handleGhostRevealed);
+      sharedSocket.off('like_boost', handleLikeBoost);
+    };
+  }, [sharedSocket, userId]);
 
   // --------------------------------------------------------
   // Azione: scansiona il QR → chiama l'API reale di check-in
@@ -232,8 +244,8 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
       // davvero nella stanza WebSocket giusta, e avvisiamo la shell
       // dell'app (serve alla tab "Stanotte" per sapere quale
       // classifica mostrare).
-      if (socketInstance && data.arenaSessionId) {
-        socketInstance.emit('join_arena', { arenaSessionId: data.arenaSessionId, userId });
+      if (sharedSocket && data.arenaSessionId) {
+        sharedSocket.emit('join_arena', { arenaSessionId: data.arenaSessionId, userId });
         setArenaSessionId(data.arenaSessionId);
         onArenaSession?.(data.arenaSessionId);
       }
@@ -241,7 +253,7 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
       setStatus('error');
       setErrorReason('network_error');
     }
-  }, [userId, venueId, socketInstance, onArenaSession]);
+  }, [userId, venueId, sharedSocket, onArenaSession]);
 
   // --------------------------------------------------------
   // Scanner DENTRO l'app (30/8, richiesta esplicita) — nato da un
@@ -327,7 +339,7 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
   // codice. Solo chi apre l'app direttamente (senza QR) vede il
   // bottone manuale qui sotto.
   //
-  // IMPORTANTE: aspettiamo che socketInstance sia pronto prima di
+  // IMPORTANTE: aspettiamo che sharedSocket sia pronto prima di
   // scattare — altrimenti il check-in stesso riesce comunque, ma
   // il collegamento alla stanza WebSocket giusta (necessario per
   // vedere il radar/la classifica aggiornarsi) si perde per strada,
@@ -335,11 +347,11 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
   // in quel preciso istante.
   // --------------------------------------------------------
   useEffect(() => {
-    if (autoCheckin && status === 'idle' && socketInstance) {
+    if (autoCheckin && status === 'idle' && sharedSocket) {
       handleScanQr();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoCheckin, socketInstance, status]);
+  }, [autoCheckin, sharedSocket, status]);
 
   // --------------------------------------------------------
   // RENDER

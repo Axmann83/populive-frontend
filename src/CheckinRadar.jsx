@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { io } from 'socket.io-client';
 import { Html5Qrcode } from 'html5-qrcode';
-import { apiFetch, setLastVenueId, clearLastVenueId } from './apiClient';
+import { apiFetch, setLastVenueId, clearLastVenueId, getOptimizedPhotoUrl } from './apiClient';
 import ProfileFullScreen from './ProfileFullScreen';
 import { Armchair, Radar as RadarIcon } from './PopuLiveIcons';
 
@@ -591,7 +591,7 @@ function RadarCard({ personId, arenaSessionId, viewerId, onClick }) {
     <div className="pl-radar-card" onClick={onClick} style={{ cursor: 'pointer' }}>
       <span className="pl-radar-card-avatar" style={ringStyleFor(badgeColors)}>
         {preview?.photoUrl
-          ? <img src={preview.photoUrl} alt={preview.displayName} />
+          ? <img src={getOptimizedPhotoUrl(preview.photoUrl, { width: 32, height: 32 })} alt={preview.displayName} />
           : (preview?.avatarEmoji || '🙂')}
       </span>
       <span className="pl-radar-card-id">{preview?.displayName || 'Caricamento…'}</span>

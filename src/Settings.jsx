@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 
-import { apiFetch, requestAndSendLocation, uploadPhotoToStorage } from './apiClient';
+import { apiFetch, requestAndSendLocation, uploadPhotoToStorage, getOptimizedPhotoUrl } from './apiClient';
 
 /**
  * ============================================================
@@ -105,7 +105,7 @@ export default function Settings({ userId, onClose }) {
             opacity: uploadingPhoto ? 0.5 : 1,
           }}>
             {settings.photoUrl
-              ? <img src={settings.photoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ? <img src={getOptimizedPhotoUrl(settings.photoUrl, { width: 84, height: 84 })} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               : <span style={{ fontSize: 28, color: 'var(--text-muted)' }}>🙂</span>}
           </div>
           <div style={{

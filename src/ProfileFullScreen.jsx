@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { apiFetch } from './apiClient';
+import { apiFetch, getOptimizedPhotoUrl } from './apiClient';
 import { PulseSend } from './RosaFlow';
 import ProfileDetail from './ProfileDetail';
 import { Heart, Star, PulseWaveIcon, Link2, Coins, Crown, Sparkles } from './PopuLiveIcons';
@@ -191,7 +191,7 @@ export default function ProfileFullScreen({ userId, arenaSessionId, currentUserI
               riquadri della lista. */}
           <div style={photoContainerStyle}>
             {profile.photoUrl ? (
-              <div style={{ ...photoImgStyle, backgroundImage: `url(${profile.photoUrl})` }} role="img" aria-label={profile.displayName} />
+              <div style={{ ...photoImgStyle, backgroundImage: `url(${getOptimizedPhotoUrl(profile.photoUrl, { width: 600, height: 800, crop: false })})` }} role="img" aria-label={profile.displayName} />
             ) : (
               <div style={{ ...photoImgStyle, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 120 }}>
                 {profile.avatarEmoji}

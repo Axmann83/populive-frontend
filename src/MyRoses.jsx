@@ -4,7 +4,7 @@ import { PulseRedeemSeal } from './RosaFlow';
 import SwipeableRow from './SwipeableRow';
 import ProfileFullScreen from './ProfileFullScreen';
 
-import { apiFetch } from './apiClient';
+import { apiFetch, getOptimizedPhotoUrl } from './apiClient';
 
 /**
  * ============================================================
@@ -188,7 +188,7 @@ export default function MyPulses({ userId, venueId, arenaSessionId, onOpenPulse,
               onClick={(e) => { e.stopPropagation(); setViewingProfile({ senderId: r.senderId, pulseId: r.pulseId, isPending: r.status === 'pending' }); }}
               style={{ width: 32, height: 32, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, border: '1.5px solid var(--cyan)' }}
             >
-              <img src={r.senderPhotoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <img src={getOptimizedPhotoUrl(r.senderPhotoUrl, { width: 32, height: 32 })} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             </div>
           ) : (
             <PulseWaveIcon size={22} color="var(--cyan)" />

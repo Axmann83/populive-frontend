@@ -167,3 +167,40 @@ async function uploadPhotoToStorage(file) {
 }
 
 export { uploadPhotoToStorage };
+
+/**
+ * ============================================================
+ * OTTIMIZZAZIONE FOTO — leggerezza su reti deboli (31/8)
+ * ============================================================
+ * Prima ogni foto veniva mostrata alla risoluzione ORIGINALE di
+ * caricamento, ovunque comparisse — anche un piccolo cerchietto da
+ * 40px nella classifica scaricava la stessa foto pesante di una
+ * vista a schermo intero. Cloudinary (già usato per il caricamento)
+ * sa ridimensionare/comprimere AL VOLO inserendo alcuni parametri
+ * nell'indirizzo stesso della foto — nessun nuovo caricamento,
+ * nessuna modifica al server, la trasformazione avviene sui loro
+ * server e viene messa in cache.
+ *
+ * width/height: le dimensioni VERE a cui la foto viene mostrata a
+ * schermo (in pixel CSS) — la funzione chiede automaticamente il
+ * doppio (2x) per restare nitida sugli schermi retina, pratica
+ * comune. Se non specificate, applica comunque compressione/
+ * formato automatici SENZA ridimensionare (utile per usi dove la
+ * dimensione varia troppo per fissarla, es. sfondo a schermo
+ * intero).
+ * g_face: per i ritagli quadrati/circolari (avatar), centra sul
+ * volto rilevato invece che al centro geometrico — evita di
+ * tagliare teste per sbaglio.
+ * ============================================================
+ */
+function getOptimizedPhotoUrl(url, { width, height, crop = true } = {}) {
+  if (!url || !url.includes('res.cloudinary.com') || !url.includes('/upload/')) {
+    return url; // non un URL Cloudinary riconoscibile — meglio restituirlo invariato che rischiare di romperlo
+  }
+  const sizePart = width && height
+    ? `w_${width * 2},h_${height * 2}${crop ? ',c_fill,g_face' : ',c_limit'},`
+    : '';
+  return url.replace('/upload/', `/upload/${sizePart}q_auto,f_auto/`);
+}
+
+export { getOptimizedPhotoUrl };

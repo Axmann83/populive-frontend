@@ -16,7 +16,7 @@ import { apiFetch, requestAndSendLocation, uploadPhotoToStorage, getOptimizedPho
  * qui insieme alle altre impostazioni modificabili in ogni momento.
  * ============================================================
  */
-export default function Settings({ userId, onClose }) {
+export default function Settings({ userId, onClose, onAccountDeleted }) {
   const [settings, setSettings] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -47,6 +47,28 @@ export default function Settings({ userId, onClose }) {
   // aggiungerla dopo). Riusa lo stesso caricamento verso Cloudinary
   // già collaudato in ProfileCreation.jsx (ora condiviso via
   // apiClient.js) + lo stesso endpoint server già pronto.
+  // Cancellazione account (12/9) — richiesta obbligatoria di Apple/
+  // Google. Conferma esplicita in due passaggi data l'irreversibilità
+  // (stesso principio già usato per il bottone "Blocca" in chat) —
+  // mai un singolo tocco per un'azione che non si può disfare.
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  async function handleDeleteAccount() {
+    setDeleting(true);
+    try {
+      const res = await apiFetch('/api/profile/me', { method: 'DELETE' });
+      const data = await res.json();
+      if (data.success) {
+        onAccountDeleted?.();
+      } else {
+        setDeleting(false);
+      }
+    } catch {
+      setDeleting(false);
+    }
+  }
+
   async function handlePhotoSelected(e) {
     const file = e.target.files[0];
     if (!file) return;
@@ -208,13 +230,36 @@ export default function Settings({ userId, onClose }) {
       <a href="/termini-di-servizio" target="_blank" rel="noopener noreferrer" className="pl-hint" style={{ display: 'block', marginBottom: 12 }}>
         Termini di Servizio →
       </a>
-      <button
-        className="pl-hint"
-        style={{ background: 'none', border: '1px solid rgba(229,57,53,0.3)', color: 'var(--red)', borderRadius: 12, padding: 10, width: '100%', cursor: 'pointer' }}
-        onClick={() => alert('Richiesta di cancellazione account — da collegare al flusso reale quando pronto (diritto GDPR alla cancellazione).')}
-      >
-        Richiedi la cancellazione del tuo account
-      </button>
+      {!showDeleteConfirm ? (
+        <button
+          className="pl-hint"
+          style={{ background: 'none', border: '1px solid rgba(229,57,53,0.3)', color: 'var(--red)', borderRadius: 12, padding: 10, width: '100%', cursor: 'pointer' }}
+          onClick={() => setShowDeleteConfirm(true)}
+        >
+          Richiedi la cancellazione del tuo account
+        </button>
+      ) : (
+        <div style={{ border: '1px solid rgba(229,57,53,0.4)', borderRadius: 12, padding: 12 }}>
+          <p className="pl-hint" style={{ marginBottom: 10, color: 'var(--red)' }}>
+            Questa azione è definitiva: profilo, foto e bio verranno cancellati per sempre, e non potrai più accedere con questo account. Sei sicuro?
+          </p>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              onClick={() => setShowDeleteConfirm(false)}
+              style={{ flex: 1, padding: 10, borderRadius: 10, border: '1px solid rgba(228,212,200,0.3)', background: 'none', color: 'var(--text)', cursor: 'pointer' }}
+            >
+              Annulla
+            </button>
+            <button
+              onClick={handleDeleteAccount}
+              disabled={deleting}
+              style={{ flex: 1, padding: 10, borderRadius: 10, border: 'none', background: 'var(--red)', color: '#fff', fontWeight: 700, cursor: 'pointer' }}
+            >
+              {deleting ? 'Cancellazione…' : 'Sì, cancella per sempre'}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

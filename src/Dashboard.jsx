@@ -1295,6 +1295,7 @@ function FeatureFlagsSection() {
     pulse_super: 'Pulse + Superlike (svela subito, richiede un Superlike)',
     chat_keep_required: 'Chat: richiedi "Conserva" esplicito (se spento, si conservano come su Tinder/Hinge)',
     big_spender: 'Big Spender (soglia di spesa)',
+    top_connector: 'Top Connector (Squad via QR)',
   };
 
   if (loading) return <p className="pl-hint">Caricamento…</p>;

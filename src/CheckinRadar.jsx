@@ -16,7 +16,14 @@ import { Armchair, Radar as RadarIcon } from './PopuLiveIcons';
  * ============================================================
  */
 
-export default function CheckinRadar({ userId, venueId, onArenaSession, autoCheckin, onVenueIdDetected, sharedSocket }) {
+export default function CheckinRadar({
+  userId,
+  venueId,
+  onArenaSession,
+  autoCheckin,
+  onVenueIdDetected,
+  sharedSocket,
+}) {
   const [arenaActive, setArenaActive] = useState(false);
   const [checkinCount, setCheckinCount] = useState(0);
   const [threshold, setThreshold] = useState(20);
@@ -94,7 +101,9 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
         if (!cancelled && data.success) setBlockedPairIds(new Set(data.blockedUserIds));
       })
       .catch(() => {});
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [userId]);
 
   // --------------------------------------------------------
@@ -150,7 +159,13 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
         const seenInThisBatch = new Set(); // il server ora è già corretto, ma non ci fidiamo di un solo livello — se lo stesso id comparisse più volte nello stesso messaggio, lo prendiamo una volta sola
         const newEntries = userIds
           .filter((id) => {
-            if (id === userId || existingIds.has(id) || seenInThisBatch.has(id) || blockedPairIdsRef.current.has(id)) return false;
+            if (
+              id === userId ||
+              existingIds.has(id) ||
+              seenInThisBatch.has(id) ||
+              blockedPairIdsRef.current.has(id)
+            )
+              return false;
             seenInThisBatch.add(id);
             return true;
           })
@@ -212,46 +227,49 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
   // React non sono immediati. Passandolo qui direttamente, invece,
   // non c'è alcun rischio di questo tipo.
   // --------------------------------------------------------
-  const handleScanQr = useCallback(async (venueIdOverride) => {
-    const effectiveVenueId = venueIdOverride || venueId;
-    setStatus('checking_in');
-    setErrorReason(null);
+  const handleScanQr = useCallback(
+    async (venueIdOverride) => {
+      const effectiveVenueId = venueIdOverride || venueId;
+      setStatus('checking_in');
+      setErrorReason(null);
 
-    try {
-      const res = await apiFetch('/api/checkin', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ venueId: effectiveVenueId }),
-      });
-      const data = await res.json();
+      try {
+        const res = await apiFetch('/api/checkin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ venueId: effectiveVenueId }),
+        });
+        const data = await res.json();
 
-      if (!data.success) {
+        if (!data.success) {
+          setStatus('error');
+          setErrorReason(data.reason); // es. 'venue_closed'
+          clearLastVenueId(); // niente da riprovare da solo la prossima volta, era una tappa già chiusa
+          return;
+        }
+
+        setCheckinCount(data.checkinCount);
+        setThreshold(data.threshold);
+        setArenaActive(data.arenaActive);
+        setStatus('checked_in');
+        setLastVenueId(effectiveVenueId); // sopravvive a un aggiornamento pagina, v. apiClient.js
+
+        // Ora che sappiamo in quale sessione siamo, entriamo
+        // davvero nella stanza WebSocket giusta, e avvisiamo la shell
+        // dell'app (serve alla tab "Stanotte" per sapere quale
+        // classifica mostrare).
+        if (sharedSocket && data.arenaSessionId) {
+          sharedSocket.emit('join_arena', { arenaSessionId: data.arenaSessionId, userId });
+          setArenaSessionId(data.arenaSessionId);
+          onArenaSession?.(data.arenaSessionId);
+        }
+      } catch (err) {
         setStatus('error');
-        setErrorReason(data.reason); // es. 'venue_closed'
-        clearLastVenueId(); // niente da riprovare da solo la prossima volta, era una tappa già chiusa
-        return;
+        setErrorReason('network_error');
       }
-
-      setCheckinCount(data.checkinCount);
-      setThreshold(data.threshold);
-      setArenaActive(data.arenaActive);
-      setStatus('checked_in');
-      setLastVenueId(effectiveVenueId); // sopravvive a un aggiornamento pagina, v. apiClient.js
-
-      // Ora che sappiamo in quale sessione siamo, entriamo
-      // davvero nella stanza WebSocket giusta, e avvisiamo la shell
-      // dell'app (serve alla tab "Stanotte" per sapere quale
-      // classifica mostrare).
-      if (sharedSocket && data.arenaSessionId) {
-        sharedSocket.emit('join_arena', { arenaSessionId: data.arenaSessionId, userId });
-        setArenaSessionId(data.arenaSessionId);
-        onArenaSession?.(data.arenaSessionId);
-      }
-    } catch (err) {
-      setStatus('error');
-      setErrorReason('network_error');
-    }
-  }, [userId, venueId, sharedSocket, onArenaSession]);
+    },
+    [userId, venueId, sharedSocket, onArenaSession]
+  );
 
   // --------------------------------------------------------
   // Scanner DENTRO l'app (30/8, richiesta esplicita) — nato da un
@@ -298,23 +316,30 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
             // inquadrato per sbaglio) — continuiamo a cercare,
             // nessun errore per un singolo fotogramma non valido.
           },
-          () => { /* nessun codice in QUESTO fotogramma — normalissimo mentre si cerca, richiamato di continuo, mai un vero errore */ }
+          () => {
+            /* nessun codice in QUESTO fotogramma — normalissimo mentre si cerca, richiamato di continuo, mai un vero errore */
+          }
         );
       } catch {
         // Permesso negato, o nessuna fotocamera disponibile — capita,
         // niente di grave: resta comunque la strada di sempre (uscire
         // e usare la fotocamera di sistema).
-        setScannerError('Impossibile accedere alla fotocamera — controlla i permessi, oppure esci e inquadra il QR con la fotocamera del telefono.');
+        setScannerError(
+          'Impossibile accedere alla fotocamera — controlla i permessi, oppure esci e inquadra il QR con la fotocamera del telefono.'
+        );
       }
     }, 0);
   }
 
   function closeScanner() {
     if (html5QrCodeRef.current) {
-      html5QrCodeRef.current.stop()
+      html5QrCodeRef.current
+        .stop()
         .then(() => html5QrCodeRef.current?.clear())
         .catch(() => {}) // già fermata/mai partita davvero — nessun problema
-        .finally(() => { html5QrCodeRef.current = null; });
+        .finally(() => {
+          html5QrCodeRef.current = null;
+        });
     }
     setScannerOpen(false);
   }
@@ -358,27 +383,89 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
     return (
       <div className="pl-screen" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         {status === 'checking_in' ? (
-          <p className="pl-scan-cta" style={{ marginTop: 30, textAlign: 'center' }}>Verifica in corso…</p>
+          <p className="pl-scan-cta" style={{ marginTop: 30, textAlign: 'center' }}>
+            Verifica in corso…
+          </p>
         ) : (
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 22 }}>
+          <div
+            style={{
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              gap: 22,
+            }}
+          >
             {/* Momento editoriale — stesso linguaggio delle strisce
                 di Radar e Pulse, ma qui più grande: è l'unico
                 contenuto della pagina, non un accento sopra una
                 lista vera, quindi ha senso che occupi più spazio
                 invece di restare una striscia sottile. */}
-            <div style={{ position: 'relative', aspectRatio: '4/5', borderRadius: 20, overflow: 'hidden', boxShadow: 'var(--shadow-md)' }}>
+            <div
+              style={{
+                position: 'relative',
+                aspectRatio: '4/5',
+                borderRadius: 20,
+                overflow: 'hidden',
+                boxShadow: 'var(--shadow-md)',
+              }}
+            >
               <img
                 src="https://res.cloudinary.com/rjkegdrp/image/upload/v1786334476/populive_entrata_locale_bqvrhj.webp"
                 alt=""
-                style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 40%', filter: 'grayscale(100%) contrast(1.08) brightness(0.95)' }}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  objectPosition: 'center 40%',
+                  filter: 'grayscale(100%) contrast(1.08) brightness(0.95)',
+                }}
               />
-              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(20,16,15,0.88) 0%, rgba(20,16,15,0.15) 45%, rgba(20,16,15,0.05) 70%)' }} />
-              <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: 20, display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div style={{ width: 40, height: 40, borderRadius: '50%', flexShrink: 0, background: 'linear-gradient(135deg, #FF7A9C, var(--cyan))', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 10px -2px rgba(255,61,110,0.5)' }}>
+              <div
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  background:
+                    'linear-gradient(to top, rgba(20,16,15,0.88) 0%, rgba(20,16,15,0.15) 45%, rgba(20,16,15,0.05) 70%)',
+                }}
+              />
+              <div
+                style={{
+                  position: 'absolute',
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  padding: 20,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12,
+                }}
+              >
+                <div
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: '50%',
+                    flexShrink: 0,
+                    background: 'linear-gradient(135deg, #FF7A9C, var(--cyan))',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 4px 10px -2px rgba(255,61,110,0.5)',
+                  }}
+                >
                   <RadarIcon size={18} color="#fff" />
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontFamily: "'Unbounded',sans-serif", fontWeight: 700, fontSize: 16, color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,0.4)' }}>
+                  <div
+                    style={{
+                      fontFamily: "'Unbounded',sans-serif",
+                      fontWeight: 700,
+                      fontSize: 16,
+                      color: '#fff',
+                      textShadow: '0 1px 3px rgba(0,0,0,0.4)',
+                    }}
+                  >
                     La serata sta per iniziare
                   </div>
                   <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)', marginTop: 3 }}>
@@ -391,7 +478,11 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
             <button className="pl-send-btn" onClick={openScanner}>
               📷 Inquadra il QR dall'app
             </button>
-            {scannerError && <p className="pl-error" style={{ textAlign: 'center' }}>{scannerError}</p>}
+            {scannerError && (
+              <p className="pl-error" style={{ textAlign: 'center' }}>
+                {scannerError}
+              </p>
+            )}
           </div>
         )}
 
@@ -400,16 +491,45 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
             (SCANNER_REGION_ID) — non dobbiamo più gestire noi il
             flusso video a mano. */}
         {scannerOpen && (
-          <div style={{ position: 'fixed', inset: 0, zIndex: 70, background: '#000', display: 'flex', flexDirection: 'column' }}>
+          <div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              zIndex: 70,
+              background: '#000',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
             <div id={SCANNER_REGION_ID} style={{ flex: 1, width: '100%' }} />
-            <div style={{ position: 'absolute', top: 20, left: 0, right: 0, textAlign: 'center', color: '#fff', fontSize: 13, textShadow: '0 1px 4px rgba(0,0,0,0.6)' }}>
+            <div
+              style={{
+                position: 'absolute',
+                top: 20,
+                left: 0,
+                right: 0,
+                textAlign: 'center',
+                color: '#fff',
+                fontSize: 13,
+                textShadow: '0 1px 4px rgba(0,0,0,0.6)',
+              }}
+            >
               Inquadra il QR del locale
             </div>
             <button
               onClick={closeScanner}
               style={{
-                position: 'absolute', top: 16, right: 16, width: 38, height: 38, borderRadius: '50%',
-                background: 'rgba(0,0,0,0.5)', border: 'none', color: '#fff', fontSize: 16, cursor: 'pointer',
+                position: 'absolute',
+                top: 16,
+                right: 16,
+                width: 38,
+                height: 38,
+                borderRadius: '50%',
+                background: 'rgba(0,0,0,0.5)',
+                border: 'none',
+                color: '#fff',
+                fontSize: 16,
+                cursor: 'pointer',
               }}
               aria-label="Chiudi"
             >
@@ -430,7 +550,9 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
     return (
       <div className="pl-screen">
         <p className="pl-error">{messages[errorReason] || 'Qualcosa è andato storto.'}</p>
-        <button className="pl-retry-btn" onClick={() => handleScanQr()}>Riprova</button>
+        <button className="pl-retry-btn" onClick={() => handleScanQr()}>
+          Riprova
+        </button>
       </div>
     );
   }
@@ -455,14 +577,17 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
             // segue quello del boost più recente; tutti gli altri
             // restano nel loro ordine originale, semplicemente
             // spostati dopo.
-            const sortedOthers = boostedUserIds.length === 0 ? othersOnly : [...othersOnly].sort((a, b) => {
-              const aBoost = boostedUserIds.indexOf(a.userId);
-              const bBoost = boostedUserIds.indexOf(b.userId);
-              if (aBoost === -1 && bBoost === -1) return 0; // nessuno dei due è boostato — ordine invariato
-              if (aBoost === -1) return 1;
-              if (bBoost === -1) return -1;
-              return aBoost - bBoost; // tra due boostati, il più recente prima
-            });
+            const sortedOthers =
+              boostedUserIds.length === 0
+                ? othersOnly
+                : [...othersOnly].sort((a, b) => {
+                    const aBoost = boostedUserIds.indexOf(a.userId);
+                    const bBoost = boostedUserIds.indexOf(b.userId);
+                    if (aBoost === -1 && bBoost === -1) return 0; // nessuno dei due è boostato — ordine invariato
+                    if (aBoost === -1) return 1;
+                    if (bBoost === -1) return -1;
+                    return aBoost - bBoost; // tra due boostati, il più recente prima
+                  });
             return (
               <>
                 {/* Momento editoriale — stesso principio della
@@ -475,19 +600,70 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
                     diventata falsa al primo nuovo arrivo — qui il
                     testo resta sempre vero, qualunque cosa succeda
                     dopo nella lista. */}
-                <div style={{ position: 'relative', aspectRatio: '16/5', borderRadius: 16, overflow: 'hidden', marginBottom: 16, boxShadow: 'var(--shadow-md)' }}>
+                <div
+                  style={{
+                    position: 'relative',
+                    aspectRatio: '16/5',
+                    borderRadius: 16,
+                    overflow: 'hidden',
+                    marginBottom: 16,
+                    boxShadow: 'var(--shadow-md)',
+                  }}
+                >
                   <img
                     src="https://res.cloudinary.com/rjkegdrp/image/upload/v1786253032/Radar_Populive_x4srpz.webp"
                     alt=""
-                    style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 30%', filter: 'grayscale(100%) contrast(1.08) brightness(0.95)' }}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      objectPosition: 'center 30%',
+                      filter: 'grayscale(100%) contrast(1.08) brightness(0.95)',
+                    }}
                   />
-                  <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, rgba(20,16,15,0.92) 0%, rgba(20,16,15,0.55) 40%, rgba(20,16,15,0.05) 75%)' }} />
-                  <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', padding: '0 14px', gap: 10 }}>
-                    <div style={{ width: 32, height: 32, borderRadius: '50%', flexShrink: 0, background: 'linear-gradient(135deg, #FF7A9C, var(--cyan))', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 10px -2px rgba(255,61,110,0.5)' }}>
+                  <div
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      background:
+                        'linear-gradient(to right, rgba(20,16,15,0.92) 0%, rgba(20,16,15,0.55) 40%, rgba(20,16,15,0.05) 75%)',
+                    }}
+                  />
+                  <div
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                      padding: '0 14px',
+                      gap: 10,
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: '50%',
+                        flexShrink: 0,
+                        background: 'linear-gradient(135deg, #FF7A9C, var(--cyan))',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: '0 4px 10px -2px rgba(255,61,110,0.5)',
+                      }}
+                    >
                       <RadarIcon size={16} color="#fff" />
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontFamily: "'Unbounded',sans-serif", fontWeight: 700, fontSize: 12.5, color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,0.4)' }}>
+                      <div
+                        style={{
+                          fontFamily: "'Unbounded',sans-serif",
+                          fontWeight: 700,
+                          fontSize: 12.5,
+                          color: '#fff',
+                          textShadow: '0 1px 3px rgba(0,0,0,0.4)',
+                        }}
+                      >
                         Chi troverai stasera qui
                       </div>
                       <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.7)', marginTop: 1 }}>
@@ -516,8 +692,13 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
       ) : (
         <>
           <h2>Sei dentro l'Arena</h2>
-          <div className="pl-counter">{checkinCount}/{threshold}</div>
-          <p>I tuoi punti si stanno già accumulando — la classifica si sblocca al raggiungimento della soglia.</p>
+          <div className="pl-counter">
+            {checkinCount}/{threshold}
+          </div>
+          <p>
+            I tuoi punti si stanno già accumulando — la classifica si sblocca al raggiungimento
+            della soglia.
+          </p>
         </>
       )}
 
@@ -529,36 +710,62 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
           (arenaSessionId esiste solo a quel punto) — prima non ha
           senso mostrarlo, il collegamento al tavolo non avrebbe
           nessuna sessione a cui agganciarsi. */}
-      {arenaSessionId && (tableJoined ? (
-        <div className="pl-hint" style={{ textAlign: 'center', marginTop: 14 }}>
-          ✓ Agganciato al tavolo — i bonus di spesa si divideranno con chi altro si unisce.
-        </div>
-      ) : !showTableJoin ? (
-        <button
-          onClick={() => setShowTableJoin(true)}
-          style={{ marginTop: 14, width: '100%', padding: 12, borderRadius: 14, border: '1px dashed rgba(228,212,200,0.3)', background: 'transparent', color: 'var(--teak)', fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
-        >
-          <Armchair size={15} /> Aggancia il tuo tavolo
-        </button>
-      ) : (
-        <div className="pl-sheet" style={{ marginTop: 14 }}>
-          <input
-            value={tableCode}
-            onChange={(e) => setTableCode(e.target.value)}
-            placeholder="Codice del tavolo"
-          />
-          <div className="pl-consent-row">
-            <div>
-              <div className="pl-consent-label">Vuoi essere il Connector di questo gruppo?</div>
-              <div className="pl-consent-sub">Chiesto solo se sei il primo ad agganciare questo tavolo</div>
-            </div>
-            <input type="checkbox" checked={wantsConnector} onChange={(e) => setWantsConnector(e.target.checked)} />
+      {arenaSessionId &&
+        (tableJoined ? (
+          <div className="pl-hint" style={{ textAlign: 'center', marginTop: 14 }}>
+            ✓ Agganciato al tavolo — i bonus di spesa si divideranno con chi altro si unisce.
           </div>
-          <button className="pl-send-btn" onClick={handleJoinTable} disabled={!tableCode.trim() || tableJoinLoading}>
-            {tableJoinLoading ? 'Un attimo…' : 'Conferma'}
+        ) : !showTableJoin ? (
+          <button
+            onClick={() => setShowTableJoin(true)}
+            style={{
+              marginTop: 14,
+              width: '100%',
+              padding: 12,
+              borderRadius: 14,
+              border: '1px dashed rgba(228,212,200,0.3)',
+              background: 'transparent',
+              color: 'var(--teak)',
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 6,
+            }}
+          >
+            <Armchair size={15} /> Aggancia il tuo tavolo
           </button>
-        </div>
-      ))}
+        ) : (
+          <div className="pl-sheet" style={{ marginTop: 14 }}>
+            <input
+              value={tableCode}
+              onChange={(e) => setTableCode(e.target.value)}
+              placeholder="Codice del tavolo"
+            />
+            <div className="pl-consent-row">
+              <div>
+                <div className="pl-consent-label">Vuoi essere il Connector di questo gruppo?</div>
+                <div className="pl-consent-sub">
+                  Chiesto solo se sei il primo ad agganciare questo tavolo
+                </div>
+              </div>
+              <input
+                type="checkbox"
+                checked={wantsConnector}
+                onChange={(e) => setWantsConnector(e.target.checked)}
+              />
+            </div>
+            <button
+              className="pl-send-btn"
+              onClick={handleJoinTable}
+              disabled={!tableCode.trim() || tableJoinLoading}
+            >
+              {tableJoinLoading ? 'Un attimo…' : 'Conferma'}
+            </button>
+          </div>
+        ))}
 
       {selectedProfileUserId && (
         <ProfileFullScreen
@@ -579,16 +786,20 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
  * foto/nome veri con lo stesso endpoint pubblico usato altrove,
  * invece di mostrare l'id grezzo del database.
  */
-function RadarCard({ personId, arenaSessionId, viewerId, onClick }) {
+function RadarCard({ personId, arenaSessionId, onClick }) {
   const [preview, setPreview] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
     apiFetch(`/api/users/${personId}/public-profile?arenaSessionId=${arenaSessionId || ''}`)
       .then((r) => r.json())
-      .then((data) => { if (!cancelled && data.success) setPreview(data.profile); })
+      .then((data) => {
+        if (!cancelled && data.success) setPreview(data.profile);
+      })
       .catch(() => {});
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [personId, arenaSessionId]);
 
   // Un colpo d'occhio, senza dover toccare la foto per scoprire chi
@@ -600,9 +811,14 @@ function RadarCard({ personId, arenaSessionId, viewerId, onClick }) {
   return (
     <div className="pl-radar-card" onClick={onClick} style={{ cursor: 'pointer' }}>
       <span className="pl-radar-card-avatar" style={ringStyleFor(badgeColors)}>
-        {preview?.photoUrl
-          ? <img src={getOptimizedPhotoUrl(preview.photoUrl, { width: 32, height: 32 })} alt={preview.displayName} />
-          : (preview?.avatarEmoji || '🙂')}
+        {preview?.photoUrl ? (
+          <img
+            src={getOptimizedPhotoUrl(preview.photoUrl, { width: 32, height: 32 })}
+            alt={preview.displayName}
+          />
+        ) : (
+          preview?.avatarEmoji || '🙂'
+        )}
       </span>
       <span className="pl-radar-card-id">{preview?.displayName || 'Caricamento…'}</span>
     </div>
@@ -612,8 +828,8 @@ function RadarCard({ personId, arenaSessionId, viewerId, onClick }) {
 function getBadgeRingColors(preview) {
   if (!preview) return [];
   const colors = [];
-  if (preview.isTopConnector) colors.push('#C7C9CC');            // argento
-  if (preview.isTopSpender) colors.push('#E8C77E');              // oro (stesso di --gold-medal)
+  if (preview.isTopConnector) colors.push('#C7C9CC'); // argento
+  if (preview.isTopSpender) colors.push('#E8C77E'); // oro (stesso di --gold-medal)
   if (preview.instantInfluencerCategory) colors.push('#E83E8C'); // magenta
   return colors;
 }

@@ -67,9 +67,11 @@ export default function ProfileCreation({ onComplete }) {
       const data = await res.json();
 
       if (!data.success) {
-        setError(data.reason === 'too_many_hashtags'
-          ? `Massimo ${MAX_HASHTAGS} hashtag`
-          : 'Controlla il nome inserito');
+        setError(
+          data.reason === 'too_many_hashtags'
+            ? `Massimo ${MAX_HASHTAGS} hashtag`
+            : 'Controlla il nome inserito'
+        );
         setLoading(false);
         return;
       }
@@ -180,10 +182,12 @@ export default function ProfileCreation({ onComplete }) {
               tuo profilo, mai visibile a nessun altro utente. */}
           <div style={{ margin: '4px 0 10px' }}>
             <div className="pl-consent-label" style={{ marginBottom: 2 }}>
-              Genere <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(facoltativo)</span>
+              Genere{' '}
+              <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(facoltativo)</span>
             </div>
             <div className="pl-consent-sub" style={{ marginBottom: 8 }}>
-              Serve solo per mostrare quante persone ci sono in un locale, in forma aggregata — mai sul tuo profilo
+              Serve solo per mostrare quante persone ci sono in un locale, in forma aggregata — mai
+              sul tuo profilo
             </div>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
               {[
@@ -197,9 +201,17 @@ export default function ProfileCreation({ onComplete }) {
                   type="button"
                   onClick={() => setGenderForStats(opt.value)}
                   style={{
-                    padding: '7px 12px', borderRadius: 999, fontSize: 11, fontWeight: 600, cursor: 'pointer',
-                    border: genderForStats === opt.value ? '1px solid var(--cyan)' : '1px solid rgba(228,212,200,0.16)',
-                    background: genderForStats === opt.value ? 'rgba(255,61,110,0.14)' : 'var(--surface-2)',
+                    padding: '7px 12px',
+                    borderRadius: 999,
+                    fontSize: 11,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    border:
+                      genderForStats === opt.value
+                        ? '1px solid var(--cyan)'
+                        : '1px solid rgba(228,212,200,0.16)',
+                    background:
+                      genderForStats === opt.value ? 'rgba(255,61,110,0.14)' : 'var(--surface-2)',
                     color: genderForStats === opt.value ? 'var(--cyan)' : 'var(--text-muted)',
                   }}
                 >
@@ -216,24 +228,38 @@ export default function ProfileCreation({ onComplete }) {
               onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addHashtag())}
               placeholder="#fitness, #nightlife..."
             />
-            <button type="button" onClick={addHashtag}>Aggiungi</button>
+            <button type="button" onClick={addHashtag}>
+              Aggiungi
+            </button>
           </div>
           <div className="pl-hashtag-list">
             {hashtags.map((h) => (
               <span key={h} className="pl-hashtag-pill">
                 #{h}
-                <button type="button" onClick={() => setHashtags(hashtags.filter((x) => x !== h))}>✕</button>
+                <button type="button" onClick={() => setHashtags(hashtags.filter((x) => x !== h))}>
+                  ✕
+                </button>
               </span>
             ))}
           </div>
-          <p className="pl-hint">Gli hashtag ti rendono trovabile dai brand della tua categoria — max {MAX_HASHTAGS}.</p>
+          <p className="pl-hint">
+            Gli hashtag ti rendono trovabile dai brand della tua categoria — max {MAX_HASHTAGS}.
+          </p>
 
           {/* Casella dedicata, non un hashtag scritto a mano come gli
               altri — ma sotto usa la STESSA infrastruttura hashtag
               già esistente (aggiunge/toglie "pr"), così il motore di
               ricerca per hashtag in dashboard funziona per questo
               come per qualunque altra categoria, senza duplicare nulla. */}
-          <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10, cursor: 'pointer' }}>
+          <label
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              marginTop: 10,
+              cursor: 'pointer',
+            }}
+          >
             <input
               type="checkbox"
               checked={hashtags.includes('pr')}
@@ -248,7 +274,9 @@ export default function ProfileCreation({ onComplete }) {
               }}
               style={{ width: 16, height: 16, marginBottom: 0 }}
             />
-            <span style={{ fontSize: 12 }}>Sono un PR — rendimi trovabile dai locali che cercano organizzatori</span>
+            <span style={{ fontSize: 12 }}>
+              Sono un PR — rendimi trovabile dai locali che cercano organizzatori
+            </span>
           </label>
 
           {error && <p className="pl-error">{error}</p>}
@@ -261,11 +289,7 @@ export default function ProfileCreation({ onComplete }) {
       {step === 2 && (
         <div>
           <h2>Aggiungi una foto</h2>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => setPhotoFile(e.target.files[0])}
-          />
+          <input type="file" accept="image/*" onChange={(e) => setPhotoFile(e.target.files[0])} />
           {error && <p className="pl-error">{error}</p>}
           <button onClick={submitPhoto} disabled={loading}>
             {loading ? 'Un attimo…' : photoFile ? 'Continua' : 'Salta per ora'}
@@ -277,8 +301,9 @@ export default function ProfileCreation({ onComplete }) {
         <div>
           <h2>Le tue preferenze</h2>
           <p className="pl-hint">
-            Queste opzioni sono tutte facoltative — l'app funziona comunque al 100% se le lasci disattivate.
-            Ognuna attiva ti dà +5% sui punti che guadagni (fino a +15% con tutte e tre) — mai una penalità se non lo fai.
+            Queste opzioni sono tutte facoltative — l'app funziona comunque al 100% se le lasci
+            disattivate. Ognuna attiva ti dà +5% sui punti che guadagni (fino a +15% con tutte e
+            tre) — mai una penalità se non lo fai.
           </p>
 
           <ConsentToggle
@@ -324,13 +349,23 @@ export default function ProfileCreation({ onComplete }) {
             <div>
               <div className="pl-consent-label">
                 Ho letto e accetto la{' '}
-                <a href="/privacy-policy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>
-                {' '}e i{' '}
-                <a href="/termini-di-servizio" target="_blank" rel="noopener noreferrer">Termini di Servizio</a>
+                <a href="/privacy-policy" target="_blank" rel="noopener noreferrer">
+                  Privacy Policy
+                </a>{' '}
+                e i{' '}
+                <a href="/termini-di-servizio" target="_blank" rel="noopener noreferrer">
+                  Termini di Servizio
+                </a>
               </div>
-              <div className="pl-consent-sub">Obbligatorio per usare PopuLive — non è un consenso opzionale come quelli sopra</div>
+              <div className="pl-consent-sub">
+                Obbligatorio per usare PopuLive — non è un consenso opzionale come quelli sopra
+              </div>
             </div>
-            <input type="checkbox" checked={legalAccepted} onChange={(e) => setLegalAccepted(e.target.checked)} />
+            <input
+              type="checkbox"
+              checked={legalAccepted}
+              onChange={(e) => setLegalAccepted(e.target.checked)}
+            />
           </div>
 
           {error && <p className="pl-error">{error}</p>}

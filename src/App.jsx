@@ -16,9 +16,23 @@ import LikeCenter from './LikeCenter';
 import SplashScreen from './SplashScreen';
 import ReloadLoader from './ReloadLoader';
 import {
-  Radar as RadarIcon, Trophy, Globe, User, PulseWaveIcon, MessageCircle, Bell,
-  Eye, Heart, Star, PartyPopper, Target, Link2, Sparkles,
-  Map, History, Wallet,
+  Radar as RadarIcon,
+  Trophy,
+  Globe,
+  User,
+  PulseWaveIcon,
+  MessageCircle,
+  Bell,
+  Eye,
+  Heart,
+  Star,
+  PartyPopper,
+  Target,
+  Link2,
+  Sparkles,
+  Map,
+  History,
+  Wallet,
 } from './PopuLiveIcons';
 import WelcomeBack from './WelcomeBack';
 import MissionClaim from './MissionClaim';
@@ -26,7 +40,14 @@ import VenuesMap from './VenuesMap';
 import Dashboard from './Dashboard';
 import NearbyMissions from './NearbyMissions';
 import SuperlikeNotification from './SuperlikeNotification';
-import { API_BASE, apiFetch, getToken, getStoredUserId, clearSession, getLastVenueId } from './apiClient';
+import {
+  API_BASE,
+  apiFetch,
+  getToken,
+  getStoredUserId,
+  clearSession,
+  getLastVenueId,
+} from './apiClient';
 
 import './populive-styles.css';
 
@@ -149,7 +170,10 @@ export default function App() {
     // andato a buon fine, il popup punti universale scatterà da
     // solo appena il webhook avrà creato la Pulse. Ripuliamo solo
     // l'indirizzo, che altrimenti resterebbe sporco.
-    if (window.location.search.includes('pulse_sent') || window.location.search.includes('pulse_cancelled')) {
+    if (
+      window.location.search.includes('pulse_sent') ||
+      window.location.search.includes('pulse_cancelled')
+    ) {
       window.history.replaceState(null, '', '/');
     }
   }, []);
@@ -174,7 +198,15 @@ export default function App() {
   // l'animazione deve andare avanti o indietro quando si passa da
   // un gruppo all'altro con un tocco diretto (mai usato per lo
   // scorrimento vero e proprio).
-  const ANIMATION_ORDER = ['radar', 'locale', 'globale', 'like_center', 'chat_list', 'pulse', 'profilo'];
+  const ANIMATION_ORDER = [
+    'radar',
+    'locale',
+    'globale',
+    'like_center',
+    'chat_list',
+    'pulse',
+    'profilo',
+  ];
   const MAIN_TAB_ORDER = ['radar', 'like_center', 'chat_list', 'pulse', 'profilo'];
   const RANKING_TAB_ORDER = ['locale', 'globale'];
   const swipeStart = useRef(null);
@@ -251,7 +283,9 @@ export default function App() {
       const res = await apiFetch(`/api/users/${userId}/active-chats`);
       const data = await res.json();
       if (data.success) setActiveChats(data.conversations);
-    } catch { /* ignorato — la lista resta quella di prima */ }
+    } catch {
+      /* ignorato — la lista resta quella di prima */
+    }
   }, [userId]);
   useEffect(() => {
     if (authState === 'app' && userId) refreshActiveChats();
@@ -266,7 +300,10 @@ export default function App() {
   // in tempo ad aggiornarsi), poi recuperiamo il nome vero.
   const [activeChatOtherUserName, setActiveChatOtherUserName] = useState('');
   useEffect(() => {
-    if (!activeChatConversationId) { setActiveChatOtherUserName(''); return; }
+    if (!activeChatConversationId) {
+      setActiveChatOtherUserName('');
+      return;
+    }
     const fromActive = activeChats.find((c) => c.conversationId === activeChatConversationId);
     const fromPending = pendingMatches.find((m) => m.conversationId === activeChatConversationId);
     const otherUserId = fromActive?.withUserId || fromPending?.withUserId;
@@ -279,7 +316,9 @@ export default function App() {
         if (!cancelled && data.success) setActiveChatOtherUserName(data.profile.displayName);
       })
       .catch(() => {});
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [activeChatConversationId, activeChats, pendingMatches, arenaSessionId]);
 
   // Pallino sulla scheda Chat — PRIMA contava semplicemente quante
@@ -293,7 +332,9 @@ export default function App() {
       const res = await apiFetch(`/api/users/${userId}/unread-chat-count`);
       const data = await res.json();
       if (data.success) setUnreadChatCount(data.count);
-    } catch { /* ignorato — il numero resta quello di prima */ }
+    } catch {
+      /* ignorato — il numero resta quello di prima */
+    }
   }, [userId]);
   useEffect(() => {
     if (authState === 'app' && userId) refreshUnreadChatCount();
@@ -310,7 +351,9 @@ export default function App() {
       const res = await apiFetch(`/api/users/${userId}/unseen-notification-count`);
       const data = await res.json();
       if (data.success) setNotificationBadgeCount(data.count);
-    } catch { /* ignorato — il numero resta quello di prima */ }
+    } catch {
+      /* ignorato — il numero resta quello di prima */
+    }
   }, [userId]);
   useEffect(() => {
     if (authState === 'app' && userId) refreshNotificationBadge();
@@ -327,7 +370,9 @@ export default function App() {
       const res = await apiFetch(`/api/users/${userId}/unseen-like-center-count`);
       const data = await res.json();
       if (data.success) setLikeCenterBadgeCount(data.count);
-    } catch { /* ignorato — il numero resta quello di prima */ }
+    } catch {
+      /* ignorato — il numero resta quello di prima */
+    }
   }, [userId]);
   useEffect(() => {
     if (authState === 'app' && userId) refreshLikeCenterBadge();
@@ -361,10 +406,14 @@ export default function App() {
       const res = await apiFetch(`/api/users/${userId}/pulses`);
       const data = await res.json();
       if (data.success) {
-        const count = data.pulses.filter((p) => p.status === 'pending' || p.status === 'accepted').length;
+        const count = data.pulses.filter(
+          (p) => p.status === 'pending' || p.status === 'accepted'
+        ).length;
         setPulseBadgeCount(count);
       }
-    } catch { /* ignorato — il numero resta quello di prima, non blocca nulla */ }
+    } catch {
+      /* ignorato — il numero resta quello di prima, non blocca nulla */
+    }
   }, [userId]);
   const [showSettings, setShowSettings] = useState(false);
   const [venuesMapMode, setVenuesMapMode] = useState(null); // null | 'browse' | 'historical'
@@ -373,13 +422,18 @@ export default function App() {
   // volta all'apertura dell'app, pubblici (nessun login richiesto),
   // di default tutto acceso finché non arrivano davvero dal server.
   const [featureFlags, setFeatureFlags] = useState({
-    sponsored_missions: true, historical_board: true, venues_map: true, instant_influencer: true,
+    sponsored_missions: true,
+    historical_board: true,
+    venues_map: true,
+    instant_influencer: true,
   });
 
   useEffect(() => {
     apiFetch('/api/feature-flags')
       .then((r) => r.json())
-      .then((data) => { if (data.success) setFeatureFlags(data.flags); })
+      .then((data) => {
+        if (data.success) setFeatureFlags(data.flags);
+      })
       .catch(() => {});
   }, []);
   // "Bentornato" — mostrata una sola volta appena si entra in app,
@@ -451,7 +505,9 @@ export default function App() {
   // il prodotto giusto per SKU nel catalogo (l'id vero lo assegna
   // il database), poi mandiamo su Stripe se serve pagare davvero.
   const offerLikeCreditsPurchase = useCallback(async () => {
-    const confirmed = window.confirm('Da qui in poi i tuoi Like in questa Arena non ti fanno più guadagnare punti. Vuoi sbloccarne altri 10?');
+    const confirmed = window.confirm(
+      'Da qui in poi i tuoi Like in questa Arena non ti fanno più guadagnare punti. Vuoi sbloccarne altri 10?'
+    );
     if (!confirmed) return;
 
     try {
@@ -595,7 +651,11 @@ export default function App() {
           setTimeout(() => setShowLikeReceivedBanner(false), 6000);
           refreshLikeCenterBadge();
         } else {
-          showPointsToast(pointsIconFor(payload.source), payload.points, pointsLabelFor(payload.source));
+          showPointsToast(
+            pointsIconFor(payload.source),
+            payload.points,
+            pointsLabelFor(payload.source)
+          );
         }
       }
     });
@@ -610,11 +670,11 @@ export default function App() {
 
     socket.on('chat_unlocked', (payload) => {
       if (!activeChatConversationIdRef.current) {
-        setPendingMatches((prev) => (
+        setPendingMatches((prev) =>
           prev.some((m) => m.conversationId === payload.conversationId)
             ? prev
             : [...prev, { conversationId: payload.conversationId, withUserId: payload.withUserId }]
-        ));
+        );
         setShowMatchBanner(true);
         setTimeout(() => setShowMatchBanner(false), 10000);
       }
@@ -625,7 +685,17 @@ export default function App() {
       socketRef.current = null;
       setSharedSocket(null);
     };
-  }, [authState, userId, showPointsToast, pointsIconFor, pointsLabelFor, offerLikeCreditsPurchase, refreshPulseBadge, refreshLikeCenterBadge, refreshUnreadChatCount]);
+  }, [
+    authState,
+    userId,
+    showPointsToast,
+    pointsIconFor,
+    pointsLabelFor,
+    offerLikeCreditsPurchase,
+    refreshPulseBadge,
+    refreshLikeCenterBadge,
+    refreshUnreadChatCount,
+  ]);
 
   // Appena conosciamo l'Arena in cui siamo (dopo il check-in),
   // colleghiamo QUESTA STESSA connessione anche alla sua stanza —
@@ -665,14 +735,29 @@ export default function App() {
     // ricontattare il server.
     mainContent = (
       <div className="pl-app-shell">
-        <div className="pl-content" style={{ paddingTop: 20, display: 'flex', flexDirection: 'column', justifyContent: 'center', minHeight: '100dvh', textAlign: 'center' }}>
+        <div
+          className="pl-content"
+          style={{
+            paddingTop: 20,
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            minHeight: '100dvh',
+            textAlign: 'center',
+          }}
+        >
           <div className="pl-brand" style={{ justifyContent: 'center', marginBottom: 20 }}>
             Popu<span className="pl-brand-live">Live</span>
           </div>
           <p className="pl-hint" style={{ marginBottom: 16 }}>
-            Non riesco a contattare il server — controlla la connessione e riprova. Il tuo accesso resta salvato, non serve rifare login.
+            Non riesco a contattare il server — controlla la connessione e riprova. Il tuo accesso
+            resta salvato, non serve rifare login.
           </p>
-          <button className="pl-send-btn" onClick={checkExistingSession} style={{ maxWidth: 200, margin: '0 auto' }}>
+          <button
+            className="pl-send-btn"
+            onClick={checkExistingSession}
+            style={{ maxWidth: 200, margin: '0 auto' }}
+          >
             Riprova
           </button>
         </div>
@@ -709,130 +794,244 @@ export default function App() {
   } else if (authState === 'app') {
     mainContent = (
       <div className="pl-app-shell">
-      <div className="pl-top-bar">
-        <div className="pl-top-bar-left">
-          <div className="pl-brand">Popu<span className="pl-brand-live">Live</span></div>
-          <button className={`pl-top-icon pl-ranking-icon ${activeTab === 'locale' ? 'active' : ''}`} onClick={() => navigateToTab('locale')}>
-            <Trophy size={22} />
-            <span className="pl-top-icon-label">Locale</span>
-          </button>
-          <button className={`pl-top-icon pl-ranking-icon ${activeTab === 'globale' ? 'active' : ''}`} onClick={() => navigateToTab('globale')}>
-            <Globe size={22} />
-            <span className="pl-top-icon-label">Globale</span>
-          </button>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          {arenaSessionId && <div className="pl-arena-pill"><span className="pl-live-dot"></span> Arena attiva</div>}
-          <button
-            onClick={() => navigateToTab('notification_center')}
-            style={{ position: 'relative', background: 'none', border: 'none', color: activeTab === 'notification_center' ? 'var(--cyan)' : 'var(--text-muted)', cursor: 'pointer', padding: 4, display: 'flex' }}
-          >
-            <Bell size={20} />
-            {notificationBadgeCount > 0 && (
-              <span style={{ position: 'absolute', top: -2, right: -2, background: 'var(--cyan)', color: '#fff', fontSize: 9, fontWeight: 700, minWidth: 15, height: 15, borderRadius: 999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px' }}>
-                {notificationBadgeCount}
-              </span>
+        <div className="pl-top-bar">
+          <div className="pl-top-bar-left">
+            <div className="pl-brand">
+              Popu<span className="pl-brand-live">Live</span>
+            </div>
+            <button
+              className={`pl-top-icon pl-ranking-icon ${activeTab === 'locale' ? 'active' : ''}`}
+              onClick={() => navigateToTab('locale')}
+            >
+              <Trophy size={22} />
+              <span className="pl-top-icon-label">Locale</span>
+            </button>
+            <button
+              className={`pl-top-icon pl-ranking-icon ${activeTab === 'globale' ? 'active' : ''}`}
+              onClick={() => navigateToTab('globale')}
+            >
+              <Globe size={22} />
+              <span className="pl-top-icon-label">Globale</span>
+            </button>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {arenaSessionId && (
+              <div className="pl-arena-pill">
+                <span className="pl-live-dot"></span> Arena attiva
+              </div>
             )}
-          </button>
+            <button
+              onClick={() => navigateToTab('notification_center')}
+              style={{
+                position: 'relative',
+                background: 'none',
+                border: 'none',
+                color: activeTab === 'notification_center' ? 'var(--cyan)' : 'var(--text-muted)',
+                cursor: 'pointer',
+                padding: 4,
+                display: 'flex',
+              }}
+            >
+              <Bell size={20} />
+              {notificationBadgeCount > 0 && (
+                <span
+                  style={{
+                    position: 'absolute',
+                    top: -2,
+                    right: -2,
+                    background: 'var(--cyan)',
+                    color: '#fff',
+                    fontSize: 9,
+                    fontWeight: 700,
+                    minWidth: 15,
+                    height: 15,
+                    borderRadius: 999,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '0 3px',
+                  }}
+                >
+                  {notificationBadgeCount}
+                </span>
+              )}
+            </button>
+          </div>
         </div>
-      </div>
 
-      <div
-        className={`pl-content ${tabSlideDirection === 'forward' ? 'pl-tab-panel-forward' : 'pl-tab-panel-back'}`}
-        key={activeTab}
-        onTouchStart={handleSwipeStart}
-        onTouchEnd={handleSwipeEnd}
-      >
-        {activeTab === 'radar' && (
-          <>
-            <CheckinRadar
+        <div
+          className={`pl-content ${tabSlideDirection === 'forward' ? 'pl-tab-panel-forward' : 'pl-tab-panel-back'}`}
+          key={activeTab}
+          onTouchStart={handleSwipeStart}
+          onTouchEnd={handleSwipeEnd}
+        >
+          {activeTab === 'radar' && (
+            <>
+              <CheckinRadar
+                userId={userId}
+                venueId={venueId}
+                onArenaSession={setArenaSessionId}
+                autoCheckin={arrivedViaQr}
+                onVenueIdDetected={setVenueId}
+                sharedSocket={sharedSocket}
+              />
+              {featureFlags.historical_board && (
+                <button
+                  onClick={() => setVenuesMapMode('historical')}
+                  style={{
+                    marginTop: 12,
+                    width: '100%',
+                    padding: 12,
+                    borderRadius: 14,
+                    border: '1px solid rgba(228,212,200,0.2)',
+                    background: 'var(--surface)',
+                    color: 'var(--teak)',
+                    fontSize: 11.5,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 7,
+                  }}
+                >
+                  <History size={14} /> Bacheca storica dei locali
+                </button>
+              )}
+              {featureFlags.venues_map && (
+                <button
+                  onClick={() => setVenuesMapMode('browse')}
+                  style={{
+                    marginTop: 8,
+                    width: '100%',
+                    padding: 12,
+                    borderRadius: 14,
+                    border: '1px solid rgba(228,212,200,0.2)',
+                    background: 'var(--surface)',
+                    color: 'var(--teak)',
+                    fontSize: 11.5,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 7,
+                  }}
+                >
+                  <Map size={14} /> Sfoglia tutti i locali sulla mappa
+                </button>
+              )}
+              {featureFlags.sponsored_missions && (
+                <button
+                  onClick={() => setShowNearbyMissions(true)}
+                  style={{
+                    marginTop: 8,
+                    width: '100%',
+                    padding: 12,
+                    borderRadius: 14,
+                    border: '1px solid rgba(228,212,200,0.2)',
+                    background: 'var(--surface)',
+                    color: 'var(--teak)',
+                    fontSize: 11.5,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 7,
+                  }}
+                >
+                  <Target size={14} /> Missioni vicino a te
+                </button>
+              )}
+            </>
+          )}
+
+          {activeTab === 'locale' && arenaSessionId && (
+            <LiveRanking
+              arenaSessionId={arenaSessionId}
+              currentUserId={userId}
+              venueId={venueId}
+              onSelectSelf={() => setActiveTab('profilo')}
+            />
+          )}
+          {activeTab === 'locale' && !arenaSessionId && (
+            <div className="pl-hint" style={{ textAlign: 'center', marginTop: 40 }}>
+              Fai check-in in un'Arena per sbloccare la classifica locale.
+            </div>
+          )}
+
+          {activeTab === 'globale' && (
+            <LiveRanking
+              arenaSessionId={null}
+              currentUserId={userId}
+              isGlobal
+              onSelectSelf={() => setActiveTab('profilo')}
+            />
+          )}
+
+          {activeTab === 'chat_list' && (
+            <ChatCenter
+              pendingMatches={pendingMatches}
+              activeChats={activeChats}
+              onOpenMatch={openMatch}
+              arenaSessionId={arenaSessionId}
+            />
+          )}
+
+          {activeTab === 'notification_center' && (
+            <NotificationCenter
+              userId={userId}
+              onSeen={() => setNotificationBadgeCount(0)}
+              arenaSessionId={arenaSessionId}
+              venueId={venueId}
+              onOpenChat={openMatch}
+            />
+          )}
+
+          {activeTab === 'like_center' && (
+            <LikeCenter
+              userId={userId}
+              arenaSessionId={arenaSessionId}
+              venueId={venueId}
+              onOpenChat={openMatch}
+              onSeen={() => setLikeCenterBadgeCount(0)}
+            />
+          )}
+
+          {activeTab === 'pulse' && (
+            <MyPulses
               userId={userId}
               venueId={venueId}
-              onArenaSession={setArenaSessionId}
-              autoCheckin={arrivedViaQr}
-              onVenueIdDetected={setVenueId}
+              arenaSessionId={arenaSessionId}
+              onOpenPulse={(pulse) => setPendingPulseNotification(pulse)}
+              onPulseListChanged={refreshPulseBadge}
+            />
+          )}
+
+          {activeTab === 'profilo' && (
+            <>
+              <MyProfile
+                userId={userId}
+                arenaSessionId={arenaSessionId}
+                onOpenSettings={() => setShowSettings(true)}
+              />
+              <ComingSoonSection />
+            </>
+          )}
+
+          {activeTab === 'chat' && activeChatConversationId && (
+            <ChatWindow
+              conversationId={activeChatConversationId}
+              currentUserId={userId}
+              otherUserName={activeChatOtherUserName || 'questa persona'}
+              onMarkedRead={refreshUnreadChatCount}
               sharedSocket={sharedSocket}
             />
-            {featureFlags.historical_board && (
-              <button
-                onClick={() => setVenuesMapMode('historical')}
-                style={{ marginTop: 12, width: '100%', padding: 12, borderRadius: 14, border: '1px solid rgba(228,212,200,0.2)', background: 'var(--surface)', color: 'var(--teak)', fontSize: 11.5, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}
-              >
-                <History size={14} /> Bacheca storica dei locali
-              </button>
-            )}
-            {featureFlags.venues_map && (
-              <button
-                onClick={() => setVenuesMapMode('browse')}
-                style={{ marginTop: 8, width: '100%', padding: 12, borderRadius: 14, border: '1px solid rgba(228,212,200,0.2)', background: 'var(--surface)', color: 'var(--teak)', fontSize: 11.5, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}
-              >
-                <Map size={14} /> Sfoglia tutti i locali sulla mappa
-              </button>
-            )}
-            {featureFlags.sponsored_missions && (
-              <button
-                onClick={() => setShowNearbyMissions(true)}
-                style={{ marginTop: 8, width: '100%', padding: 12, borderRadius: 14, border: '1px solid rgba(228,212,200,0.2)', background: 'var(--surface)', color: 'var(--teak)', fontSize: 11.5, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}
-              >
-                <Target size={14} /> Missioni vicino a te
-              </button>
-            )}
-          </>
-        )}
+          )}
+        </div>
 
-        {activeTab === 'locale' && arenaSessionId && (
-          <LiveRanking arenaSessionId={arenaSessionId} currentUserId={userId} venueId={venueId} onSelectSelf={() => setActiveTab('profilo')} />
-        )}
-        {activeTab === 'locale' && !arenaSessionId && (
-          <div className="pl-hint" style={{ textAlign: 'center', marginTop: 40 }}>
-            Fai check-in in un'Arena per sbloccare la classifica locale.
-          </div>
-        )}
-
-        {activeTab === 'globale' && (
-          <LiveRanking arenaSessionId={null} currentUserId={userId} isGlobal onSelectSelf={() => setActiveTab('profilo')} />
-        )}
-
-        {activeTab === 'chat_list' && (
-          <ChatCenter
-            pendingMatches={pendingMatches}
-            activeChats={activeChats}
-            onOpenMatch={openMatch}
-            arenaSessionId={arenaSessionId}
-          />
-        )}
-
-        {activeTab === 'notification_center' && (
-          <NotificationCenter userId={userId} onSeen={() => setNotificationBadgeCount(0)} arenaSessionId={arenaSessionId} venueId={venueId} onOpenChat={openMatch} />
-        )}
-
-        {activeTab === 'like_center' && (
-          <LikeCenter userId={userId} arenaSessionId={arenaSessionId} venueId={venueId} onOpenChat={openMatch} onSeen={() => setLikeCenterBadgeCount(0)} />
-        )}
-
-        {activeTab === 'pulse' && (
-          <MyPulses userId={userId} venueId={venueId} arenaSessionId={arenaSessionId} onOpenPulse={(pulse) => setPendingPulseNotification(pulse)} onPulseListChanged={refreshPulseBadge} />
-        )}
-
-        {activeTab === 'profilo' && (
-          <>
-            <MyProfile userId={userId} arenaSessionId={arenaSessionId} onOpenSettings={() => setShowSettings(true)} />
-            <ComingSoonSection />
-          </>
-        )}
-
-        {activeTab === 'chat' && activeChatConversationId && (
-          <ChatWindow
-            conversationId={activeChatConversationId}
-            currentUserId={userId}
-            otherUserName={activeChatOtherUserName || 'questa persona'}
-            onMarkedRead={refreshUnreadChatCount}
-            sharedSocket={sharedSocket}
-          />
-        )}
-      </div>
-
-      {/* Niente più portale né position:fixed (24/8, terzo
+        {/* Niente più portale né position:fixed (24/8, terzo
           ripensamento) — dopo diversi tentativi di "inseguire" la
           barra dinamica di Safari con CSS/JS sempre più elaborati,
           la soluzione più robusta è evitare del tutto position:fixed
@@ -843,15 +1042,44 @@ export default function App() {
           perché il contenitore che lo ospita è già dimensionato
           bene. Elimina alla radice l'intera classe di bug di Safari
           con gli elementi fissi dentro contenitori che scorrono. */}
-      <div className="pl-bottom-nav">
-        <NavItem icon={RadarIcon} label="Radar" active={activeTab === 'radar'} onClick={() => navigateToTab('radar')} />
-        <NavItem icon={Heart} label="Like" active={activeTab === 'like_center'} onClick={() => navigateToTab('like_center')} badge={likeCenterBadgeCount} />
-        <NavItem icon={MessageCircle} label="Chat" active={activeTab === 'chat_list'} onClick={() => navigateToTab('chat_list')} badge={unreadChatCount} />
-        <NavItem icon={PulseWaveIcon} label="Pulse" active={activeTab === 'pulse'} onClick={() => navigateToTab('pulse')} badge={pulseBadgeCount} />
-        <NavItem icon={User} label="Profilo" active={activeTab === 'profilo'} onClick={() => navigateToTab('profilo')} badge={pendingMatches.length} />
-      </div>
+        <div className="pl-bottom-nav">
+          <NavItem
+            icon={RadarIcon}
+            label="Radar"
+            active={activeTab === 'radar'}
+            onClick={() => navigateToTab('radar')}
+          />
+          <NavItem
+            icon={Heart}
+            label="Like"
+            active={activeTab === 'like_center'}
+            onClick={() => navigateToTab('like_center')}
+            badge={likeCenterBadgeCount}
+          />
+          <NavItem
+            icon={MessageCircle}
+            label="Chat"
+            active={activeTab === 'chat_list'}
+            onClick={() => navigateToTab('chat_list')}
+            badge={unreadChatCount}
+          />
+          <NavItem
+            icon={PulseWaveIcon}
+            label="Pulse"
+            active={activeTab === 'pulse'}
+            onClick={() => navigateToTab('pulse')}
+            badge={pulseBadgeCount}
+          />
+          <NavItem
+            icon={User}
+            label="Profilo"
+            active={activeTab === 'profilo'}
+            onClick={() => navigateToTab('profilo')}
+            badge={pendingMatches.length}
+          />
+        </div>
 
-      {/* "Bentornato" appare per prima, appena entrati in app — e
+        {/* "Bentornato" appare per prima, appena entrati in app — e
           quando sparisce (con o senza notizie), apre in automatico
           la mappa dei locali SOLO LA PRIMA VOLTA della giornata —
           dalla volta successiva resta una scelta volontaria, non ha
@@ -859,181 +1087,322 @@ export default function App() {
           nel telefono stesso (non nel database): non serve
           sincronizzarla tra dispositivi, è solo una comodità
           locale. */}
-      {showWelcomeBack && (
-        <WelcomeBack
-          userId={userId}
-          onDone={() => {
-            setShowWelcomeBack(false);
-            const today = new Date().toISOString().slice(0, 10); // es. "2026-08-05"
-            const lastAutoOpen = localStorage.getItem('pl_map_autoopen_date');
-            if (lastAutoOpen !== today && featureFlags.venues_map) {
-              localStorage.setItem('pl_map_autoopen_date', today);
-              setVenuesMapMode('browse');
-            }
-          }}
-        />
-      )}
+        {showWelcomeBack && (
+          <WelcomeBack
+            userId={userId}
+            onDone={() => {
+              setShowWelcomeBack(false);
+              const today = new Date().toISOString().slice(0, 10); // es. "2026-08-05"
+              const lastAutoOpen = localStorage.getItem('pl_map_autoopen_date');
+              if (lastAutoOpen !== today && featureFlags.venues_map) {
+                localStorage.setItem('pl_map_autoopen_date', today);
+                setVenuesMapMode('browse');
+              }
+            }}
+          />
+        )}
 
-      {/* Missione sponsorizzata da QR — sopra a tutto il resto (anche
+        {/* Missione sponsorizzata da QR — sopra a tutto il resto (anche
           sopra "Bentornato", se capitano insieme): chi ha appena
           scansionato un QR in negozio si aspetta di vedere subito
           la missione, non doverla aspettare dietro altri popup. */}
-      {pendingMissionId && (
-        <MissionClaim
-          missionId={pendingMissionId}
-          onClose={() => setPendingMissionId(null)}
-        />
-      )}
+        {pendingMissionId && (
+          <MissionClaim missionId={pendingMissionId} onClose={() => setPendingMissionId(null)} />
+        )}
 
-      {venuesMapMode && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 50 }}>
-          <div style={{ width: '100%', maxWidth: 420, background: 'var(--surface)', borderRadius: '24px 24px 0 0', padding: 20, maxHeight: '85vh', overflowY: 'auto', boxShadow: 'var(--shadow-lg)' }}>
-            <VenuesMap currentUserId={userId} onClose={() => setVenuesMapMode(null)} mode={venuesMapMode} />
-          </div>
-        </div>
-      )}
-
-      {showNearbyMissions && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 50 }}>
-          <div style={{ width: '100%', maxWidth: 420, background: 'var(--surface)', borderRadius: '24px 24px 0 0', padding: 20, maxHeight: '85vh', overflowY: 'auto', boxShadow: 'var(--shadow-lg)' }}>
-            <NearbyMissions onClose={() => setShowNearbyMissions(false)} />
-          </div>
-        </div>
-      )}
-
-      {showSettings && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 50 }}>
-          <div style={{ width: '100%', maxWidth: 420, background: 'var(--surface)', borderRadius: '24px 24px 0 0', padding: 20, maxHeight: '85vh', overflowY: 'auto', boxShadow: 'var(--shadow-lg)' }}>
-            <Settings
-              userId={userId}
-              onClose={() => setShowSettings(false)}
-              onAccountDeleted={() => {
-                clearSession();
-                setAuthState('login');
+        {venuesMapMode && (
+          <div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(0,0,0,0.75)',
+              display: 'flex',
+              alignItems: 'flex-end',
+              justifyContent: 'center',
+              zIndex: 50,
+            }}
+          >
+            <div
+              style={{
+                width: '100%',
+                maxWidth: 420,
+                background: 'var(--surface)',
+                borderRadius: '24px 24px 0 0',
+                padding: 20,
+                maxHeight: '85vh',
+                overflowY: 'auto',
+                boxShadow: 'var(--shadow-lg)',
               }}
-            />
+            >
+              <VenuesMap
+                currentUserId={userId}
+                onClose={() => setVenuesMapMode(null)}
+                mode={venuesMapMode}
+              />
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {pendingPulseNotification && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 50 }}>
-          <div style={{ width: '100%', maxWidth: 420, background: 'var(--surface)', borderRadius: '24px 24px 0 0', padding: 20, maxHeight: '85vh', overflowY: 'auto', boxShadow: 'var(--shadow-lg)' }}>
-            <PulseNotification
-              pulse={pendingPulseNotification}
-              currentUserId={userId}
-              arenaSessionId={arenaSessionId}
-              venueId={venueId}
-              onResolved={() => {
-                setPendingPulseNotification(null);
-                refreshPulseBadge();
+        {showNearbyMissions && (
+          <div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(0,0,0,0.75)',
+              display: 'flex',
+              alignItems: 'flex-end',
+              justifyContent: 'center',
+              zIndex: 50,
+            }}
+          >
+            <div
+              style={{
+                width: '100%',
+                maxWidth: 420,
+                background: 'var(--surface)',
+                borderRadius: '24px 24px 0 0',
+                padding: 20,
+                maxHeight: '85vh',
+                overflowY: 'auto',
+                boxShadow: 'var(--shadow-lg)',
               }}
-            />
+            >
+              <NearbyMissions onClose={() => setShowNearbyMissions(false)} />
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {pendingSuperlike && (
-        <SuperlikeNotification
-          superlike={pendingSuperlike}
-          currentUserId={userId}
-          arenaSessionId={arenaSessionId}
-          venueId={venueId}
-          onResolved={() => setPendingSuperlike(null)}
-        />
-      )}
+        {showSettings && (
+          <div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(0,0,0,0.75)',
+              display: 'flex',
+              alignItems: 'flex-end',
+              justifyContent: 'center',
+              zIndex: 50,
+            }}
+          >
+            <div
+              style={{
+                width: '100%',
+                maxWidth: 420,
+                background: 'var(--surface)',
+                borderRadius: '24px 24px 0 0',
+                padding: 20,
+                maxHeight: '85vh',
+                overflowY: 'auto',
+                boxShadow: 'var(--shadow-lg)',
+              }}
+            >
+              <Settings
+                userId={userId}
+                onClose={() => setShowSettings(false)}
+                onAccountDeleted={() => {
+                  clearSession();
+                  setAuthState('login');
+                }}
+              />
+            </div>
+          </div>
+        )}
 
-      {/* Notifica di match — stile Tinder, discreta e toccabile, mai
+        {pendingPulseNotification && (
+          <div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(0,0,0,0.75)',
+              display: 'flex',
+              alignItems: 'flex-end',
+              justifyContent: 'center',
+              zIndex: 50,
+            }}
+          >
+            <div
+              style={{
+                width: '100%',
+                maxWidth: 420,
+                background: 'var(--surface)',
+                borderRadius: '24px 24px 0 0',
+                padding: 20,
+                maxHeight: '85vh',
+                overflowY: 'auto',
+                boxShadow: 'var(--shadow-lg)',
+              }}
+            >
+              <PulseNotification
+                pulse={pendingPulseNotification}
+                currentUserId={userId}
+                arenaSessionId={arenaSessionId}
+                venueId={venueId}
+                onResolved={() => {
+                  setPendingPulseNotification(null);
+                  refreshPulseBadge();
+                }}
+              />
+            </div>
+          </div>
+        )}
+
+        {pendingSuperlike && (
+          <SuperlikeNotification
+            superlike={pendingSuperlike}
+            currentUserId={userId}
+            arenaSessionId={arenaSessionId}
+            venueId={venueId}
+            onResolved={() => setPendingSuperlike(null)}
+          />
+        )}
+
+        {/* Notifica di match — stile Tinder, discreta e toccabile, mai
           un salto forzato alla chat. Sparisce da sola se ignorata
           per un po', ma resta lì abbastanza a lungo da poterla
           notare e toccare con calma. */}
-      {showLikeReceivedBanner && (
-        <div
-          onClick={() => { setActiveTab('like_center'); setShowLikeReceivedBanner(false); }}
-          style={{
-            position: 'fixed', top: 70, left: '50%', transform: 'translateX(-50%)', zIndex: 71,
-            width: 'calc(100% - 32px)', maxWidth: 380,
-            background: 'var(--surface-2)', border: '1px solid rgba(255,61,110,0.4)',
-            borderRadius: 16, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 10,
-            boxShadow: 'var(--shadow-glow-cyan)', cursor: 'pointer',
-          }}
-        >
-          <span className="pl-confirm-wave-wrap" style={{ position: 'relative', flexShrink: 0 }}>
-            <span className="pl-confirm-wave"></span>
-            <span className="pl-confirm-wave"></span>
-            <Heart size={20} color="var(--cyan)" />
-          </span>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontFamily: "'Unbounded',sans-serif", fontWeight: 700, fontSize: 13 }}>
-              Hai ricevuto un nuovo Like!
-            </div>
-            <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Tocca per vedere chi è</div>
-          </div>
-          <span
-            onClick={(e) => { e.stopPropagation(); setShowLikeReceivedBanner(false); }}
-            style={{ color: 'var(--text-muted)', fontSize: 16, padding: 4, cursor: 'pointer' }}
-          >
-            ✕
-          </span>
-        </div>
-      )}
-
-      {showMatchBanner && pendingMatches.length > 0 && (
-        <div
-          onClick={() => openMatch(pendingMatches[pendingMatches.length - 1].conversationId)}
-          style={{
-            position: 'fixed', top: 70, left: '50%', transform: 'translateX(-50%)', zIndex: 71,
-            width: 'calc(100% - 32px)', maxWidth: 380,
-            background: 'var(--surface-2)', border: '1px solid rgba(255,61,110,0.4)',
-            borderRadius: 16, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 10,
-            boxShadow: 'var(--shadow-glow-cyan)', cursor: 'pointer',
-          }}
-        >
-          <span className="pl-confirm-wave-wrap" style={{ position: 'relative', flexShrink: 0 }}>
-            <span className="pl-confirm-wave"></span>
-            <span className="pl-confirm-wave"></span>
-            <PulseWaveIcon size={20} color="var(--cyan)" />
-          </span>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontFamily: "'Unbounded',sans-serif", fontWeight: 700, fontSize: 13 }}>
-              {pendingMatches.length > 1 ? `${pendingMatches.length} nuovi match!` : 'È un match!'}
-            </div>
-            <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Tocca per aprire la chat — resta anche sul tuo profilo</div>
-          </div>
-          <span
-            onClick={(e) => { e.stopPropagation(); setShowMatchBanner(false); }}
-            style={{ color: 'var(--text-muted)', fontSize: 16, padding: 4, cursor: 'pointer' }}
-          >
-            ✕
-          </span>
-        </div>
-      )}
-
-      {/* Popup punti — impilati se ne arriva più di uno vicino nel
-          tempo, ognuno sparisce da solo dopo un paio di secondi. */}
-      <div style={{ position: 'fixed', top: 70, left: '50%', transform: 'translateX(-50%)', zIndex: 70, display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center', pointerEvents: 'none' }}>
-        {pointsToasts.map((t) => (
+        {showLikeReceivedBanner && (
           <div
-            key={t.id}
-            className="pl-confirm-wave-wrap"
+            onClick={() => {
+              setActiveTab('like_center');
+              setShowLikeReceivedBanner(false);
+            }}
             style={{
-              display: 'flex', alignItems: 'center', gap: 8,
-              background: 'var(--surface-2)', border: '1px solid rgba(255,61,110,0.4)',
-              borderRadius: 999, padding: '9px 16px',
-              fontSize: 13, fontWeight: 700, color: 'var(--text)',
-              boxShadow: 'var(--shadow-lg)',
-              animation: 'pl-toast-in 0.25s ease-out',
+              position: 'fixed',
+              top: 70,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              zIndex: 71,
+              width: 'calc(100% - 32px)',
+              maxWidth: 380,
+              background: 'var(--surface-2)',
+              border: '1px solid rgba(255,61,110,0.4)',
+              borderRadius: 16,
+              padding: '12px 16px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              boxShadow: 'var(--shadow-glow-cyan)',
+              cursor: 'pointer',
             }}
           >
-            <span className="pl-confirm-wave"></span>
-            <span className="pl-confirm-wave"></span>
-            <span className="pl-confirm-wave"></span>
-            <t.icon size={16} />
-            <span style={{ color: 'var(--cyan)' }}>+{t.points} {t.label || 'punti'}</span>
+            <span className="pl-confirm-wave-wrap" style={{ position: 'relative', flexShrink: 0 }}>
+              <span className="pl-confirm-wave"></span>
+              <span className="pl-confirm-wave"></span>
+              <Heart size={20} color="var(--cyan)" />
+            </span>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontFamily: "'Unbounded',sans-serif", fontWeight: 700, fontSize: 13 }}>
+                Hai ricevuto un nuovo Like!
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Tocca per vedere chi è</div>
+            </div>
+            <span
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowLikeReceivedBanner(false);
+              }}
+              style={{ color: 'var(--text-muted)', fontSize: 16, padding: 4, cursor: 'pointer' }}
+            >
+              ✕
+            </span>
           </div>
-        ))}
+        )}
+
+        {showMatchBanner && pendingMatches.length > 0 && (
+          <div
+            onClick={() => openMatch(pendingMatches[pendingMatches.length - 1].conversationId)}
+            style={{
+              position: 'fixed',
+              top: 70,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              zIndex: 71,
+              width: 'calc(100% - 32px)',
+              maxWidth: 380,
+              background: 'var(--surface-2)',
+              border: '1px solid rgba(255,61,110,0.4)',
+              borderRadius: 16,
+              padding: '12px 16px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              boxShadow: 'var(--shadow-glow-cyan)',
+              cursor: 'pointer',
+            }}
+          >
+            <span className="pl-confirm-wave-wrap" style={{ position: 'relative', flexShrink: 0 }}>
+              <span className="pl-confirm-wave"></span>
+              <span className="pl-confirm-wave"></span>
+              <PulseWaveIcon size={20} color="var(--cyan)" />
+            </span>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontFamily: "'Unbounded',sans-serif", fontWeight: 700, fontSize: 13 }}>
+                {pendingMatches.length > 1
+                  ? `${pendingMatches.length} nuovi match!`
+                  : 'È un match!'}
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                Tocca per aprire la chat — resta anche sul tuo profilo
+              </div>
+            </div>
+            <span
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowMatchBanner(false);
+              }}
+              style={{ color: 'var(--text-muted)', fontSize: 16, padding: 4, cursor: 'pointer' }}
+            >
+              ✕
+            </span>
+          </div>
+        )}
+
+        {/* Popup punti — impilati se ne arriva più di uno vicino nel
+          tempo, ognuno sparisce da solo dopo un paio di secondi. */}
+        <div
+          style={{
+            position: 'fixed',
+            top: 70,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 70,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 8,
+            alignItems: 'center',
+            pointerEvents: 'none',
+          }}
+        >
+          {pointsToasts.map((t) => (
+            <div
+              key={t.id}
+              className="pl-confirm-wave-wrap"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                background: 'var(--surface-2)',
+                border: '1px solid rgba(255,61,110,0.4)',
+                borderRadius: 999,
+                padding: '9px 16px',
+                fontSize: 13,
+                fontWeight: 700,
+                color: 'var(--text)',
+                boxShadow: 'var(--shadow-lg)',
+                animation: 'pl-toast-in 0.25s ease-out',
+              }}
+            >
+              <span className="pl-confirm-wave"></span>
+              <span className="pl-confirm-wave"></span>
+              <span className="pl-confirm-wave"></span>
+              <t.icon size={16} />
+              <span style={{ color: 'var(--cyan)' }}>
+                +{t.points} {t.label || 'punti'}
+              </span>
+            </div>
+          ))}
+        </div>
       </div>
-    </div>
     );
   }
 
@@ -1048,9 +1417,11 @@ export default function App() {
   // poi — solo a sfumatura VERAMENTE conclusa — il resto.
   // --------------------------------------------------------
   if (showSplash) {
-    return isColdStart
-      ? <SplashScreen fadingOut={splashFadingOut} onExited={() => setShowSplash(false)} />
-      : <ReloadLoader fadingOut={splashFadingOut} onExited={() => setShowSplash(false)} />;
+    return isColdStart ? (
+      <SplashScreen fadingOut={splashFadingOut} onExited={() => setShowSplash(false)} />
+    ) : (
+      <ReloadLoader fadingOut={splashFadingOut} onExited={() => setShowSplash(false)} />
+    );
   }
 
   return mainContent;
@@ -1068,21 +1439,61 @@ function NavItem({ icon: Icon, label, active, onClick, badge }) {
 
 function ComingSoonSection() {
   const items = [
-    { icon: Target, title: 'Missioni Sponsorizzate', sub: 'I brand potranno invitarti, con una notifica geolocalizzata, a visitare un loro punto vendita per ottenere punti bonus — sempre con il tuo consenso esplicito.' },
-    { icon: Wallet, title: 'Wallet PopuLive', sub: 'Mance libere P2P e PopuLive Card, in arrivo con la fintech.' },
+    {
+      icon: Target,
+      title: 'Missioni Sponsorizzate',
+      sub: 'I brand potranno invitarti, con una notifica geolocalizzata, a visitare un loro punto vendita per ottenere punti bonus — sempre con il tuo consenso esplicito.',
+    },
+    {
+      icon: Wallet,
+      title: 'Wallet PopuLive',
+      sub: 'Mance libere P2P e PopuLive Card, in arrivo con la fintech.',
+    },
   ];
   return (
     <div style={{ marginTop: 16 }}>
       <div className="pl-section-label">In arrivo</div>
       {items.map((item) => (
-        <div key={item.title} style={{ background: 'var(--surface)', border: '1px solid rgba(228,212,200,0.12)', borderRadius: 16, padding: 14, marginBottom: 12, boxShadow: 'var(--shadow-sm)' }}>
-          <span style={{ fontSize: 8.5, fontWeight: 700, textTransform: 'uppercase', color: 'var(--teak)', background: 'rgba(228,212,200,0.14)', padding: '2px 8px', borderRadius: 6 }}>
+        <div
+          key={item.title}
+          style={{
+            background: 'var(--surface)',
+            border: '1px solid rgba(228,212,200,0.12)',
+            borderRadius: 16,
+            padding: 14,
+            marginBottom: 12,
+            boxShadow: 'var(--shadow-sm)',
+          }}
+        >
+          <span
+            style={{
+              fontSize: 8.5,
+              fontWeight: 700,
+              textTransform: 'uppercase',
+              color: 'var(--teak)',
+              background: 'rgba(228,212,200,0.14)',
+              padding: '2px 8px',
+              borderRadius: 6,
+            }}
+          >
             Coming Soon
           </span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: "'Unbounded',sans-serif", fontWeight: 700, fontSize: 13, margin: '6px 0 3px' }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              fontFamily: "'Unbounded',sans-serif",
+              fontWeight: 700,
+              fontSize: 13,
+              margin: '6px 0 3px',
+            }}
+          >
             <item.icon size={14} /> {item.title}
           </div>
-          <div style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.4 }}>{item.sub}</div>
+          <div style={{ fontSize: 10.5, color: 'var(--text-muted)', lineHeight: 1.4 }}>
+            {item.sub}
+          </div>
         </div>
       ))}
     </div>

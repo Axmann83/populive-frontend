@@ -47,15 +47,46 @@ export default function HistoricalStories({ people, currentUserId, onClose }) {
       {/* Barra di avanzamento — un segmento per persona, pieno fino
           a quella corrente. Non è un limite di visualizzazione,
           solo un riferimento visivo di "dove sei nella sequenza". */}
-      <div style={{ position: 'absolute', top: 10, left: 12, right: 12, display: 'flex', gap: 4, zIndex: 3 }}>
+      <div
+        style={{
+          position: 'absolute',
+          top: 10,
+          left: 12,
+          right: 12,
+          display: 'flex',
+          gap: 4,
+          zIndex: 3,
+        }}
+      >
         {people.map((p, i) => (
-          <div key={p.userId} style={{ flex: 1, height: 3, borderRadius: 999, background: i <= index ? 'var(--cyan)' : 'rgba(255,255,255,0.25)' }} />
+          <div
+            key={p.userId}
+            style={{
+              flex: 1,
+              height: 3,
+              borderRadius: 999,
+              background: i <= index ? 'var(--cyan)' : 'rgba(255,255,255,0.25)',
+            }}
+          />
         ))}
       </div>
 
       <button
         onClick={onClose}
-        style={{ position: 'absolute', top: 22, right: 14, zIndex: 3, width: 34, height: 34, borderRadius: '50%', border: 'none', background: 'rgba(0,0,0,0.5)', color: '#fff', fontSize: 15, cursor: 'pointer' }}
+        style={{
+          position: 'absolute',
+          top: 22,
+          right: 14,
+          zIndex: 3,
+          width: 34,
+          height: 34,
+          borderRadius: '50%',
+          border: 'none',
+          background: 'rgba(0,0,0,0.5)',
+          color: '#fff',
+          fontSize: 15,
+          cursor: 'pointer',
+        }}
         aria-label="Chiudi"
       >
         ✕
@@ -65,31 +96,95 @@ export default function HistoricalStories({ people, currentUserId, onClose }) {
           Nessun tetto su quante volte si può tornare indietro. */}
       <div onClick={handleTap} style={{ position: 'absolute', inset: 0, cursor: 'pointer' }}>
         {current.photoUrl ? (
-          <img src={getOptimizedPhotoUrl(current.photoUrl, { width: 800, height: 1400, crop: false })} alt={current.displayName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          <img
+            src={getOptimizedPhotoUrl(current.photoUrl, { width: 800, height: 1400, crop: false })}
+            alt={current.displayName}
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          />
         ) : (
-          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 140, background: 'var(--surface-2)' }}>
+          <div
+            style={{
+              width: '100%',
+              height: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: 140,
+              background: 'var(--surface-2)',
+            }}
+          >
             {current.avatarEmoji || '🙂'}
           </div>
         )}
-        <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: '38%', background: 'linear-gradient(to top, rgba(0,0,0,0.92), rgba(0,0,0,0))' }} />
+        <div
+          style={{
+            position: 'absolute',
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: '38%',
+            background: 'linear-gradient(to top, rgba(0,0,0,0.92), rgba(0,0,0,0))',
+          }}
+        />
       </div>
 
-      <div style={{ position: 'absolute', left: 20, right: 20, bottom: 30, zIndex: 3, color: '#fff' }}>
-        <div style={{ fontFamily: "'Unbounded',sans-serif", fontWeight: 700, fontSize: 20, marginBottom: 4 }}>{current.displayName}</div>
+      <div
+        style={{ position: 'absolute', left: 20, right: 20, bottom: 30, zIndex: 3, color: '#fff' }}
+      >
+        <div
+          style={{
+            fontFamily: "'Unbounded',sans-serif",
+            fontWeight: 700,
+            fontSize: 20,
+            marginBottom: 4,
+          }}
+        >
+          {current.displayName}
+        </div>
         <div style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.7)', marginBottom: 16 }}>
           Visto qui {formatRelativeDay(current.lastSeenAt)}
         </div>
 
         <div style={{ display: 'flex', gap: 10 }}>
           <button
-            onClick={(e) => { e.stopPropagation(); setOpenProfile(true); }}
-            style={{ flex: 1, padding: '11px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.3)', background: 'rgba(255,255,255,0.1)', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
+            onClick={(e) => {
+              e.stopPropagation();
+              setOpenProfile(true);
+            }}
+            style={{
+              flex: 1,
+              padding: '11px',
+              borderRadius: 12,
+              border: '1px solid rgba(255,255,255,0.3)',
+              background: 'rgba(255,255,255,0.1)',
+              color: '#fff',
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
           >
             Guarda profilo
           </button>
           <button
-            onClick={(e) => { e.stopPropagation(); setOpenProfile(true); }}
-            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '11px', borderRadius: 12, border: 'none', background: 'var(--cyan)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+            onClick={(e) => {
+              e.stopPropagation();
+              setOpenProfile(true);
+            }}
+            style={{
+              flex: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 6,
+              padding: '11px',
+              borderRadius: 12,
+              border: 'none',
+              background: 'var(--cyan)',
+              color: '#fff',
+              fontSize: 12,
+              fontWeight: 700,
+              cursor: 'pointer',
+            }}
           >
             <Star size={14} />
             Superlike

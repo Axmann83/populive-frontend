@@ -22,36 +22,67 @@ export default function QrScannerModal({ onScan, onClose }) {
     const scanner = new Html5Qrcode(elementId);
     scannerRef.current = scanner;
 
-    scanner.start(
-      { facingMode: 'environment' }, // fotocamera posteriore, quella vera per inquadrare
-      { fps: 10, qrbox: { width: 240, height: 240 } },
-      (decodedText) => {
-        // Un tocco solo — appena legge qualcosa, fermiamo subito la
-        // fotocamera e passiamo il risultato, nessuna doppia lettura.
-        scanner.stop().catch(() => {});
-        onScanRef.current(decodedText);
-      },
-      () => { /* nessun QR nel fotogramma corrente — normale, non è un errore da mostrare */ }
-    ).catch(() => {
-      onScanRef.current(null, 'camera_error');
-    });
+    scanner
+      .start(
+        { facingMode: 'environment' }, // fotocamera posteriore, quella vera per inquadrare
+        { fps: 10, qrbox: { width: 240, height: 240 } },
+        (decodedText) => {
+          // Un tocco solo — appena legge qualcosa, fermiamo subito la
+          // fotocamera e passiamo il risultato, nessuna doppia lettura.
+          scanner.stop().catch(() => {});
+          onScanRef.current(decodedText);
+        },
+        () => {
+          /* nessun QR nel fotogramma corrente — normale, non è un errore da mostrare */
+        }
+      )
+      .catch(() => {
+        onScanRef.current(null, 'camera_error');
+      });
 
     return () => {
       // Se la persona chiude senza aver scansionato nulla, fermiamo
       // comunque la fotocamera — non deve restare accesa in background.
       if (scannerRef.current) {
-        scannerRef.current.stop().catch(() => {}).then(() => {
-          scannerRef.current?.clear();
-        });
+        scannerRef.current
+          .stop()
+          .catch(() => {})
+          .then(() => {
+            scannerRef.current?.clear();
+          });
       }
     };
   }, []); // SOLO al montaggio — mai riavviare la fotocamera per un cambio di onScan
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.92)', zIndex: 95, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(0,0,0,0.92)',
+        zIndex: 95,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 20,
+      }}
+    >
       <button
         onClick={onClose}
-        style={{ position: 'absolute', top: 22, right: 18, width: 34, height: 34, borderRadius: '50%', border: 'none', background: 'rgba(255,255,255,0.15)', color: '#fff', fontSize: 15, cursor: 'pointer' }}
+        style={{
+          position: 'absolute',
+          top: 22,
+          right: 18,
+          width: 34,
+          height: 34,
+          borderRadius: '50%',
+          border: 'none',
+          background: 'rgba(255,255,255,0.15)',
+          color: '#fff',
+          fontSize: 15,
+          cursor: 'pointer',
+        }}
         aria-label="Chiudi"
       >
         ✕
@@ -59,7 +90,11 @@ export default function QrScannerModal({ onScan, onClose }) {
       <p style={{ color: '#fff', fontSize: 12.5, marginBottom: 16, textAlign: 'center' }}>
         Inquadra il QR del tavolo
       </p>
-      <div id="pl-qr-scanner-region" ref={containerRef} style={{ width: '100%', maxWidth: 320, borderRadius: 16, overflow: 'hidden' }} />
+      <div
+        id="pl-qr-scanner-region"
+        ref={containerRef}
+        style={{ width: '100%', maxWidth: 320, borderRadius: 16, overflow: 'hidden' }}
+      />
     </div>
   );
 }

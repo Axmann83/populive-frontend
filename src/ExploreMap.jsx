@@ -23,7 +23,9 @@ export default function ExploreMap({ onClose }) {
   useEffect(() => {
     apiFetch('/api/venues/popular-now')
       .then((r) => r.json())
-      .then((data) => { if (data.success) setVenues(data.venues); })
+      .then((data) => {
+        if (data.success) setVenues(data.venues);
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -31,7 +33,9 @@ export default function ExploreMap({ onClose }) {
 
   return (
     <div className="pl-sheet">
-      <div className="pl-sheet-close" onClick={onClose}>Chiudi ✕</div>
+      <div className="pl-sheet-close" onClick={onClose}>
+        Chiudi ✕
+      </div>
       <h3>I locali stanotte</h3>
       <p className="pl-hint" style={{ marginBottom: 12 }}>
         I locali più caldi di stasera, in tempo reale
@@ -52,12 +56,31 @@ function VenueCard({ venue, maxCheckins }) {
   const g = venue.genderStats;
 
   return (
-    <div style={{ background: 'var(--surface)', border: '1px solid rgba(228,212,200,0.12)', borderRadius: 16, padding: 14, marginBottom: 12, boxShadow: 'var(--shadow-md)' }}>
+    <div
+      style={{
+        background: 'var(--surface)',
+        border: '1px solid rgba(228,212,200,0.12)',
+        borderRadius: 16,
+        padding: 14,
+        marginBottom: 12,
+        boxShadow: 'var(--shadow-md)',
+      }}
+    >
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, fontSize: 13 }}>{venue.name}</div>
-        {venue.arenaActive && <span className="pl-arena-pill" style={{ fontSize: 8 }}><span className="pl-live-dot"></span> Attiva</span>}
+        <div style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 700, fontSize: 13 }}>
+          {venue.name}
+        </div>
+        {venue.arenaActive && (
+          <span className="pl-arena-pill" style={{ fontSize: 8 }}>
+            <span className="pl-live-dot"></span> Attiva
+          </span>
+        )}
       </div>
-      {venue.category && <div style={{ fontSize: 9.5, color: 'var(--text-muted)', textTransform: 'capitalize' }}>{venue.category}</div>}
+      {venue.category && (
+        <div style={{ fontSize: 9.5, color: 'var(--text-muted)', textTransform: 'capitalize' }}>
+          {venue.category}
+        </div>
+      )}
 
       <div style={{ display: 'flex', gap: 14, margin: '9px 0' }}>
         <Stat num={venue.checkinCount} label="check-in stasera" />
@@ -68,18 +91,50 @@ function VenueCard({ venue, maxCheckins }) {
       {/* Barra uomini/donne — solo se almeno una persona ha
           condiviso il dato per questo locale stasera. */}
       {g && (
-        <div style={{ display: 'flex', height: 5, borderRadius: 999, overflow: 'hidden', marginBottom: 10 }}>
+        <div
+          style={{
+            display: 'flex',
+            height: 5,
+            borderRadius: 999,
+            overflow: 'hidden',
+            marginBottom: 10,
+          }}
+        >
           <div style={{ background: 'var(--teak)', width: `${g.femalePct}%` }} />
           <div style={{ background: 'var(--cyan)', width: `${g.malePct}%` }} />
-          {g.otherPct > 0 && <div style={{ background: 'var(--gold-medal, #E8C77E)', width: `${g.otherPct}%` }} />}
+          {g.otherPct > 0 && (
+            <div style={{ background: 'var(--gold-medal, #E8C77E)', width: `${g.otherPct}%` }} />
+          )}
         </div>
       )}
 
-      <div style={{ fontSize: 9, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+      <div
+        style={{
+          fontSize: 9,
+          color: 'var(--text-muted)',
+          textTransform: 'uppercase',
+          letterSpacing: '0.04em',
+        }}
+      >
         Popolarità della serata
       </div>
-      <div style={{ height: 6, background: 'var(--surface-2)', borderRadius: 999, overflow: 'hidden', marginTop: 4 }}>
-        <div style={{ height: '100%', width: `${popularityPct}%`, background: 'linear-gradient(90deg, var(--cyan), var(--teak))', borderRadius: 999 }} />
+      <div
+        style={{
+          height: 6,
+          background: 'var(--surface-2)',
+          borderRadius: 999,
+          overflow: 'hidden',
+          marginTop: 4,
+        }}
+      >
+        <div
+          style={{
+            height: '100%',
+            width: `${popularityPct}%`,
+            background: 'linear-gradient(90deg, var(--cyan), var(--teak))',
+            borderRadius: 999,
+          }}
+        />
       </div>
     </div>
   );
@@ -88,7 +143,9 @@ function VenueCard({ venue, maxCheckins }) {
 function Stat({ num, label }) {
   return (
     <div style={{ textAlign: 'left' }}>
-      <div style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 800, fontSize: 18 }}>{num}</div>
+      <div style={{ fontFamily: "'Space Grotesk',sans-serif", fontWeight: 800, fontSize: 18 }}>
+        {num}
+      </div>
       <div style={{ fontSize: 8, color: 'var(--text-muted)' }}>{label}</div>
     </div>
   );

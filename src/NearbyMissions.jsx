@@ -25,7 +25,9 @@ export default function NearbyMissions({ onClose }) {
   useEffect(() => {
     apiFetch('/api/missions/near-me')
       .then((r) => r.json())
-      .then((data) => { if (data.success) setMissions(data.missions); })
+      .then((data) => {
+        if (data.success) setMissions(data.missions);
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -41,7 +43,9 @@ export default function NearbyMissions({ onClose }) {
 
   return (
     <div className="pl-sheet">
-      <div className="pl-sheet-close" onClick={onClose}>Chiudi ✕</div>
+      <div className="pl-sheet-close" onClick={onClose}>
+        Chiudi ✕
+      </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
         <Target size={18} color="var(--cyan)" />
         <h3 style={{ margin: 0 }}>Missioni vicino a te</h3>
@@ -54,7 +58,8 @@ export default function NearbyMissions({ onClose }) {
 
       {!loading && missions.length === 0 && (
         <p className="pl-hint" style={{ textAlign: 'center', marginTop: 20 }}>
-          Niente da vedere qui per ora — o non ci sono missioni attive vicino a te, o non hai ancora attivato "Ricevi missioni sponsorizzate" nelle Impostazioni.
+          Niente da vedere qui per ora — o non ci sono missioni attive vicino a te, o non hai ancora
+          attivato "Ricevi missioni sponsorizzate" nelle Impostazioni.
         </p>
       )}
 
@@ -63,13 +68,30 @@ export default function NearbyMissions({ onClose }) {
           <div
             key={m.missionId}
             onClick={() => setOpenMissionId(m.missionId)}
-            style={{ cursor: 'pointer', background: 'var(--surface)', border: '1px solid rgba(228,212,200,0.12)', borderRadius: 14, padding: 12, boxShadow: 'var(--shadow-sm)' }}
+            style={{
+              cursor: 'pointer',
+              background: 'var(--surface)',
+              border: '1px solid rgba(228,212,200,0.12)',
+              borderRadius: 14,
+              padding: 12,
+              boxShadow: 'var(--shadow-sm)',
+            }}
           >
-            <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>
+            <div
+              style={{
+                fontSize: 10,
+                color: 'var(--text-muted)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                marginBottom: 2,
+              }}
+            >
               {m.sponsorName} · {formatDistance(m.distanceMeters)}
             </div>
             <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4 }}>{m.claimText}</div>
-            <div style={{ fontSize: 11.5, color: 'var(--cyan)', fontWeight: 700 }}>+{m.bonusPoints} punti</div>
+            <div style={{ fontSize: 11.5, color: 'var(--cyan)', fontWeight: 700 }}>
+              +{m.bonusPoints} punti
+            </div>
           </div>
         ))}
       </div>

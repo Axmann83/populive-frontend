@@ -29,12 +29,14 @@ export default function ChatCenter({ pendingMatches, activeChats, onOpenMatch, a
     if (missing.length === 0) return;
 
     let cancelled = false;
-    Promise.all(missing.map((m) =>
-      apiFetch(`/api/users/${m.withUserId}/public-profile?arenaSessionId=${arenaSessionId || ''}`)
-        .then((r) => r.json())
-        .then((data) => ({ userId: m.withUserId, data }))
-        .catch(() => ({ userId: m.withUserId, data: null }))
-    )).then((results) => {
+    Promise.all(
+      missing.map((m) =>
+        apiFetch(`/api/users/${m.withUserId}/public-profile?arenaSessionId=${arenaSessionId || ''}`)
+          .then((r) => r.json())
+          .then((data) => ({ userId: m.withUserId, data }))
+          .catch(() => ({ userId: m.withUserId, data: null }))
+      )
+    ).then((results) => {
       if (cancelled) return;
       setMatchProfiles((prev) => {
         const next = { ...prev };
@@ -46,7 +48,9 @@ export default function ChatCenter({ pendingMatches, activeChats, onOpenMatch, a
         return next;
       });
     });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [pendingMatches, activeChats, matchProfiles, arenaSessionId]);
 
   const savedChats = (activeChats || []).filter(
@@ -61,14 +65,38 @@ export default function ChatCenter({ pendingMatches, activeChats, onOpenMatch, a
         key={entry.conversationId}
         onClick={() => onOpenMatch(entry.conversationId)}
         style={{
-          width: '100%', display: 'flex', alignItems: 'center', gap: 12,
-          background: 'var(--surface)', border: 'none', borderRadius: 14,
-          padding: '12px 14px', marginBottom: 8, cursor: 'pointer', color: 'var(--text)',
+          width: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+          background: 'var(--surface)',
+          border: 'none',
+          borderRadius: 14,
+          padding: '12px 14px',
+          marginBottom: 8,
+          cursor: 'pointer',
+          color: 'var(--text)',
         }}
       >
-        <div style={{ width: 40, height: 40, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, background: 'var(--surface-2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: '50%',
+            overflow: 'hidden',
+            flexShrink: 0,
+            background: 'var(--surface-2)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
           {info?.photoUrl ? (
-            <img src={getOptimizedPhotoUrl(info.photoUrl, { width: 40, height: 40 })} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            <img
+              src={getOptimizedPhotoUrl(info.photoUrl, { width: 40, height: 40 })}
+              alt=""
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            />
           ) : (
             <PulseWaveIcon size={18} color="var(--cyan)" />
           )}
@@ -83,7 +111,14 @@ export default function ChatCenter({ pendingMatches, activeChats, onOpenMatch, a
 
   return (
     <div className="pl-screen">
-      <div style={{ fontFamily: "'Unbounded',sans-serif", fontWeight: 700, fontSize: 18, marginBottom: 16 }}>
+      <div
+        style={{
+          fontFamily: "'Unbounded',sans-serif",
+          fontWeight: 700,
+          fontSize: 18,
+          marginBottom: 16,
+        }}
+      >
         Le tue chat
       </div>
 
@@ -106,7 +141,9 @@ export default function ChatCenter({ pendingMatches, activeChats, onOpenMatch, a
       {savedChats.length > 0 && (
         <div>
           {pendingMatches && pendingMatches.length > 0 && (
-            <div className="pl-section-label" style={{ marginBottom: 8 }}>Conversazioni</div>
+            <div className="pl-section-label" style={{ marginBottom: 8 }}>
+              Conversazioni
+            </div>
           )}
           {savedChats.map(renderRow)}
         </div>

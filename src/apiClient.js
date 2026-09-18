@@ -19,26 +19,38 @@ const TOKEN_KEY = 'pl_token';
 const USER_ID_KEY = 'pl_user_id';
 
 function getToken() {
-  try { return localStorage.getItem(TOKEN_KEY); } catch { return null; }
+  try {
+    return localStorage.getItem(TOKEN_KEY);
+  } catch {
+    return null;
+  }
 }
 
 function setSession(token, userId) {
   try {
     localStorage.setItem(TOKEN_KEY, token);
     localStorage.setItem(USER_ID_KEY, userId);
-  } catch { /* ignorato — se localStorage non è disponibile, la sessione
-                semplicemente non sopravvive a un refresh, ma l'app non crasha */ }
+  } catch {
+    /* ignorato — se localStorage non è disponibile, la sessione
+                semplicemente non sopravvive a un refresh, ma l'app non crasha */
+  }
 }
 
 function getStoredUserId() {
-  try { return localStorage.getItem(USER_ID_KEY); } catch { return null; }
+  try {
+    return localStorage.getItem(USER_ID_KEY);
+  } catch {
+    return null;
+  }
 }
 
 function clearSession() {
   try {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_ID_KEY);
-  } catch { /* ignorato */ }
+  } catch {
+    /* ignorato */
+  }
 }
 
 /**
@@ -58,15 +70,27 @@ function clearSession() {
 const LAST_VENUE_KEY = 'pl_last_venue_id';
 
 function getLastVenueId() {
-  try { return localStorage.getItem(LAST_VENUE_KEY); } catch { return null; }
+  try {
+    return localStorage.getItem(LAST_VENUE_KEY);
+  } catch {
+    return null;
+  }
 }
 
 function setLastVenueId(venueId) {
-  try { localStorage.setItem(LAST_VENUE_KEY, venueId); } catch { /* ignorato */ }
+  try {
+    localStorage.setItem(LAST_VENUE_KEY, venueId);
+  } catch {
+    /* ignorato */
+  }
 }
 
 function clearLastVenueId() {
-  try { localStorage.removeItem(LAST_VENUE_KEY); } catch { /* ignorato */ }
+  try {
+    localStorage.removeItem(LAST_VENUE_KEY);
+  } catch {
+    /* ignorato */
+  }
 }
 
 /**
@@ -90,7 +114,17 @@ async function apiFetch(path, options = {}) {
   return res;
 }
 
-export { API_BASE, getToken, getStoredUserId, setSession, clearSession, apiFetch, getLastVenueId, setLastVenueId, clearLastVenueId };
+export {
+  API_BASE,
+  getToken,
+  getStoredUserId,
+  setSession,
+  clearSession,
+  apiFetch,
+  getLastVenueId,
+  setLastVenueId,
+  clearLastVenueId,
+};
 
 /**
  * ============================================================
@@ -125,7 +159,9 @@ function requestAndSendLocation(userId) {
         // prossima occasione utile (prossima apertura dell'app).
       }
     },
-    () => { /* permesso negato o errore — nessun blocco per la persona */ },
+    () => {
+      /* permesso negato o errore — nessun blocco per la persona */
+    },
     { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 }
   );
 }
@@ -153,10 +189,10 @@ async function uploadPhotoToStorage(file) {
   formData.append('file', file);
   formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
 
-  const res = await fetch(
-    `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
-    { method: 'POST', body: formData }
-  );
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+    method: 'POST',
+    body: formData,
+  });
 
   if (!res.ok) {
     throw new Error('Upload verso Cloudinary non riuscito');
@@ -197,9 +233,8 @@ function getOptimizedPhotoUrl(url, { width, height, crop = true } = {}) {
   if (!url || !url.includes('res.cloudinary.com') || !url.includes('/upload/')) {
     return url; // non un URL Cloudinary riconoscibile — meglio restituirlo invariato che rischiare di romperlo
   }
-  const sizePart = width && height
-    ? `w_${width * 2},h_${height * 2}${crop ? ',c_fill,g_face' : ',c_limit'},`
-    : '';
+  const sizePart =
+    width && height ? `w_${width * 2},h_${height * 2}${crop ? ',c_fill,g_face' : ',c_limit'},` : '';
   return url.replace('/upload/', `/upload/${sizePart}q_auto,f_auto/`);
 }
 

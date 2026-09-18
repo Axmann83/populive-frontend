@@ -36,7 +36,11 @@ const KIND_META = {
   pulse_standalone: { icon: PulseWaveIcon, label: 'Pulse', color: 'var(--cyan)' },
   pulse_like: { icon: PulseWaveIcon, label: 'Pulse+Like', color: 'var(--cyan)' },
   pulse_simple: { icon: PulseWaveIcon, label: 'Pulse', color: 'var(--gold-medal, #D4A85C)' },
-  pulse_super: { icon: PulseWaveIcon, label: 'Pulse+Superlike', color: 'var(--gold-medal, #D4A85C)' },
+  pulse_super: {
+    icon: PulseWaveIcon,
+    label: 'Pulse+Superlike',
+    color: 'var(--gold-medal, #D4A85C)',
+  },
 };
 
 const SENT_STATUS_LABELS = {
@@ -82,8 +86,12 @@ export default function LikeCenter({ userId, arenaSessionId, venueId, onOpenChat
         if (sentData.success) setSent(sentData.items);
       })
       .catch(() => {})
-      .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [userId]);
 
   // Aprire davvero questa schermata azzera il pallino sulla scheda.
@@ -98,9 +106,10 @@ export default function LikeCenter({ userId, arenaSessionId, venueId, onOpenChat
     if (respondingIds.has(key)) return;
     setRespondingIds((prev) => new Set(prev).add(key));
 
-    const endpoint = item.kind === 'superlike'
-      ? `/api/interactions/${item.id}/respond`
-      : `/api/pulses/${item.id}/respond`;
+    const endpoint =
+      item.kind === 'superlike'
+        ? `/api/interactions/${item.id}/respond`
+        : `/api/pulses/${item.id}/respond`;
 
     try {
       const res = await apiFetch(endpoint, {
@@ -111,7 +120,7 @@ export default function LikeCenter({ userId, arenaSessionId, venueId, onOpenChat
       const data = await res.json();
 
       if (!data.success) {
-        window.alert('Non è stato possibile completare l\'azione. Riprova.');
+        window.alert("Non è stato possibile completare l'azione. Riprova.");
         return;
       }
 
@@ -124,14 +133,18 @@ export default function LikeCenter({ userId, arenaSessionId, venueId, onOpenChat
       // Pulse+Like accettata: la chat non è automatica, dipende dal
       // minigioco.
       if (action === 'accept' && item.kind === 'pulse_like' && data.canStillPlayGuessGame) {
-        window.alert('Pulse accettata! Vai nella scheda Pulse per provare a indovinare chi te l\'ha mandata e sbloccare la chat.');
+        window.alert(
+          "Pulse accettata! Vai nella scheda Pulse per provare a indovinare chi te l'ha mandata e sbloccare la chat."
+        );
       }
 
       // Decisa: sparisce da qui, qualunque sia stata la scelta.
       setPending((prev) => prev.filter((p) => !(p.kind === item.kind && p.id === item.id)));
       setViewingItem(null);
     } catch {
-      window.alert('Non è stato possibile completare l\'azione — controlla la connessione e riprova.');
+      window.alert(
+        "Non è stato possibile completare l'azione — controlla la connessione e riprova."
+      );
     } finally {
       setRespondingIds((prev) => {
         const next = new Set(prev);
@@ -145,7 +158,14 @@ export default function LikeCenter({ userId, arenaSessionId, venueId, onOpenChat
 
   return (
     <div className="pl-screen">
-      <div style={{ fontFamily: "'Unbounded',sans-serif", fontWeight: 700, fontSize: 18, marginBottom: 14 }}>
+      <div
+        style={{
+          fontFamily: "'Unbounded',sans-serif",
+          fontWeight: 700,
+          fontSize: 18,
+          marginBottom: 14,
+        }}
+      >
         Like
       </div>
 
@@ -155,7 +175,12 @@ export default function LikeCenter({ userId, arenaSessionId, venueId, onOpenChat
             key={t}
             onClick={() => setTab(t)}
             style={{
-              flex: 1, padding: '9px', borderRadius: 999, cursor: 'pointer', fontSize: 12.5, fontWeight: 700,
+              flex: 1,
+              padding: '9px',
+              borderRadius: 999,
+              cursor: 'pointer',
+              fontSize: 12.5,
+              fontWeight: 700,
               border: tab === t ? '1.5px solid var(--cyan)' : '1.5px solid rgba(228,212,200,0.16)',
               background: tab === t ? 'rgba(255,61,110,0.1)' : 'transparent',
               color: tab === t ? 'var(--cyan)' : 'var(--text-muted)',
@@ -167,7 +192,11 @@ export default function LikeCenter({ userId, arenaSessionId, venueId, onOpenChat
         ))}
       </div>
 
-      {loading && <p className="pl-hint" style={{ textAlign: 'center', marginTop: 30 }}>Caricamento…</p>}
+      {loading && (
+        <p className="pl-hint" style={{ textAlign: 'center', marginTop: 30 }}>
+          Caricamento…
+        </p>
+      )}
 
       {!loading && items.length === 0 && (
         <div style={{ textAlign: 'center', marginTop: 60, color: 'var(--text-muted)' }}>
@@ -178,95 +207,220 @@ export default function LikeCenter({ userId, arenaSessionId, venueId, onOpenChat
         </div>
       )}
 
-      {!loading && tab === 'ricevuti' && items.map((item) => {
-        const meta = KIND_META[item.kind] || {};
-        const hasPhoto = !!item.sender?.photoUrl;
-        const responding = respondingIds.has(`${item.kind}-${item.id}`);
-        return (
-          <div key={`${item.kind}-${item.id}`} style={{ background: 'var(--surface-2)', borderRadius: 18, overflow: 'hidden', marginBottom: 16, border: '1px solid rgba(217,204,192,0.12)' }}>
+      {!loading &&
+        tab === 'ricevuti' &&
+        items.map((item) => {
+          const meta = KIND_META[item.kind] || {};
+          const hasPhoto = !!item.sender?.photoUrl;
+          const responding = respondingIds.has(`${item.kind}-${item.id}`);
+          return (
             <div
-              onClick={hasPhoto ? () => setViewingItem({ userId: item.sender.userId, isPendingDecision: true, kind: item.kind, id: item.id }) : undefined}
+              key={`${item.kind}-${item.id}`}
               style={{
-                width: '100%', height: 200, position: 'relative', cursor: hasPhoto ? 'pointer' : 'default',
-                background: hasPhoto ? `center/cover url(${item.sender.photoUrl})` : 'linear-gradient(160deg,#2a1620,#1a1013)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: 'var(--surface-2)',
+                borderRadius: 18,
+                overflow: 'hidden',
+                marginBottom: 16,
+                border: '1px solid rgba(217,204,192,0.12)',
               }}
             >
-              <div style={{ position: 'absolute', top: 12, left: 12, background: 'rgba(20,16,15,0.75)', backdropFilter: 'blur(4px)', padding: '5px 12px', borderRadius: 999, fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: meta.color }}>
-                {item.kind === 'like' ? 'Ammiratore misterioso' : meta.label}
-              </div>
-              {!hasPhoto && <Heart size={56} color="var(--cyan)" fill="var(--cyan)" style={{ opacity: 0.9 }} />}
-            </div>
-            <div style={{ padding: '14px 16px' }}>
-              <div style={{ fontSize: 15, fontWeight: 700 }}>
-                {item.sender ? item.sender.displayName : 'Hai ricevuto un Like'}
-              </div>
-              <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginTop: 2 }}>
-                {item.drinkType ? `${item.drinkType} · ` : ''}{item.venueName} · {timeAgo(item.createdAt)}
-              </div>
-            </div>
-            {item.kind !== 'like' && (
-              <div style={{ display: 'flex', gap: 8, padding: '0 16px 16px' }}>
-                <button
-                  onClick={() => handleRespond(item, 'accept')}
-                  disabled={responding}
-                  style={{ flex: 1, padding: 11, borderRadius: 12, border: 'none', background: 'linear-gradient(135deg,#FF6690,#FF3D6E)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: responding ? 'default' : 'pointer', opacity: responding ? 0.6 : 1 }}
+              <div
+                onClick={
+                  hasPhoto
+                    ? () =>
+                        setViewingItem({
+                          userId: item.sender.userId,
+                          isPendingDecision: true,
+                          kind: item.kind,
+                          id: item.id,
+                        })
+                    : undefined
+                }
+                style={{
+                  width: '100%',
+                  height: 200,
+                  position: 'relative',
+                  cursor: hasPhoto ? 'pointer' : 'default',
+                  background: hasPhoto
+                    ? `center/cover url(${item.sender.photoUrl})`
+                    : 'linear-gradient(160deg,#2a1620,#1a1013)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: 12,
+                    left: 12,
+                    background: 'rgba(20,16,15,0.75)',
+                    backdropFilter: 'blur(4px)',
+                    padding: '5px 12px',
+                    borderRadius: 999,
+                    fontSize: 10,
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    color: meta.color,
+                  }}
                 >
-                  Accetta
-                </button>
-                <button
-                  onClick={() => handleRespond(item, 'ignore')}
-                  disabled={responding}
-                  style={{ flex: 1, padding: 11, borderRadius: 12, border: '1.5px solid rgba(228,212,200,0.2)', background: 'transparent', color: 'var(--text-muted)', fontSize: 12, fontWeight: 600, cursor: responding ? 'default' : 'pointer', opacity: responding ? 0.6 : 1 }}
-                >
-                  Sospendi
-                </button>
-                <button
-                  onClick={() => handleRespond(item, 'reject')}
-                  disabled={responding}
-                  style={{ flex: 1, padding: 11, borderRadius: 12, border: '1.5px solid rgba(228,212,200,0.2)', background: 'transparent', color: 'var(--text-muted)', fontSize: 12, fontWeight: 600, cursor: responding ? 'default' : 'pointer', opacity: responding ? 0.6 : 1 }}
-                >
-                  Rifiuta
-                </button>
+                  {item.kind === 'like' ? 'Ammiratore misterioso' : meta.label}
+                </div>
+                {!hasPhoto && (
+                  <Heart
+                    size={56}
+                    color="var(--cyan)"
+                    fill="var(--cyan)"
+                    style={{ opacity: 0.9 }}
+                  />
+                )}
               </div>
-            )}
-          </div>
-        );
-      })}
-
-      {!loading && tab === 'inviati' && items.map((item) => {
-        const meta = KIND_META[item.kind] || {};
-        const statusLabel = SENT_STATUS_LABELS[item.status];
-        return (
-          <div
-            key={`${item.kind}-${item.id}`}
-            onClick={() => setViewingItem({ userId: item.otherPerson.userId, isPendingDecision: false })}
-            style={{ background: 'var(--surface-2)', borderRadius: 18, overflow: 'hidden', marginBottom: 16, border: '1px solid rgba(217,204,192,0.12)', cursor: 'pointer' }}
-          >
-            <div
-              style={{
-                width: '100%', height: 200, position: 'relative',
-                background: `center/cover url(${item.otherPerson.photoUrl})`,
-              }}
-            >
-              <div style={{ position: 'absolute', top: 12, left: 12, background: 'rgba(20,16,15,0.75)', backdropFilter: 'blur(4px)', padding: '5px 12px', borderRadius: 999, fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: meta.color }}>
-                {meta.label}
+              <div style={{ padding: '14px 16px' }}>
+                <div style={{ fontSize: 15, fontWeight: 700 }}>
+                  {item.sender ? item.sender.displayName : 'Hai ricevuto un Like'}
+                </div>
+                <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginTop: 2 }}>
+                  {item.drinkType ? `${item.drinkType} · ` : ''}
+                  {item.venueName} · {timeAgo(item.createdAt)}
+                </div>
               </div>
-              {statusLabel && (
-                <div style={{ position: 'absolute', top: 12, right: 12, background: 'rgba(20,16,15,0.75)', backdropFilter: 'blur(4px)', padding: '5px 12px', borderRadius: 999, fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-muted)' }}>
-                  {statusLabel}
+              {item.kind !== 'like' && (
+                <div style={{ display: 'flex', gap: 8, padding: '0 16px 16px' }}>
+                  <button
+                    onClick={() => handleRespond(item, 'accept')}
+                    disabled={responding}
+                    style={{
+                      flex: 1,
+                      padding: 11,
+                      borderRadius: 12,
+                      border: 'none',
+                      background: 'linear-gradient(135deg,#FF6690,#FF3D6E)',
+                      color: '#fff',
+                      fontSize: 12,
+                      fontWeight: 700,
+                      cursor: responding ? 'default' : 'pointer',
+                      opacity: responding ? 0.6 : 1,
+                    }}
+                  >
+                    Accetta
+                  </button>
+                  <button
+                    onClick={() => handleRespond(item, 'ignore')}
+                    disabled={responding}
+                    style={{
+                      flex: 1,
+                      padding: 11,
+                      borderRadius: 12,
+                      border: '1.5px solid rgba(228,212,200,0.2)',
+                      background: 'transparent',
+                      color: 'var(--text-muted)',
+                      fontSize: 12,
+                      fontWeight: 600,
+                      cursor: responding ? 'default' : 'pointer',
+                      opacity: responding ? 0.6 : 1,
+                    }}
+                  >
+                    Sospendi
+                  </button>
+                  <button
+                    onClick={() => handleRespond(item, 'reject')}
+                    disabled={responding}
+                    style={{
+                      flex: 1,
+                      padding: 11,
+                      borderRadius: 12,
+                      border: '1.5px solid rgba(228,212,200,0.2)',
+                      background: 'transparent',
+                      color: 'var(--text-muted)',
+                      fontSize: 12,
+                      fontWeight: 600,
+                      cursor: responding ? 'default' : 'pointer',
+                      opacity: responding ? 0.6 : 1,
+                    }}
+                  >
+                    Rifiuta
+                  </button>
                 </div>
               )}
             </div>
-            <div style={{ padding: '14px 16px' }}>
-              <div style={{ fontSize: 15, fontWeight: 700 }}>{item.otherPerson.displayName}</div>
-              <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginTop: 2 }}>
-                {item.drinkType ? `${item.drinkType} · ` : ''}{item.venueName} · {timeAgo(item.createdAt)}
+          );
+        })}
+
+      {!loading &&
+        tab === 'inviati' &&
+        items.map((item) => {
+          const meta = KIND_META[item.kind] || {};
+          const statusLabel = SENT_STATUS_LABELS[item.status];
+          return (
+            <div
+              key={`${item.kind}-${item.id}`}
+              onClick={() =>
+                setViewingItem({ userId: item.otherPerson.userId, isPendingDecision: false })
+              }
+              style={{
+                background: 'var(--surface-2)',
+                borderRadius: 18,
+                overflow: 'hidden',
+                marginBottom: 16,
+                border: '1px solid rgba(217,204,192,0.12)',
+                cursor: 'pointer',
+              }}
+            >
+              <div
+                style={{
+                  width: '100%',
+                  height: 200,
+                  position: 'relative',
+                  background: `center/cover url(${item.otherPerson.photoUrl})`,
+                }}
+              >
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: 12,
+                    left: 12,
+                    background: 'rgba(20,16,15,0.75)',
+                    backdropFilter: 'blur(4px)',
+                    padding: '5px 12px',
+                    borderRadius: 999,
+                    fontSize: 10,
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    color: meta.color,
+                  }}
+                >
+                  {meta.label}
+                </div>
+                {statusLabel && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: 12,
+                      right: 12,
+                      background: 'rgba(20,16,15,0.75)',
+                      backdropFilter: 'blur(4px)',
+                      padding: '5px 12px',
+                      borderRadius: 999,
+                      fontSize: 10,
+                      fontWeight: 700,
+                      textTransform: 'uppercase',
+                      color: 'var(--text-muted)',
+                    }}
+                  >
+                    {statusLabel}
+                  </div>
+                )}
+              </div>
+              <div style={{ padding: '14px 16px' }}>
+                <div style={{ fontSize: 15, fontWeight: 700 }}>{item.otherPerson.displayName}</div>
+                <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginTop: 2 }}>
+                  {item.drinkType ? `${item.drinkType} · ` : ''}
+                  {item.venueName} · {timeAgo(item.createdAt)}
+                </div>
               </div>
             </div>
-          </div>
-        );
-      })}
+          );
+        })}
 
       {viewingItem && (
         <ProfileFullScreen
@@ -275,11 +429,15 @@ export default function LikeCenter({ userId, arenaSessionId, venueId, onOpenChat
           currentUserId={userId}
           venueId={venueId}
           onClose={() => setViewingItem(null)}
-          decisionActions={viewingItem.isPendingDecision ? {
-            onAccept: () => handleRespond(viewingItem, 'accept'),
-            onReject: () => handleRespond(viewingItem, 'reject'),
-            onIgnore: () => handleRespond(viewingItem, 'ignore'),
-          } : null}
+          decisionActions={
+            viewingItem.isPendingDecision
+              ? {
+                  onAccept: () => handleRespond(viewingItem, 'accept'),
+                  onReject: () => handleRespond(viewingItem, 'reject'),
+                  onIgnore: () => handleRespond(viewingItem, 'ignore'),
+                }
+              : null
+          }
           hideActionButtons={!viewingItem.isPendingDecision}
         />
       )}

@@ -30,7 +30,9 @@ export default function WelcomeBack({ userId, onDone }) {
         }
       })
       .catch(() => onDone?.());
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
@@ -38,24 +40,36 @@ export default function WelcomeBack({ userId, onDone }) {
 
   const items = [];
   if (summary.newLikes > 0) items.push({ icon: Heart, label: `${summary.newLikes} nuovi Like` });
-  if (summary.newSuperlikes > 0) items.push({ icon: Star, label: `${summary.newSuperlikes} nuovi Superlike` });
-  if (summary.newPulses > 0) items.push({ icon: PulseWaveIcon, label: `${summary.newPulses} nuovi Pulse` });
+  if (summary.newSuperlikes > 0)
+    items.push({ icon: Star, label: `${summary.newSuperlikes} nuovi Superlike` });
+  if (summary.newPulses > 0)
+    items.push({ icon: PulseWaveIcon, label: `${summary.newPulses} nuovi Pulse` });
 
   return (
     <div style={overlayStyle}>
       <div style={cardStyle}>
         <Hand size={32} color="var(--cyan)" style={{ marginBottom: 6 }} />
-        <h2 style={{ fontFamily: "'Unbounded',sans-serif", fontSize: 20, margin: '0 0 6px' }}>Bentornato</h2>
-        <p className="pl-hint" style={{ marginBottom: 16 }}>Ecco cosa ti sei perso dall'ultima volta</p>
+        <h2 style={{ fontFamily: "'Unbounded',sans-serif", fontSize: 20, margin: '0 0 6px' }}>
+          Bentornato
+        </h2>
+        <p className="pl-hint" style={{ marginBottom: 16 }}>
+          Ecco cosa ti sei perso dall'ultima volta
+        </p>
 
         {summary.pointsEarned > 0 && (
-          <div style={pointsBadgeStyle}>
-            +{summary.pointsEarned} punti guadagnati
-          </div>
+          <div style={pointsBadgeStyle}>+{summary.pointsEarned} punti guadagnati</div>
         )}
 
         {items.length > 0 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 14, textAlign: 'left' }}>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 8,
+              marginTop: 14,
+              textAlign: 'left',
+            }}
+          >
             {items.map((it) => (
               <div key={it.label} style={itemRowStyle}>
                 <it.icon size={16} />
@@ -71,8 +85,17 @@ export default function WelcomeBack({ userId, onDone }) {
             giro: se si becca la persona giusta, scatta il match e
             arrivano i punti bonus (v. sistema punti). */}
         {summary.newLikes > 0 && (
-          <p style={{ fontSize: 11.5, color: 'var(--cyan)', marginTop: 12, marginBottom: 0, lineHeight: 1.4 }}>
-            💜 Prova a mettere like in giro — se becchi la persona giusta, scatta il match e arrivano i punti bonus!
+          <p
+            style={{
+              fontSize: 11.5,
+              color: 'var(--cyan)',
+              marginTop: 12,
+              marginBottom: 0,
+              lineHeight: 1.4,
+            }}
+          >
+            💜 Prova a mettere like in giro — se becchi la persona giusta, scatta il match e
+            arrivano i punti bonus!
           </p>
         )}
 

@@ -21,7 +21,14 @@ import { Link2, Coins, Crown } from './PopuLiveIcons';
 
 const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:3000';
 
-export default function LiveRanking({ arenaSessionId, currentUserId, isGlobal, venueId, onSelectSelf, isDashboard }) {
+export default function LiveRanking({
+  arenaSessionId,
+  currentUserId,
+  isGlobal,
+  venueId,
+  onSelectSelf,
+  isDashboard,
+}) {
   const [ranking, setRanking] = useState([]);
   const [loading, setLoading] = useState(true);
   const [thresholdInfo, setThresholdInfo] = useState(null); // { currentCount, minRequired } — solo per la classifica locale
@@ -59,7 +66,11 @@ export default function LiveRanking({ arenaSessionId, currentUserId, isGlobal, v
         const data = await res.json();
         if (!cancelled && data.success) {
           setRanking(data.ranking);
-          setThresholdInfo(data.belowThreshold ? { currentCount: data.currentCount, minRequired: data.minRequired } : null);
+          setThresholdInfo(
+            data.belowThreshold
+              ? { currentCount: data.currentCount, minRequired: data.minRequired }
+              : null
+          );
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -67,7 +78,9 @@ export default function LiveRanking({ arenaSessionId, currentUserId, isGlobal, v
     }
 
     loadRanking();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [arenaSessionId, isGlobal, hashtagFilter, genderFilter]);
 
   // --------------------------------------------------------
@@ -89,9 +102,7 @@ export default function LiveRanking({ arenaSessionId, currentUserId, isGlobal, v
 
       setRanking((prev) => {
         const updated = prev.map((entry) =>
-          entry.userId === userId
-            ? { ...entry, points: entry.points + points }
-            : entry
+          entry.userId === userId ? { ...entry, points: entry.points + points } : entry
         );
         return updated.sort((a, b) => b.points - a.points).map((e, i) => ({ ...e, rank: i + 1 }));
       });
@@ -141,19 +152,72 @@ export default function LiveRanking({ arenaSessionId, currentUserId, isGlobal, v
               qui però il concetto "in attesa" ha davvero senso: si
               aspetta che si raggiunga il numero minimo di persone,
               non solo che qualcuno scansioni. */}
-          <div style={{ position: 'relative', aspectRatio: '4/5', borderRadius: 20, overflow: 'hidden', marginBottom: 16, boxShadow: 'var(--shadow-md)' }}>
+          <div
+            style={{
+              position: 'relative',
+              aspectRatio: '4/5',
+              borderRadius: 20,
+              overflow: 'hidden',
+              marginBottom: 16,
+              boxShadow: 'var(--shadow-md)',
+            }}
+          >
             <img
               src="https://res.cloudinary.com/rjkegdrp/image/upload/v1786420149/populive_senza_classifica_syju7o.webp"
               alt=""
-              style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 35%', filter: 'grayscale(100%) contrast(1.08) brightness(0.95)' }}
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                objectPosition: 'center 35%',
+                filter: 'grayscale(100%) contrast(1.08) brightness(0.95)',
+              }}
             />
-            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(20,16,15,0.88) 0%, rgba(20,16,15,0.15) 45%, rgba(20,16,15,0.05) 70%)' }} />
-            <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: 20, display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ width: 40, height: 40, borderRadius: '50%', flexShrink: 0, background: 'linear-gradient(135deg, #FF7A9C, var(--cyan))', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 10px -2px rgba(255,61,110,0.5)' }}>
+            <div
+              style={{
+                position: 'absolute',
+                inset: 0,
+                background:
+                  'linear-gradient(to top, rgba(20,16,15,0.88) 0%, rgba(20,16,15,0.15) 45%, rgba(20,16,15,0.05) 70%)',
+              }}
+            />
+            <div
+              style={{
+                position: 'absolute',
+                left: 0,
+                right: 0,
+                bottom: 0,
+                padding: 20,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12,
+              }}
+            >
+              <div
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: '50%',
+                  flexShrink: 0,
+                  background: 'linear-gradient(135deg, #FF7A9C, var(--cyan))',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 4px 10px -2px rgba(255,61,110,0.5)',
+                }}
+              >
                 <Crown size={18} color="#fff" />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontFamily: "'Unbounded',sans-serif", fontWeight: 700, fontSize: 16, color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,0.4)' }}>
+                <div
+                  style={{
+                    fontFamily: "'Unbounded',sans-serif",
+                    fontWeight: 700,
+                    fontSize: 16,
+                    color: '#fff',
+                    textShadow: '0 1px 3px rgba(0,0,0,0.4)',
+                  }}
+                >
                   In attesa che l'Arena si accenda
                 </div>
                 <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)', marginTop: 3 }}>
@@ -164,11 +228,20 @@ export default function LiveRanking({ arenaSessionId, currentUserId, isGlobal, v
           </div>
 
           <div style={{ textAlign: 'center', padding: '0 8px' }}>
-            <p style={{ fontFamily: "'Unbounded',sans-serif", fontWeight: 700, fontSize: 15, marginBottom: 8 }}>
+            <p
+              style={{
+                fontFamily: "'Unbounded',sans-serif",
+                fontWeight: 700,
+                fontSize: 15,
+                marginBottom: 8,
+              }}
+            >
               La classifica si sta ancora scaldando
             </p>
             <p className="pl-hint">
-              Servono almeno {thresholdInfo.minRequired} persone connesse per sbloccarla — al momento siete in {thresholdInfo.currentCount}. Il Radar e i tuoi punti funzionano comunque normalmente, e contano già per la classifica generale.
+              Servono almeno {thresholdInfo.minRequired} persone connesse per sbloccarla — al
+              momento siete in {thresholdInfo.currentCount}. Il Radar e i tuoi punti funzionano
+              comunque normalmente, e contano già per la classifica generale.
             </p>
           </div>
         </div>
@@ -180,39 +253,41 @@ export default function LiveRanking({ arenaSessionId, currentUserId, isGlobal, v
         </p>
       )}
 
-      {!loading && !thresholdInfo && ranking.map((entry) => (
-        <RankRow
-          key={entry.userId}
-          entry={entry}
-          isMe={entry.userId === currentUserId}
-          delta={recentDeltas[entry.userId]}
-          onClick={() => {
-            // In dashboard, mai i soliti Like/Superlike/Pulse — si
-            // apre direttamente la possibilità di scrivere, senza
-            // bisogno di nessun match (26/8, richiesta esplicita:
-            // per contattare chi si nota emergere in classifica,
-            // tipicamente per proporgli un accordo Instant
-            // Influencer). Anche toccare la PROPRIA riga qui non fa
-            // eccezione — non c'è motivo di escluderla, a differenza
-            // dell'app normale dove avrebbe aperto interazioni verso
-            // se stessi (qui non ce ne sono).
-            if (isDashboard) {
-              setAdminChatTarget({ userId: entry.userId, displayName: entry.displayName });
-              return;
-            }
-            // Toccare la PROPRIA riga non apre i bottoni Like/Superlike/
-            // Pulse puntati verso se stessi (non avrebbe senso) — ti
-            // portiamo invece dritti alla tua tab Profilo, dove hai
-            // già foto, punti e impostazioni. Un tocco a vuoto sarebbe
-            // un'esperienza povera, anche se "corretta" a modo suo.
-            if (entry.userId === currentUserId) {
-              onSelectSelf?.();
-            } else {
-              setSelectedProfileUserId(entry.userId);
-            }
-          }}
-        />
-      ))}
+      {!loading &&
+        !thresholdInfo &&
+        ranking.map((entry) => (
+          <RankRow
+            key={entry.userId}
+            entry={entry}
+            isMe={entry.userId === currentUserId}
+            delta={recentDeltas[entry.userId]}
+            onClick={() => {
+              // In dashboard, mai i soliti Like/Superlike/Pulse — si
+              // apre direttamente la possibilità di scrivere, senza
+              // bisogno di nessun match (26/8, richiesta esplicita:
+              // per contattare chi si nota emergere in classifica,
+              // tipicamente per proporgli un accordo Instant
+              // Influencer). Anche toccare la PROPRIA riga qui non fa
+              // eccezione — non c'è motivo di escluderla, a differenza
+              // dell'app normale dove avrebbe aperto interazioni verso
+              // se stessi (qui non ce ne sono).
+              if (isDashboard) {
+                setAdminChatTarget({ userId: entry.userId, displayName: entry.displayName });
+                return;
+              }
+              // Toccare la PROPRIA riga non apre i bottoni Like/Superlike/
+              // Pulse puntati verso se stessi (non avrebbe senso) — ti
+              // portiamo invece dritti alla tua tab Profilo, dove hai
+              // già foto, punti e impostazioni. Un tocco a vuoto sarebbe
+              // un'esperienza povera, anche se "corretta" a modo suo.
+              if (entry.userId === currentUserId) {
+                onSelectSelf?.();
+              } else {
+                setSelectedProfileUserId(entry.userId);
+              }
+            }}
+          />
+        ))}
 
       {/* Locale: schermata completa con Like/Superlike/Pulse —
           stesso identico strumento del radar, riusato senza
@@ -262,7 +337,11 @@ export default function LiveRanking({ arenaSessionId, currentUserId, isGlobal, v
  */
 function RankRow({ entry, isMe, delta, onClick }) {
   return (
-    <div className={`pl-rank-row ${isMe ? 'pl-rank-row-me' : ''}`} onClick={onClick} style={{ cursor: 'pointer' }}>
+    <div
+      className={`pl-rank-row ${isMe ? 'pl-rank-row-me' : ''}`}
+      onClick={onClick}
+      style={{ cursor: 'pointer' }}
+    >
       <span className="pl-rank-num">{entry.rank}</span>
 
       {/* La foto reale è sempre protagonista — è quella che serve
@@ -272,9 +351,14 @@ function RankRow({ entry, isMe, delta, onClick }) {
           stesso pattern sia qui che nel radar, per coerenza visiva. */}
       <span className="pl-rank-avatar-wrap">
         <span className="pl-rank-avatar">
-          {entry.photoUrl
-            ? <img src={getOptimizedPhotoUrl(entry.photoUrl, { width: 38, height: 38 })} alt={entry.displayName} />
-            : (entry.avatarEmoji || '🙂')}
+          {entry.photoUrl ? (
+            <img
+              src={getOptimizedPhotoUrl(entry.photoUrl, { width: 38, height: 38 })}
+              alt={entry.displayName}
+            />
+          ) : (
+            entry.avatarEmoji || '🙂'
+          )}
         </span>
         <span className="pl-badge-stack">
           {entry.isTopConnector && <Link2 size={11} color="#C7C9CC" title="Top Connector" />}
@@ -288,7 +372,9 @@ function RankRow({ entry, isMe, delta, onClick }) {
       <span className="pl-rank-points">
         {entry.points} pt
         {delta && (
-          <span className="pl-rank-delta" key={delta.key}>+{delta.points}</span>
+          <span className="pl-rank-delta" key={delta.key}>
+            +{delta.points}
+          </span>
         )}
       </span>
     </div>

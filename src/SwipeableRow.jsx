@@ -46,9 +46,15 @@ export default function SwipeableRow({ onDismiss, children }) {
     <div style={{ position: 'relative', marginBottom: 8, borderRadius: 14, overflow: 'hidden' }}>
       <div
         style={{
-          position: 'absolute', inset: 0, background: '#C4302B',
-          display: 'flex', alignItems: 'center', justifyContent: 'flex-end', paddingRight: 24,
-          color: '#fff', fontSize: 16,
+          position: 'absolute',
+          inset: 0,
+          background: '#C4302B',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'flex-end',
+          paddingRight: 24,
+          color: '#fff',
+          fontSize: 16,
         }}
       >
         ✕

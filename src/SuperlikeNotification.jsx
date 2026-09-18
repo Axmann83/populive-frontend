@@ -14,7 +14,13 @@ import ProfileFullScreen from './ProfileFullScreen';
  * natura del Superlike fin dall'inizio, mai anonimo.
  * ============================================================
  */
-export default function SuperlikeNotification({ superlike, currentUserId, arenaSessionId, venueId, onResolved }) {
+export default function SuperlikeNotification({
+  superlike,
+  currentUserId,
+  arenaSessionId,
+  venueId,
+  onResolved,
+}) {
   const [actionState, setActionState] = useState(null); // null | 'accepted' | 'rejected' | 'ignored' | 'sending'
   const [showFullProfile, setShowFullProfile] = useState(false);
 
@@ -28,7 +34,9 @@ export default function SuperlikeNotification({ superlike, currentUserId, arenaS
       });
       const data = await res.json();
       if (data.success) {
-        setActionState(action === 'accept' ? 'accepted' : action === 'reject' ? 'rejected' : 'ignored');
+        setActionState(
+          action === 'accept' ? 'accepted' : action === 'reject' ? 'rejected' : 'ignored'
+        );
         setTimeout(() => onResolved(data), action === 'accept' ? 1200 : 600);
       } else {
         setActionState(null);
@@ -39,19 +47,62 @@ export default function SuperlikeNotification({ superlike, currentUserId, arenaS
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 90, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-      <div style={{ width: '100%', maxWidth: 340, background: 'var(--surface)', border: '1px solid rgba(228,212,200,0.14)', borderRadius: 20, padding: '28px 24px', textAlign: 'center', boxShadow: 'var(--shadow-lg)' }}>
-
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(0,0,0,0.85)',
+        zIndex: 90,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 20,
+      }}
+    >
+      <div
+        style={{
+          width: '100%',
+          maxWidth: 340,
+          background: 'var(--surface)',
+          border: '1px solid rgba(228,212,200,0.14)',
+          borderRadius: 20,
+          padding: '28px 24px',
+          textAlign: 'center',
+          boxShadow: 'var(--shadow-lg)',
+        }}
+      >
         {actionState === null && (
           <>
             <div
               onClick={() => superlike.senderId && setShowFullProfile(true)}
-              style={{ width: 84, height: 84, borderRadius: '50%', overflow: 'hidden', margin: '0 auto 14px', border: '2px solid var(--cyan)', cursor: superlike.senderId ? 'pointer' : 'default' }}
+              style={{
+                width: 84,
+                height: 84,
+                borderRadius: '50%',
+                overflow: 'hidden',
+                margin: '0 auto 14px',
+                border: '2px solid var(--cyan)',
+                cursor: superlike.senderId ? 'pointer' : 'default',
+              }}
             >
               {superlike.senderPhotoUrl ? (
-                <img src={getOptimizedPhotoUrl(superlike.senderPhotoUrl, { width: 84, height: 84 })} alt={superlike.senderName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <img
+                  src={getOptimizedPhotoUrl(superlike.senderPhotoUrl, { width: 84, height: 84 })}
+                  alt={superlike.senderName}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
               ) : (
-                <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 38, background: 'var(--surface-2)' }}>
+                <div
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: 38,
+                    background: 'var(--surface-2)',
+                  }}
+                >
                   {superlike.senderAvatarEmoji || '🙂'}
                 </div>
               )}
@@ -64,31 +115,83 @@ export default function SuperlikeNotification({ superlike, currentUserId, arenaS
                 venueId={venueId}
                 onClose={() => setShowFullProfile(false)}
                 decisionActions={{
-                  onAccept: () => { setShowFullProfile(false); respond('accept'); },
-                  onReject: () => { setShowFullProfile(false); respond('reject'); },
-                  onIgnore: () => { setShowFullProfile(false); respond('ignore'); },
+                  onAccept: () => {
+                    setShowFullProfile(false);
+                    respond('accept');
+                  },
+                  onReject: () => {
+                    setShowFullProfile(false);
+                    respond('reject');
+                  },
+                  onIgnore: () => {
+                    setShowFullProfile(false);
+                    respond('ignore');
+                  },
                 }}
               />
             )}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 4 }}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6,
+                marginBottom: 4,
+              }}
+            >
               <Star size={16} color="var(--cyan)" fill="var(--cyan)" />
-              <span style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Superlike ricevuto</span>
+              <span
+                style={{
+                  fontSize: 11,
+                  color: 'var(--text-muted)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.06em',
+                }}
+              >
+                Superlike ricevuto
+              </span>
             </div>
-            <h2 style={{ fontFamily: "'Unbounded',sans-serif", fontSize: 18, margin: '0 0 18px' }}>{superlike.senderName}</h2>
+            <h2 style={{ fontFamily: "'Unbounded',sans-serif", fontSize: 18, margin: '0 0 18px' }}>
+              {superlike.senderName}
+            </h2>
 
-            <button className="pl-send-btn" onClick={() => respond('accept')} style={{ marginBottom: 8 }}>
+            <button
+              className="pl-send-btn"
+              onClick={() => respond('accept')}
+              style={{ marginBottom: 8 }}
+            >
               Accetta — apri la chat
             </button>
             <div style={{ display: 'flex', gap: 8 }}>
               <button
                 onClick={() => respond('ignore')}
-                style={{ flex: 1, padding: '10px', borderRadius: 10, border: '1px solid rgba(228,212,200,0.2)', background: 'transparent', color: 'var(--text-muted)', fontSize: 11.5, fontWeight: 600, cursor: 'pointer' }}
+                style={{
+                  flex: 1,
+                  padding: '10px',
+                  borderRadius: 10,
+                  border: '1px solid rgba(228,212,200,0.2)',
+                  background: 'transparent',
+                  color: 'var(--text-muted)',
+                  fontSize: 11.5,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
               >
                 Lascia in sospeso
               </button>
               <button
                 onClick={() => respond('reject')}
-                style={{ flex: 1, padding: '10px', borderRadius: 10, border: '1px solid rgba(228,212,200,0.2)', background: 'transparent', color: 'var(--text-muted)', fontSize: 11.5, fontWeight: 600, cursor: 'pointer' }}
+                style={{
+                  flex: 1,
+                  padding: '10px',
+                  borderRadius: 10,
+                  border: '1px solid rgba(228,212,200,0.2)',
+                  background: 'transparent',
+                  color: 'var(--text-muted)',
+                  fontSize: 11.5,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
               >
                 Rifiuta
               </button>
@@ -101,7 +204,9 @@ export default function SuperlikeNotification({ superlike, currentUserId, arenaS
         {actionState === 'accepted' && (
           <>
             <div style={{ fontSize: 34, marginBottom: 6 }}>💬</div>
-            <h2 style={{ fontFamily: "'Unbounded',sans-serif", fontSize: 18, margin: 0 }}>Chat aperta!</h2>
+            <h2 style={{ fontFamily: "'Unbounded',sans-serif", fontSize: 18, margin: 0 }}>
+              Chat aperta!
+            </h2>
           </>
         )}
 

@@ -14,7 +14,13 @@ import { apiFetch } from './apiClient';
  * cronologia resta leggibile finché la schermata è aperta.
  * ============================================================
  */
-export default function ChatWindow({ conversationId, currentUserId, otherUserName, onMarkedRead, sharedSocket }) {
+export default function ChatWindow({
+  conversationId,
+  currentUserId,
+  otherUserName,
+  onMarkedRead,
+  sharedSocket,
+}) {
   const [messages, setMessages] = useState([]);
   const [isClosed, setIsClosed] = useState(false);
   const [myWantsKeep, setMyWantsKeep] = useState(false);
@@ -61,7 +67,9 @@ export default function ChatWindow({ conversationId, currentUserId, otherUserNam
     apiFetch(`/api/chat/${conversationId}/mark-read`, { method: 'POST' })
       .then(() => onMarkedRead?.())
       .catch(() => {});
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conversationId, currentUserId]);
 
@@ -75,12 +83,15 @@ export default function ChatWindow({ conversationId, currentUserId, otherUserNam
 
     function handleChatMessage(payload) {
       if (payload.conversationId !== conversationId) return;
-      setMessages((prev) => [...prev, {
-        id: payload.messageId,
-        sender_id: payload.senderId,
-        body: payload.body,
-        created_at: payload.createdAt,
-      }]);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: payload.messageId,
+          sender_id: payload.senderId,
+          body: payload.body,
+          created_at: payload.createdAt,
+        },
+      ]);
       // Il messaggio arriva mentre la chat è già aperta e sotto gli
       // occhi — segnato come letto subito, senza aspettare che la
       // persona esca e rientri.
@@ -111,9 +122,15 @@ export default function ChatWindow({ conversationId, currentUserId, otherUserNam
     const localId = `local-${Date.now()}`;
     setDraft('');
 
-    setMessages((prev) => [...prev, {
-      id: localId, sender_id: currentUserId, body, created_at: new Date().toISOString(),
-    }]);
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: localId,
+        sender_id: currentUserId,
+        body,
+        created_at: new Date().toISOString(),
+      },
+    ]);
 
     // Controlliamo DAVVERO la risposta — prima non veniva mai letta,
     // quindi un rifiuto del server (bug vero capitato dal vivo, 22/8)
@@ -149,7 +166,9 @@ export default function ChatWindow({ conversationId, currentUserId, otherUserNam
     // Scegliere di conservare per la prima volta resta invece un
     // solo tocco, mai rischioso di suo.
     if (myWantsKeep && !newValue) {
-      const confirmed = window.confirm('Se ritiri la scelta, questa chat potrebbe chiudersi subito per entrambi, senza possibilità di tornare indietro. Continuare davvero?');
+      const confirmed = window.confirm(
+        'Se ritiri la scelta, questa chat potrebbe chiudersi subito per entrambi, senza possibilità di tornare indietro. Continuare davvero?'
+      );
       if (!confirmed) return;
     }
     setMyWantsKeep(newValue); // ottimistico
@@ -170,7 +189,9 @@ export default function ChatWindow({ conversationId, currentUserId, otherUserNam
   // bidirezionale — nessuna delle due parti potrà più contattare
   // l'altra né vederla nel radar, in nessun locale futuro.
   const handleBlock = useCallback(async () => {
-    const confirmed = window.confirm(`Vuoi davvero bloccare ${otherUserName}? Non potrete più contattarvi né vedervi nel radar, in nessun locale — questa scelta non si può annullare.`);
+    const confirmed = window.confirm(
+      `Vuoi davvero bloccare ${otherUserName}? Non potrete più contattarvi né vedervi nel radar, in nessun locale — questa scelta non si può annullare.`
+    );
     if (!confirmed) return;
     await apiFetch(`/api/chat/${conversationId}/block`, { method: 'POST' });
     setIsClosed(true);
@@ -205,12 +226,20 @@ export default function ChatWindow({ conversationId, currentUserId, otherUserNam
           disabled={isClosed}
           style={{ display: keepButtonVisible ? 'flex' : 'none', alignItems: 'center', gap: 5 }}
         >
-          {myWantsKeep && <BookmarkCheck size={12} />} {myWantsKeep ? 'Chat conservata ✓' : 'Conserva la chat'}
+          {myWantsKeep && <BookmarkCheck size={12} />}{' '}
+          {myWantsKeep ? 'Chat conservata ✓' : 'Conserva la chat'}
         </button>
         {!isClosed && (
           <button
             onClick={handleBlock}
-            style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: 10.5, cursor: 'pointer', padding: '4px 6px' }}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--text-muted)',
+              fontSize: 10.5,
+              cursor: 'pointer',
+              padding: '4px 6px',
+            }}
           >
             Blocca
           </button>
@@ -224,12 +253,17 @@ export default function ChatWindow({ conversationId, currentUserId, otherUserNam
           nessuno. */}
       {keepButtonVisible && myWantsKeep && !theirWantsKeep && !isClosed && (
         <div className="pl-chat-hint">
-          Hai scelto di conservarla — se lo sceglie anche {otherUserName}, resterà disponibile anche nei prossimi giorni.
+          Hai scelto di conservarla — se lo sceglie anche {otherUserName}, resterà disponibile anche
+          nei prossimi giorni.
         </div>
       )}
       {keepButtonVisible && myWantsKeep && theirWantsKeep && !isClosed && (
-        <div className="pl-chat-hint pl-chat-hint-success" style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-          Anche {otherUserName} ha scelto di conservare questa chat — continuerà a restare attiva e visibile anche dopo stasera. <Sparkles size={12} />
+        <div
+          className="pl-chat-hint pl-chat-hint-success"
+          style={{ display: 'flex', alignItems: 'center', gap: 5 }}
+        >
+          Anche {otherUserName} ha scelto di conservare questa chat — continuerà a restare attiva e
+          visibile anche dopo stasera. <Sparkles size={12} />
         </div>
       )}
 
@@ -247,7 +281,8 @@ export default function ChatWindow({ conversationId, currentUserId, otherUserNam
 
       {isClosed ? (
         <div className="pl-chat-closed-notice">
-          Questa chat è chiusa{keepButtonVisible
+          Questa chat è chiusa
+          {keepButtonVisible
             ? ` — ${myWantsKeep && !theirWantsKeep ? `${otherUserName} non ha scelto di conservarla.` : 'la serata è finita.'}`
             : '.'}
         </div>
@@ -260,7 +295,9 @@ export default function ChatWindow({ conversationId, currentUserId, otherUserNam
             placeholder="Scrivi un messaggio…"
             maxLength={1000}
           />
-          <button onClick={handleSend} disabled={!draft.trim()}>Invia</button>
+          <button onClick={handleSend} disabled={!draft.trim()}>
+            Invia
+          </button>
         </div>
       )}
     </div>

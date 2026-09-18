@@ -26,10 +26,18 @@ export default function MissionClaim({ missionId, onClose, viaQrScan = true }) {
     let cancelled = false;
     apiFetch(`/api/missions/${missionId}`)
       .then((r) => r.json())
-      .then((data) => { if (!cancelled) setMission(data.success ? data.mission : { notFound: true }); })
-      .catch(() => { if (!cancelled) setMission({ notFound: true }); })
-      .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
+      .then((data) => {
+        if (!cancelled) setMission(data.success ? data.mission : { notFound: true });
+      })
+      .catch(() => {
+        if (!cancelled) setMission({ notFound: true });
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [missionId]);
 
   async function confirm() {
@@ -54,30 +62,64 @@ export default function MissionClaim({ missionId, onClose, viaQrScan = true }) {
   };
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 90, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-      <div style={{ width: '100%', maxWidth: 340, background: 'var(--surface)', border: '1px solid rgba(228,212,200,0.14)', borderRadius: 20, padding: '28px 24px', textAlign: 'center', boxShadow: 'var(--shadow-lg)' }}>
-
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(0,0,0,0.85)',
+        zIndex: 90,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 20,
+      }}
+    >
+      <div
+        style={{
+          width: '100%',
+          maxWidth: 340,
+          background: 'var(--surface)',
+          border: '1px solid rgba(228,212,200,0.14)',
+          borderRadius: 20,
+          padding: '28px 24px',
+          textAlign: 'center',
+          boxShadow: 'var(--shadow-lg)',
+        }}
+      >
         {loading && <p className="pl-hint">Caricamento…</p>}
 
         {!loading && mission?.notFound && (
           <>
             <p className="pl-error">Questa missione non esiste (più).</p>
-            <button className="pl-send-btn" style={{ marginTop: 16 }} onClick={onClose}>Chiudi</button>
+            <button className="pl-send-btn" style={{ marginTop: 16 }} onClick={onClose}>
+              Chiudi
+            </button>
           </>
         )}
 
         {!loading && mission && !mission.notFound && !result && (
           <>
             <Target size={32} color="var(--cyan)" style={{ marginBottom: 6 }} />
-            <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>
+            <div
+              style={{
+                fontSize: 11,
+                color: 'var(--text-muted)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.06em',
+                marginBottom: 4,
+              }}
+            >
               Missione da {mission.sponsorName}
             </div>
-            <h2 style={{ fontFamily: "'Unbounded',sans-serif", fontSize: 18, margin: '0 0 10px' }}>{mission.claimText}</h2>
+            <h2 style={{ fontFamily: "'Unbounded',sans-serif", fontSize: 18, margin: '0 0 10px' }}>
+              {mission.claimText}
+            </h2>
 
             {viaQrScan ? (
               <>
                 <p className="pl-hint" style={{ marginBottom: 18 }}>
-                  Conferma per ottenere <strong style={{ color: 'var(--cyan)' }}>+{mission.bonusPoints} punti</strong>
+                  Conferma per ottenere{' '}
+                  <strong style={{ color: 'var(--cyan)' }}>+{mission.bonusPoints} punti</strong>
                 </p>
                 <button className="pl-send-btn" onClick={confirm} disabled={confirming}>
                   {confirming ? 'Un attimo…' : 'Conferma la tua presenza'}
@@ -85,13 +127,22 @@ export default function MissionClaim({ missionId, onClose, viaQrScan = true }) {
               </>
             ) : (
               <p className="pl-hint" style={{ marginBottom: 18 }}>
-                Vai lì e inquadra il QR esposto nel locale per ottenere <strong style={{ color: 'var(--cyan)' }}>+{mission.bonusPoints} punti</strong> — la sola posizione non basta, serve la prova reale di esserci passato.
+                Vai lì e inquadra il QR esposto nel locale per ottenere{' '}
+                <strong style={{ color: 'var(--cyan)' }}>+{mission.bonusPoints} punti</strong> — la
+                sola posizione non basta, serve la prova reale di esserci passato.
               </p>
             )}
 
             <button
               onClick={onClose}
-              style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: 11.5, marginTop: viaQrScan ? 12 : 0, cursor: 'pointer' }}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'var(--text-muted)',
+                fontSize: 11.5,
+                marginTop: viaQrScan ? 12 : 0,
+                cursor: 'pointer',
+              }}
             >
               {viaQrScan ? 'Annulla' : 'Chiudi'}
             </button>
@@ -101,18 +152,26 @@ export default function MissionClaim({ missionId, onClose, viaQrScan = true }) {
         {result?.success && (
           <>
             <div style={{ fontSize: 34, marginBottom: 6 }}>🎉</div>
-            <h2 style={{ fontFamily: "'Unbounded',sans-serif", fontSize: 18, margin: '0 0 6px' }}>Missione completata!</h2>
+            <h2 style={{ fontFamily: "'Unbounded',sans-serif", fontSize: 18, margin: '0 0 6px' }}>
+              Missione completata!
+            </h2>
             <p className="pl-hint" style={{ marginBottom: 18 }}>
               +{result.bonusPoints} punti da {result.sponsorName}
             </p>
-            <button className="pl-send-btn" onClick={onClose}>Continua</button>
+            <button className="pl-send-btn" onClick={onClose}>
+              Continua
+            </button>
           </>
         )}
 
         {result && result.success === false && (
           <>
-            <p className="pl-error">{errorMessages[result.reason] || 'Qualcosa è andato storto.'}</p>
-            <button className="pl-send-btn" style={{ marginTop: 16 }} onClick={onClose}>Chiudi</button>
+            <p className="pl-error">
+              {errorMessages[result.reason] || 'Qualcosa è andato storto.'}
+            </p>
+            <button className="pl-send-btn" style={{ marginTop: 16 }} onClick={onClose}>
+              Chiudi
+            </button>
           </>
         )}
       </div>

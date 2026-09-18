@@ -19,7 +19,13 @@ import { useState, useRef, useEffect } from 'react';
  *     manualmente…"), per i casi che ne hanno bisogno.
  * ============================================================
  */
-export default function VenueSearchSelect({ venues, value, onChange, placeholder = 'Scegli un locale…', extraOptions = [] }) {
+export default function VenueSearchSelect({
+  venues,
+  value,
+  onChange,
+  placeholder = 'Scegli un locale…',
+  extraOptions = [],
+}) {
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef(null);
@@ -63,16 +69,27 @@ export default function VenueSearchSelect({ venues, value, onChange, placeholder
         type="text"
         value={open ? query : displayValue}
         onFocus={() => setOpen(true)}
-        onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
+        onChange={(e) => {
+          setQuery(e.target.value);
+          setOpen(true);
+        }}
         placeholder={placeholder}
         style={{ width: '100%', boxSizing: 'border-box' }}
       />
       {open && (
         <div
           style={{
-            position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 20,
-            maxHeight: 260, overflowY: 'auto', background: 'var(--surface)',
-            border: '1px solid rgba(228,212,200,0.16)', borderRadius: 12, marginTop: 4,
+            position: 'absolute',
+            top: '100%',
+            left: 0,
+            right: 0,
+            zIndex: 20,
+            maxHeight: 260,
+            overflowY: 'auto',
+            background: 'var(--surface)',
+            border: '1px solid rgba(228,212,200,0.16)',
+            borderRadius: 12,
+            marginTop: 4,
             boxShadow: 'var(--shadow-lg)',
           }}
         >
@@ -86,18 +103,27 @@ export default function VenueSearchSelect({ venues, value, onChange, placeholder
               key={v.venueId}
               onClick={() => handlePick(v.venueId)}
               style={{
-                padding: '10px 14px', fontSize: 13, cursor: 'pointer',
+                padding: '10px 14px',
+                fontSize: 13,
+                cursor: 'pointer',
                 borderBottom: '1px solid rgba(228,212,200,0.08)',
               }}
             >
-              {v.name}{v.isPartner ? ' · partner' : ''}
+              {v.name}
+              {v.isPartner ? ' · partner' : ''}
             </div>
           ))}
           {extraOptions.map((o) => (
             <div
               key={o.value}
               onClick={() => handlePick(o.value)}
-              style={{ padding: '10px 14px', fontSize: 13, cursor: 'pointer', color: 'var(--cyan)', fontWeight: 600 }}
+              style={{
+                padding: '10px 14px',
+                fontSize: 13,
+                cursor: 'pointer',
+                color: 'var(--cyan)',
+                fontWeight: 600,
+              }}
             >
               {o.label}
             </div>

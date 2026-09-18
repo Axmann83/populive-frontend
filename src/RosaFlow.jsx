@@ -8,7 +8,10 @@ const TIER_META = {
   standalone: { label: 'Solo Pulse', sub: 'Anonima al 100% — nessun contatto' },
   like: { label: 'Pulse + Like', sub: 'Mistero — si svela solo con reciprocità' },
   simple: { label: 'Pulse', sub: 'Il tuo profilo sarà subito visibile' },
-  super: { label: 'Pulse + Superlike', sub: 'Il tuo profilo sarà subito visibile, con un Superlike incluso' },
+  super: {
+    label: 'Pulse + Superlike',
+    sub: 'Il tuo profilo sarà subito visibile, con un Superlike incluso',
+  },
 };
 
 /**
@@ -23,11 +26,10 @@ const TIER_META = {
  * ============================================================
  */
 
-
 // ------------------------------------------------------------
 // 1) INVIO
 // ------------------------------------------------------------
-export function PulseSend({ senderId, receiverId, arenaSessionId, venueId, onSent, onCancel }) {
+export function PulseSend({ receiverId, arenaSessionId, venueId, onSent, onCancel }) {
   const [drinks, setDrinks] = useState([]);
   const [selectedDrink, setSelectedDrink] = useState(null);
   // Quali modalità mostrare dipende dagli interruttori decisi dagli
@@ -82,14 +84,22 @@ export function PulseSend({ senderId, receiverId, arenaSessionId, venueId, onSen
   // il Pulse), offriamo di comprarne altri 5 invece di un errore
   // muto che non spiega cosa manca davvero.
   const offerSuperlikePurchase = useCallback(async () => {
-    const confirmed = window.confirm('Superlike esauriti per questa settimana — il Pulse ha bisogno anche di quello. Vuoi acquistarne altri 5?');
-    if (!confirmed) { setSending(false); return; }
+    const confirmed = window.confirm(
+      'Superlike esauriti per questa settimana — il Pulse ha bisogno anche di quello. Vuoi acquistarne altri 5?'
+    );
+    if (!confirmed) {
+      setSending(false);
+      return;
+    }
 
     try {
       const catalogRes = await apiFetch('/api/products');
       const catalogData = await catalogRes.json();
       const product = catalogData.products?.find((p) => p.product_type === 'superlike_credits');
-      if (!product) { setSending(false); return; }
+      if (!product) {
+        setSending(false);
+        return;
+      }
 
       const purchaseRes = await apiFetch('/api/purchases/initiate', {
         method: 'POST',
@@ -122,7 +132,10 @@ export function PulseSend({ senderId, receiverId, arenaSessionId, venueId, onSen
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          receiverId, arenaSessionId, drinkProductId: selectedDrink.id, tier,
+          receiverId,
+          arenaSessionId,
+          drinkProductId: selectedDrink.id,
+          tier,
         }),
       });
       const data = await res.json();
@@ -154,7 +167,9 @@ export function PulseSend({ senderId, receiverId, arenaSessionId, venueId, onSen
 
   return (
     <div className="pl-sheet">
-      <div className="pl-sheet-close" onClick={onCancel}>Chiudi ✕</div>
+      <div className="pl-sheet-close" onClick={onCancel}>
+        Chiudi ✕
+      </div>
       <h3>Invia un Pulse</h3>
 
       {drinks.length > 1 && (
@@ -184,19 +199,27 @@ export function PulseSend({ senderId, receiverId, arenaSessionId, venueId, onSen
         <div className="pl-pulse-option selected" style={{ cursor: 'default' }}>
           <div className="pl-pulse-title">
             {drinks[0].name}
-            {drinks[0].sponsor_name && <span className="pl-sponsor-tag"> · {drinks[0].sponsor_name}</span>}
+            {drinks[0].sponsor_name && (
+              <span className="pl-sponsor-tag"> · {drinks[0].sponsor_name}</span>
+            )}
           </div>
           <div className="pl-pulse-price">
-            {((drinks[0].base_price_cents - (drinks[0].sponsor_discount_cents || 0)) / 100).toFixed(2)}€
+            {((drinks[0].base_price_cents - (drinks[0].sponsor_discount_cents || 0)) / 100).toFixed(
+              2
+            )}
+            €
           </div>
         </div>
       )}
 
-      {drinks.length === 0 && <p className="pl-hint">Nessun drink disponibile in questo locale al momento.</p>}
+      {drinks.length === 0 && (
+        <p className="pl-hint">Nessun drink disponibile in questo locale al momento.</p>
+      )}
 
       {availableTiers.length === 1 ? (
         <p className="pl-hint" style={{ marginBottom: 14 }}>
-          Se chi la riceve accetta, il tuo profilo diventa subito visibile e si apre la chat — se non accetta, semplicemente non succede nulla.
+          Se chi la riceve accetta, il tuo profilo diventa subito visibile e si apre la chat — se
+          non accetta, semplicemente non succede nulla.
         </p>
       ) : (
         <>
@@ -234,7 +257,6 @@ function reasonToMessage(reason) {
   };
   return messages[reason] || 'Invio non riuscito — riprova.';
 }
-
 
 // ------------------------------------------------------------
 // 2) NOTIFICA DI RICEZIONE — le tre varianti
@@ -284,7 +306,14 @@ export function PulseNotification({ pulse, currentUserId, arenaSessionId, venueI
   }
 
   if (redeemInfo) {
-    return <PulseRedeemSeal pulseId={pulse.pulseId} redeemCode={redeemInfo.redeemCode} venueId={venueId} onDone={() => onResolved({ action: 'redeemed' })} />;
+    return (
+      <PulseRedeemSeal
+        pulseId={pulse.pulseId}
+        redeemCode={redeemInfo.redeemCode}
+        venueId={venueId}
+        onDone={() => onResolved({ action: 'redeemed' })}
+      />
+    );
   }
 
   if (showGuessGame) {
@@ -334,12 +363,34 @@ export function PulseNotification({ pulse, currentUserId, arenaSessionId, venueI
       {(pulse.tier === 'super' || pulse.tier === 'simple') && (
         <div
           onClick={() => pulse.senderId && setShowFullProfile(true)}
-          style={{ width: 84, height: 84, borderRadius: '50%', overflow: 'hidden', margin: '0 auto 14px', border: '2px solid var(--cyan)', cursor: pulse.senderId ? 'pointer' : 'default' }}
+          style={{
+            width: 84,
+            height: 84,
+            borderRadius: '50%',
+            overflow: 'hidden',
+            margin: '0 auto 14px',
+            border: '2px solid var(--cyan)',
+            cursor: pulse.senderId ? 'pointer' : 'default',
+          }}
         >
           {pulse.senderPhotoUrl ? (
-            <img src={pulse.senderPhotoUrl} alt={pulse.senderName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            <img
+              src={pulse.senderPhotoUrl}
+              alt={pulse.senderName}
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            />
           ) : (
-            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 38, background: 'var(--surface-2)' }}>
+            <div
+              style={{
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 38,
+                background: 'var(--surface-2)',
+              }}
+            >
               {pulse.senderAvatarEmoji || '🙂'}
             </div>
           )}
@@ -353,31 +404,52 @@ export function PulseNotification({ pulse, currentUserId, arenaSessionId, venueI
           venueId={venueId}
           onClose={() => setShowFullProfile(false)}
           decisionActions={{
-            onAccept: () => { setShowFullProfile(false); respond('accept'); },
-            onReject: () => { setShowFullProfile(false); respond('reject'); },
-            onIgnore: () => { setShowFullProfile(false); respond('ignore'); },
+            onAccept: () => {
+              setShowFullProfile(false);
+              respond('accept');
+            },
+            onReject: () => {
+              setShowFullProfile(false);
+              respond('reject');
+            },
+            onIgnore: () => {
+              setShowFullProfile(false);
+              respond('ignore');
+            },
           }}
         />
       )}
-      <h3 style={{ textAlign: (pulse.tier === 'super' || pulse.tier === 'simple') ? 'center' : 'left' }}>{copy.title}</h3>
-      <p className="pl-hint" style={{ textAlign: (pulse.tier === 'super' || pulse.tier === 'simple') ? 'center' : 'left' }}>{copy.sub}</p>
+      <h3
+        style={{ textAlign: pulse.tier === 'super' || pulse.tier === 'simple' ? 'center' : 'left' }}
+      >
+        {copy.title}
+      </h3>
+      <p
+        className="pl-hint"
+        style={{ textAlign: pulse.tier === 'super' || pulse.tier === 'simple' ? 'center' : 'left' }}
+      >
+        {copy.sub}
+      </p>
 
       <div className="pl-redeem-actions">
-        <button disabled={loading} onClick={() => respond('ignore')}>Lascia in sospeso</button>
-        <button disabled={loading} onClick={() => respond('reject')} className="pl-btn-reject">Rifiuta</button>
+        <button disabled={loading} onClick={() => respond('ignore')}>
+          Lascia in sospeso
+        </button>
+        <button disabled={loading} onClick={() => respond('reject')} className="pl-btn-reject">
+          Rifiuta
+        </button>
       </div>
       <button className="pl-send-btn" disabled={loading} onClick={() => respond('accept')}>
-        {(pulse.tier === 'super' || pulse.tier === 'simple') ? 'Apri la chat' : 'Accetta il Pulse'}
+        {pulse.tier === 'super' || pulse.tier === 'simple' ? 'Apri la chat' : 'Accetta il Pulse'}
       </button>
     </div>
   );
 }
 
-
 // ------------------------------------------------------------
 // 3) MINIGIOCO — indovina chi ti ha inviato il Pulse+Like
 // ------------------------------------------------------------
-export function PulseGuessGame({ pulseId, currentUserId, candidates, onFinished, redeemCode }) {
+export function PulseGuessGame({ pulseId, candidates, onFinished }) {
   const [message, setMessage] = useState('Hai tot tentativi per provare a scoprire chi è.');
   const [justMatched, setJustMatched] = useState(false);
 
@@ -414,7 +486,14 @@ export function PulseGuessGame({ pulseId, currentUserId, candidates, onFinished,
       <div className="pl-guess-grid">
         {candidates.map((c) => (
           <div key={c.userId} className="pl-guess-candidate" onClick={() => guess(c.userId)}>
-            {c.photoUrl ? <img src={getOptimizedPhotoUrl(c.photoUrl, { width: 40, height: 40 })} alt={c.displayName} /> : (c.avatarEmoji || '🙂')}
+            {c.photoUrl ? (
+              <img
+                src={getOptimizedPhotoUrl(c.photoUrl, { width: 40, height: 40 })}
+                alt={c.displayName}
+              />
+            ) : (
+              c.avatarEmoji || '🙂'
+            )}
             <span>{c.displayName}</span>
           </div>
         ))}
@@ -424,13 +503,15 @@ export function PulseGuessGame({ pulseId, currentUserId, candidates, onFinished,
           vero a quella persona (v. attemptGuess lato server) — chi
           non vuole rischiare un match indesiderato può uscire senza
           giocare, il Pulse resta comunque suo. */}
-      <button className="pl-abandon-btn" onClick={() => onFinished({ matched: false, abandoned: true })}>
+      <button
+        className="pl-abandon-btn"
+        onClick={() => onFinished({ matched: false, abandoned: true })}
+      >
         Nessuno mi interessa — abbandona e riscatta il Pulse
       </button>
     </div>
   );
 }
-
 
 // ------------------------------------------------------------
 // 4) RISCATTO AL BANCONE — sigillo con timer, mostrato al bartender
@@ -443,7 +524,10 @@ export function PulseRedeemSeal({ pulseId, redeemCode, venueId, onDone }) {
 
   useEffect(() => {
     if (state !== 'live') return;
-    if (secondsLeft <= 0) { setState('expired'); return; }
+    if (secondsLeft <= 0) {
+      setState('expired');
+      return;
+    }
     const t = setTimeout(() => setSecondsLeft((s) => s - 1), 1000);
     return () => clearTimeout(t);
   }, [state, secondsLeft]);
@@ -476,11 +560,17 @@ export function PulseRedeemSeal({ pulseId, redeemCode, venueId, onDone }) {
       setState('confirmed');
       setTimeout(onDone, 1000);
     } else if (data.reason === 'wrong_venue') {
-      setErrorMessage('Questo Pulse è valido solo nel locale in cui è stato ricevuto — qui non può essere riscattato.');
+      setErrorMessage(
+        'Questo Pulse è valido solo nel locale in cui è stato ricevuto — qui non può essere riscattato.'
+      );
     } else if (data.reason === 'pulse_expired_changed_venue') {
-      setErrorMessage('Questo Pulse è scaduto — hai fatto check-in in un altro locale nel frattempo.');
+      setErrorMessage(
+        'Questo Pulse è scaduto — hai fatto check-in in un altro locale nel frattempo.'
+      );
     } else if (data.reason === 'code_expired') {
-      setErrorMessage('Il tempo per confermare è scaduto — tocca di nuovo "Tieni premuto" per riprovare.');
+      setErrorMessage(
+        'Il tempo per confermare è scaduto — tocca di nuovo "Tieni premuto" per riprovare.'
+      );
       setState('idle');
     } else {
       setErrorMessage('Qualcosa è andato storto — riprova.');
@@ -491,11 +581,16 @@ export function PulseRedeemSeal({ pulseId, redeemCode, venueId, onDone }) {
     <div className="pl-sheet pl-redeem-card">
       <h3>Riscatta il tuo Pulse</h3>
       {state === 'idle' && (
-        <button className="pl-seal" onClick={activate}>Tieni premuto per attivare</button>
+        <button className="pl-seal" onClick={activate}>
+          Tieni premuto per attivare
+        </button>
       )}
       {state === 'live' && (
         <>
-          <div className={`pl-seal pl-seal-live pl-confirm-wave-wrap ${flash ? 'pl-seal-flash' : ''}`} onClick={handleSealTap}>
+          <div
+            className={`pl-seal pl-seal-live pl-confirm-wave-wrap ${flash ? 'pl-seal-flash' : ''}`}
+            onClick={handleSealTap}
+          >
             {flash && (
               <>
                 <span className="pl-confirm-wave"></span>
@@ -505,14 +600,19 @@ export function PulseRedeemSeal({ pulseId, redeemCode, venueId, onDone }) {
             )}
             {secondsLeft}
           </div>
-          <p className="pl-hint">Mostra il telefono al bartender: un suo tocco sul cerchio conferma ed eroga la consumazione.</p>
+          <p className="pl-hint">
+            Mostra il telefono al bartender: un suo tocco sul cerchio conferma ed eroga la
+            consumazione.
+          </p>
           {errorMessage && <p className="pl-error">{errorMessage}</p>}
         </>
       )}
       {state === 'expired' && (
         <>
           <p className="pl-error">Codice scaduto.</p>
-          <button className="pl-send-btn" onClick={activate}>Riattiva</button>
+          <button className="pl-send-btn" onClick={activate}>
+            Riattiva
+          </button>
         </>
       )}
       {state === 'confirmed' && <p>✓ Consumazione erogata.</p>}

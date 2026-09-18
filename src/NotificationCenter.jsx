@@ -30,7 +30,11 @@ const KIND_META = {
   pulse_standalone: { icon: PulseWaveIcon, color: 'var(--cyan)', label: 'Pulse' },
   pulse_like: { icon: PulseWaveIcon, color: 'var(--cyan)', label: 'Pulse+Like' },
   pulse_simple: { icon: PulseWaveIcon, color: 'var(--gold-medal, #D4A85C)', label: 'Pulse' },
-  pulse_super: { icon: PulseWaveIcon, color: 'var(--gold-medal, #D4A85C)', label: 'Pulse+Superlike' },
+  pulse_super: {
+    icon: PulseWaveIcon,
+    color: 'var(--gold-medal, #D4A85C)',
+    label: 'Pulse+Superlike',
+  },
 };
 
 const STATUS_LABELS = {
@@ -55,7 +59,9 @@ function timeAgo(dateString) {
 
 function describeEntry(entry) {
   if (entry.direction === 'match') {
-    return entry.otherPerson ? `Hai matchato con ${entry.otherPerson.displayName}! 🎉` : 'Hai fatto un nuovo match!';
+    return entry.otherPerson
+      ? `Hai matchato con ${entry.otherPerson.displayName}! 🎉`
+      : 'Hai fatto un nuovo match!';
   }
   const kindLabel = KIND_META[entry.kind]?.label || entry.kind;
   const who = entry.otherPerson ? entry.otherPerson.displayName : 'Qualcuno';
@@ -64,7 +70,13 @@ function describeEntry(entry) {
     : `Hai ricevuto un ${kindLabel}`;
 }
 
-export default function NotificationCenter({ userId, onSeen, arenaSessionId, venueId, onOpenChat }) {
+export default function NotificationCenter({
+  userId,
+  onSeen,
+  arenaSessionId,
+  venueId,
+  onOpenChat,
+}) {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [viewingUserId, setViewingUserId] = useState(null);
@@ -77,8 +89,12 @@ export default function NotificationCenter({ userId, onSeen, arenaSessionId, ven
         if (!cancelled && data.success) setHistory(data.history);
       })
       .catch(() => {})
-      .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [userId]);
 
   // Aprire davvero questa schermata azzera il pallino sulla scheda
@@ -103,7 +119,12 @@ export default function NotificationCenter({ userId, onSeen, arenaSessionId, ven
   }
 
   function handleClearAll() {
-    if (!window.confirm('Svuotare tutto il Centro Notifiche? Quelle nuove che arriveranno dopo restano visibili.')) return;
+    if (
+      !window.confirm(
+        'Svuotare tutto il Centro Notifiche? Quelle nuove che arriveranno dopo restano visibili.'
+      )
+    )
+      return;
     setHistory([]);
     apiFetch(`/api/users/${userId}/notifications/clear-all`, { method: 'POST' }).catch(() => {});
   }
@@ -122,21 +143,40 @@ export default function NotificationCenter({ userId, onSeen, arenaSessionId, ven
 
   return (
     <div className="pl-screen">
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: 16,
+        }}
+      >
         <div style={{ fontFamily: "'Unbounded',sans-serif", fontWeight: 700, fontSize: 18 }}>
           Centro Notifiche
         </div>
         {!loading && history.length > 0 && (
           <button
             onClick={handleClearAll}
-            style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: 11, fontWeight: 600, cursor: 'pointer', padding: 4 }}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--text-muted)',
+              fontSize: 11,
+              fontWeight: 600,
+              cursor: 'pointer',
+              padding: 4,
+            }}
           >
             Ripulisci tutto
           </button>
         )}
       </div>
 
-      {loading && <p className="pl-hint" style={{ textAlign: 'center', marginTop: 30 }}>Caricamento…</p>}
+      {loading && (
+        <p className="pl-hint" style={{ textAlign: 'center', marginTop: 30 }}>
+          Caricamento…
+        </p>
+      )}
 
       {!loading && history.length === 0 && (
         <div style={{ textAlign: 'center', marginTop: 60, color: 'var(--text-muted)' }}>
@@ -145,54 +185,89 @@ export default function NotificationCenter({ userId, onSeen, arenaSessionId, ven
         </div>
       )}
 
-      {!loading && history.map((entry) => {
-        const meta = KIND_META[entry.kind] || {};
-        const Icon = meta.icon || Bell;
-        const statusLabel = STATUS_LABELS[entry.status];
-        const photoClickable = entry.kind === 'like_match' ? !!entry.conversationId : !!entry.otherPerson?.userId;
+      {!loading &&
+        history.map((entry) => {
+          const meta = KIND_META[entry.kind] || {};
+          const Icon = meta.icon || Bell;
+          const statusLabel = STATUS_LABELS[entry.status];
+          const photoClickable =
+            entry.kind === 'like_match' ? !!entry.conversationId : !!entry.otherPerson?.userId;
 
-        return (
-          <SwipeableRow key={`${entry.kind}-${entry.id}`} onDismiss={() => handleDismiss(entry)}>
-            <div
-              style={{
-                display: 'flex', alignItems: 'center', gap: 12,
-                background: 'var(--surface-2)', padding: '12px 14px',
-              }}
-            >
+          return (
+            <SwipeableRow key={`${entry.kind}-${entry.id}`} onDismiss={() => handleDismiss(entry)}>
               <div
-                onClick={photoClickable ? () => handlePhotoClick(entry) : undefined}
                 style={{
-                  width: 38, height: 38, borderRadius: '50%', overflow: 'hidden', flexShrink: 0,
-                  background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  cursor: photoClickable ? 'pointer' : 'default',
-                  border: photoClickable ? '1.5px solid var(--cyan)' : 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12,
+                  background: 'var(--surface-2)',
+                  padding: '12px 14px',
                 }}
               >
-                {entry.otherPerson?.photoUrl ? (
-                  <img src={getOptimizedPhotoUrl(entry.otherPerson.photoUrl, { width: 38, height: 38 })} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                ) : (
-                  <Icon size={18} color={meta.color || 'var(--text-muted)'} />
-                )}
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 12.5, fontWeight: 600 }}>{describeEntry(entry)}</div>
-                <div style={{ fontSize: 10.5, color: 'var(--text-muted)', marginTop: 2, display: 'flex', gap: 6, alignItems: 'center' }}>
-                  {entry.direction === 'match' ? (
-                    <span style={{ color: meta.color }}>🎉 Match</span>
+                <div
+                  onClick={photoClickable ? () => handlePhotoClick(entry) : undefined}
+                  style={{
+                    width: 38,
+                    height: 38,
+                    borderRadius: '50%',
+                    overflow: 'hidden',
+                    flexShrink: 0,
+                    background: 'var(--surface)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: photoClickable ? 'pointer' : 'default',
+                    border: photoClickable ? '1.5px solid var(--cyan)' : 'none',
+                  }}
+                >
+                  {entry.otherPerson?.photoUrl ? (
+                    <img
+                      src={getOptimizedPhotoUrl(entry.otherPerson.photoUrl, {
+                        width: 38,
+                        height: 38,
+                      })}
+                      alt=""
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
                   ) : (
-                    <span style={{ color: meta.color }}>↘ Ricevuta</span>
+                    <Icon size={18} color={meta.color || 'var(--text-muted)'} />
                   )}
-                  {entry.direction !== 'match' && statusLabel && <span>· {statusLabel}</span>}
-                  {entry.drinkType && <span>· {entry.drinkType}</span>}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 12.5, fontWeight: 600 }}>{describeEntry(entry)}</div>
+                  <div
+                    style={{
+                      fontSize: 10.5,
+                      color: 'var(--text-muted)',
+                      marginTop: 2,
+                      display: 'flex',
+                      gap: 6,
+                      alignItems: 'center',
+                    }}
+                  >
+                    {entry.direction === 'match' ? (
+                      <span style={{ color: meta.color }}>🎉 Match</span>
+                    ) : (
+                      <span style={{ color: meta.color }}>↘ Ricevuta</span>
+                    )}
+                    {entry.direction !== 'match' && statusLabel && <span>· {statusLabel}</span>}
+                    {entry.drinkType && <span>· {entry.drinkType}</span>}
+                  </div>
+                </div>
+                <div
+                  style={{
+                    fontSize: 10,
+                    color: 'var(--text-muted)',
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0,
+                  }}
+                >
+                  {timeAgo(entry.createdAt)}
                 </div>
               </div>
-              <div style={{ fontSize: 10, color: 'var(--text-muted)', whiteSpace: 'nowrap', flexShrink: 0 }}>
-                {timeAgo(entry.createdAt)}
-              </div>
-            </div>
-          </SwipeableRow>
-        );
-      })}
+            </SwipeableRow>
+          );
+        })}
 
       {viewingUserId && (
         <ProfileFullScreen

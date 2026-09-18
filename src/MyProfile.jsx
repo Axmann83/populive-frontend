@@ -52,10 +52,17 @@ export default function MyProfile({ userId, arenaSessionId, onOpenSettings }) {
       }
     }
     load();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [userId, arenaSessionId]);
 
-  if (loading) return <div className="pl-hint" style={{ textAlign: 'center', marginTop: 30 }}>Caricamento…</div>;
+  if (loading)
+    return (
+      <div className="pl-hint" style={{ textAlign: 'center', marginTop: 30 }}>
+        Caricamento…
+      </div>
+    );
 
   if (editing) {
     return (
@@ -77,25 +84,60 @@ export default function MyProfile({ userId, arenaSessionId, onOpenSettings }) {
       <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
         <button
           onClick={onOpenSettings}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex' }}
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            color: 'var(--text-muted)',
+            display: 'flex',
+          }}
           aria-label="Impostazioni"
         >
           <SettingsIcon size={20} />
         </button>
       </div>
 
-
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', marginBottom: 10 }}>
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          textAlign: 'center',
+          marginBottom: 10,
+        }}
+      >
         <div
           className="pl-rank-avatar"
           onClick={() => ranking?.photoUrl && setShowPhoto(true)}
-          style={{ width: 64, height: 64, fontSize: 28, border: '2px solid var(--teak)', overflow: 'hidden', cursor: ranking?.photoUrl ? 'pointer' : 'default' }}
+          style={{
+            width: 64,
+            height: 64,
+            fontSize: 28,
+            border: '2px solid var(--teak)',
+            overflow: 'hidden',
+            cursor: ranking?.photoUrl ? 'pointer' : 'default',
+          }}
         >
-          {ranking?.photoUrl
-            ? <img src={getOptimizedPhotoUrl(ranking.photoUrl, { width: 64, height: 64 })} alt={ranking.displayName || 'Tu'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            : (ranking?.avatarEmoji || '🙂')}
+          {ranking?.photoUrl ? (
+            <img
+              src={getOptimizedPhotoUrl(ranking.photoUrl, { width: 64, height: 64 })}
+              alt={ranking.displayName || 'Tu'}
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            />
+          ) : (
+            ranking?.avatarEmoji || '🙂'
+          )}
         </div>
-        <div style={{ fontFamily: "'Unbounded',sans-serif", fontWeight: 700, fontSize: 15, marginTop: 8 }}>{ranking?.displayName || 'Tu'}</div>
+        <div
+          style={{
+            fontFamily: "'Unbounded',sans-serif",
+            fontWeight: 700,
+            fontSize: 15,
+            marginTop: 8,
+          }}
+        >
+          {ranking?.displayName || 'Tu'}
+        </div>
       </div>
 
       {/* Foto a tutto schermo — per vedere esattamente come ci si
@@ -105,11 +147,33 @@ export default function MyProfile({ userId, arenaSessionId, onOpenSettings }) {
       {showPhoto && ranking?.photoUrl && (
         <div
           onClick={() => setShowPhoto(false)}
-          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.92)', zIndex: 80, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.92)',
+            zIndex: 80,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+          }}
         >
           <button
             onClick={() => setShowPhoto(false)}
-            style={{ position: 'absolute', top: 18, right: 18, width: 38, height: 38, borderRadius: '50%', border: 'none', background: 'rgba(255,255,255,0.12)', color: '#fff', fontSize: 16, cursor: 'pointer', backdropFilter: 'blur(4px)' }}
+            style={{
+              position: 'absolute',
+              top: 18,
+              right: 18,
+              width: 38,
+              height: 38,
+              borderRadius: '50%',
+              border: 'none',
+              background: 'rgba(255,255,255,0.12)',
+              color: '#fff',
+              fontSize: 16,
+              cursor: 'pointer',
+              backdropFilter: 'blur(4px)',
+            }}
             aria-label="Chiudi"
           >
             ✕
@@ -117,7 +181,13 @@ export default function MyProfile({ userId, arenaSessionId, onOpenSettings }) {
           <img
             src={getOptimizedPhotoUrl(ranking.photoUrl, { width: 1000, height: 1000, crop: false })}
             alt={ranking.displayName || 'Tu'}
-            style={{ maxWidth: '92%', maxHeight: '80%', borderRadius: 16, objectFit: 'contain', boxShadow: 'var(--shadow-lg)' }}
+            style={{
+              maxWidth: '92%',
+              maxHeight: '80%',
+              borderRadius: 16,
+              objectFit: 'contain',
+              boxShadow: 'var(--shadow-lg)',
+            }}
           />
         </div>
       )}
@@ -125,7 +195,12 @@ export default function MyProfile({ userId, arenaSessionId, onOpenSettings }) {
       {ranking && (
         <div style={{ display: 'flex', gap: 8, margin: '14px 0' }}>
           <RankCounter label="Stanotte" rank={ranking.localRank} points={ranking.localPoints} />
-          <RankCounter label="Globale" rank={ranking.globalRank} points={ranking.globalPoints} accent="var(--teak)" />
+          <RankCounter
+            label="Globale"
+            rank={ranking.globalRank}
+            points={ranking.globalPoints}
+            accent="var(--teak)"
+          />
         </div>
       )}
 
@@ -133,29 +208,47 @@ export default function MyProfile({ userId, arenaSessionId, onOpenSettings }) {
           dopo la registrazione, non solo quella prima volta. */}
       <div style={{ marginTop: 6 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div className="pl-section-label" style={{ margin: 0 }}>Bio e hashtag</div>
+          <div className="pl-section-label" style={{ margin: 0 }}>
+            Bio e hashtag
+          </div>
           <button
             onClick={() => setEditing(true)}
-            style={{ background: 'none', border: 'none', color: 'var(--cyan)', fontSize: 11, fontWeight: 700, cursor: 'pointer', padding: 0 }}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--cyan)',
+              fontSize: 11,
+              fontWeight: 700,
+              cursor: 'pointer',
+              padding: 0,
+            }}
           >
             Modifica
           </button>
         </div>
 
         {profile?.bio ? (
-          <p style={{ fontSize: 12.5, lineHeight: 1.5, color: 'var(--text)', marginTop: 8 }}>{profile.bio}</p>
+          <p style={{ fontSize: 12.5, lineHeight: 1.5, color: 'var(--text)', marginTop: 8 }}>
+            {profile.bio}
+          </p>
         ) : (
-          <p className="pl-hint" style={{ marginTop: 8 }}>Non hai ancora scritto una bio.</p>
+          <p className="pl-hint" style={{ marginTop: 8 }}>
+            Non hai ancora scritto una bio.
+          </p>
         )}
 
         {profile?.hashtags?.length > 0 ? (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
             {profile.hashtags.map((h) => (
-              <span key={h} className="pl-hashtag">{h}</span>
+              <span key={h} className="pl-hashtag">
+                {h}
+              </span>
             ))}
           </div>
         ) : (
-          <p className="pl-hint" style={{ marginTop: 4 }}>Nessun hashtag ancora — aiutano i brand della tua categoria a trovarti.</p>
+          <p className="pl-hint" style={{ marginTop: 4 }}>
+            Nessun hashtag ancora — aiutano i brand della tua categoria a trovarti.
+          </p>
         )}
       </div>
 
@@ -175,47 +268,50 @@ function PremiumVerifiedSection({ profile, arenaSessionId, onProfileRefresh }) {
   const [purchasing, setPurchasing] = useState(null); // 'premium' | 'verified' | null
   const [error, setError] = useState(null);
 
-  const buy = useCallback(async (productType, key) => {
-    setPurchasing(key);
-    setError(null);
-    try {
-      const catalogRes = await apiFetch('/api/products');
-      const catalogData = await catalogRes.json();
-      const product = catalogData.products?.find((p) => p.product_type === productType);
-      if (!product) {
-        setError('Prodotto non disponibile al momento.');
-        return;
-      }
-
-      const purchaseRes = await apiFetch('/api/purchases/initiate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ productId: product.id, arenaSessionId }),
-      });
-      const purchaseData = await purchaseRes.json();
-
-      if (purchaseData.requiresPayment) {
-        window.location.href = purchaseData.checkoutUrl;
-        return; // usciamo dall'app per andare su Stripe
-      }
-
-      // Account di prova/gratis: l'effetto è già stato applicato sul
-      // server, aggiorniamo la vista senza dover ricaricare la pagina.
-      if (purchaseData.success) {
-        if (productType === 'premium_subscription') {
-          onProfileRefresh({ isPremium: true });
-        } else if (productType === 'verified_badge') {
-          onProfileRefresh({ verificationPending: true });
+  const buy = useCallback(
+    async (productType, key) => {
+      setPurchasing(key);
+      setError(null);
+      try {
+        const catalogRes = await apiFetch('/api/products');
+        const catalogData = await catalogRes.json();
+        const product = catalogData.products?.find((p) => p.product_type === productType);
+        if (!product) {
+          setError('Prodotto non disponibile al momento.');
+          return;
         }
-      } else {
-        setError('Qualcosa è andato storto — riprova.');
+
+        const purchaseRes = await apiFetch('/api/purchases/initiate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ productId: product.id, arenaSessionId }),
+        });
+        const purchaseData = await purchaseRes.json();
+
+        if (purchaseData.requiresPayment) {
+          window.location.href = purchaseData.checkoutUrl;
+          return; // usciamo dall'app per andare su Stripe
+        }
+
+        // Account di prova/gratis: l'effetto è già stato applicato sul
+        // server, aggiorniamo la vista senza dover ricaricare la pagina.
+        if (purchaseData.success) {
+          if (productType === 'premium_subscription') {
+            onProfileRefresh({ isPremium: true });
+          } else if (productType === 'verified_badge') {
+            onProfileRefresh({ verificationPending: true });
+          }
+        } else {
+          setError('Qualcosa è andato storto — riprova.');
+        }
+      } catch {
+        setError('Non siamo riusciti a raggiungere il server — riprova.');
+      } finally {
+        setPurchasing(null);
       }
-    } catch {
-      setError('Non siamo riusciti a raggiungere il server — riprova.');
-    } finally {
-      setPurchasing(null);
-    }
-  }, [arenaSessionId, onProfileRefresh]);
+    },
+    [arenaSessionId, onProfileRefresh]
+  );
 
   return (
     <div style={{ marginTop: 18 }}>
@@ -227,7 +323,11 @@ function PremiumVerifiedSection({ profile, arenaSessionId, onProfileRefresh }) {
           icon={Zap}
           color="var(--cyan)"
           title="Premium attivo"
-          sub={profile.premiumExpiresAt ? `Fino al ${new Date(profile.premiumExpiresAt).toLocaleDateString('it-IT')}` : 'Punti moltiplicati 1.2x'}
+          sub={
+            profile.premiumExpiresAt
+              ? `Fino al ${new Date(profile.premiumExpiresAt).toLocaleDateString('it-IT')}`
+              : 'Punti moltiplicati 1.2x'
+          }
         />
       ) : (
         <PurchaseCard
@@ -242,9 +342,19 @@ function PremiumVerifiedSection({ profile, arenaSessionId, onProfileRefresh }) {
 
       {/* Verificato */}
       {profile?.isVerified ? (
-        <StatusBadgeCard icon={BadgeCheck} color="var(--gold-medal, #E8C77E)" title="Profilo Verificato" sub="La tua identità è confermata" />
+        <StatusBadgeCard
+          icon={BadgeCheck}
+          color="var(--gold-medal, #E8C77E)"
+          title="Profilo Verificato"
+          sub="La tua identità è confermata"
+        />
       ) : profile?.verificationPending ? (
-        <StatusBadgeCard icon={BadgeCheck} color="var(--text-muted)" title="Verifica in corso" sub="La rivediamo a mano, ci vuole un po'" />
+        <StatusBadgeCard
+          icon={BadgeCheck}
+          color="var(--text-muted)"
+          title="Verifica in corso"
+          sub="La rivediamo a mano, ci vuole un po'"
+        />
       ) : (
         <PurchaseCard
           icon={BadgeCheck}
@@ -256,14 +366,30 @@ function PremiumVerifiedSection({ profile, arenaSessionId, onProfileRefresh }) {
         />
       )}
 
-      {error && <p className="pl-error" style={{ marginTop: 8 }}>{error}</p>}
+      {error && (
+        <p className="pl-error" style={{ marginTop: 8 }}>
+          {error}
+        </p>
+      )}
     </div>
   );
 }
 
 function StatusBadgeCard({ icon: Icon, color, title, sub }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'var(--surface)', border: `1px solid ${color}55`, borderRadius: 14, padding: 12, marginBottom: 8, boxShadow: 'var(--shadow-sm)' }}>
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 12,
+        background: 'var(--surface)',
+        border: `1px solid ${color}55`,
+        borderRadius: 14,
+        padding: 12,
+        marginBottom: 8,
+        boxShadow: 'var(--shadow-sm)',
+      }}
+    >
       <Icon size={22} color={color} />
       <div>
         <div style={{ fontSize: 12.5, fontWeight: 700, color }}>{title}</div>
@@ -275,7 +401,19 @@ function StatusBadgeCard({ icon: Icon, color, title, sub }) {
 
 function PurchaseCard({ icon: Icon, title, sub, buttonLabel, disabled, onClick }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'var(--surface)', border: '1px solid rgba(228,212,200,0.12)', borderRadius: 14, padding: 12, marginBottom: 8, boxShadow: 'var(--shadow-sm)' }}>
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 12,
+        background: 'var(--surface)',
+        border: '1px solid rgba(228,212,200,0.12)',
+        borderRadius: 14,
+        padding: 12,
+        marginBottom: 8,
+        boxShadow: 'var(--shadow-sm)',
+      }}
+    >
       <Icon size={22} color="var(--teak)" />
       <div style={{ flex: 1 }}>
         <div style={{ fontSize: 12.5, fontWeight: 700 }}>{title}</div>
@@ -284,7 +422,18 @@ function PurchaseCard({ icon: Icon, title, sub, buttonLabel, disabled, onClick }
       <button
         onClick={onClick}
         disabled={disabled}
-        style={{ background: 'var(--cyan)', color: '#fff', border: 'none', borderRadius: 10, padding: '8px 14px', fontSize: 11, fontWeight: 700, cursor: disabled ? 'default' : 'pointer', opacity: disabled ? 0.6 : 1, flexShrink: 0 }}
+        style={{
+          background: 'var(--cyan)',
+          color: '#fff',
+          border: 'none',
+          borderRadius: 10,
+          padding: '8px 14px',
+          fontSize: 11,
+          fontWeight: 700,
+          cursor: disabled ? 'default' : 'pointer',
+          opacity: disabled ? 0.6 : 1,
+          flexShrink: 0,
+        }}
       >
         {buttonLabel}
       </button>
@@ -319,7 +468,11 @@ function EditProfileForm({ userId, initialBio, initialHashtags, onSaved, onCance
       if (data.success) {
         onSaved(bio, hashtags);
       } else {
-        setError(data.reason === 'too_many_hashtags' ? `Massimo ${MAX_HASHTAGS} hashtag` : 'Qualcosa è andato storto.');
+        setError(
+          data.reason === 'too_many_hashtags'
+            ? `Massimo ${MAX_HASHTAGS} hashtag`
+            : 'Qualcosa è andato storto.'
+        );
       }
     } catch {
       setError('Non siamo riusciti a raggiungere il server — riprova.');
@@ -330,7 +483,9 @@ function EditProfileForm({ userId, initialBio, initialHashtags, onSaved, onCance
 
   return (
     <div className="pl-screen">
-      <div className="pl-sheet-close" onClick={onCancel}>Annulla ✕</div>
+      <div className="pl-sheet-close" onClick={onCancel}>
+        Annulla ✕
+      </div>
       <h3>Modifica bio e hashtag</h3>
 
       <textarea
@@ -347,19 +502,27 @@ function EditProfileForm({ userId, initialBio, initialHashtags, onSaved, onCance
           onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addHashtag())}
           placeholder="#fitness, #nightlife..."
         />
-        <button type="button" onClick={addHashtag}>Aggiungi</button>
+        <button type="button" onClick={addHashtag}>
+          Aggiungi
+        </button>
       </div>
       <div className="pl-hashtag-list">
         {hashtags.map((h) => (
           <span key={h} className="pl-hashtag-pill">
             #{h}
-            <button type="button" onClick={() => setHashtags(hashtags.filter((x) => x !== h))}>✕</button>
+            <button type="button" onClick={() => setHashtags(hashtags.filter((x) => x !== h))}>
+              ✕
+            </button>
           </span>
         ))}
       </div>
-      <p className="pl-hint">Gli hashtag ti rendono trovabile dai brand della tua categoria — max {MAX_HASHTAGS}.</p>
+      <p className="pl-hint">
+        Gli hashtag ti rendono trovabile dai brand della tua categoria — max {MAX_HASHTAGS}.
+      </p>
 
-      <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10, cursor: 'pointer' }}>
+      <label
+        style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10, cursor: 'pointer' }}
+      >
         <input
           type="checkbox"
           checked={hashtags.includes('pr')}
@@ -374,7 +537,9 @@ function EditProfileForm({ userId, initialBio, initialHashtags, onSaved, onCance
           }}
           style={{ width: 16, height: 16, marginBottom: 0 }}
         />
-        <span style={{ fontSize: 12 }}>Sono un PR — rendimi trovabile dai locali che cercano organizzatori</span>
+        <span style={{ fontSize: 12 }}>
+          Sono un PR — rendimi trovabile dai locali che cercano organizzatori
+        </span>
       </label>
 
       {error && <p className="pl-error">{error}</p>}
@@ -387,11 +552,30 @@ function EditProfileForm({ userId, initialBio, initialHashtags, onSaved, onCance
 
 function RankCounter({ label, rank, points, accent }) {
   return (
-    <div style={{ flex: 1, background: 'var(--surface-2)', border: '1px solid rgba(228,212,200,0.1)', borderRadius: 12, padding: 10, textAlign: 'center', boxShadow: 'var(--shadow-sm)' }}>
-      <div style={{ fontFamily: "'Unbounded',sans-serif", fontWeight: 800, fontSize: 17, color: accent || 'var(--text)' }}>
+    <div
+      style={{
+        flex: 1,
+        background: 'var(--surface-2)',
+        border: '1px solid rgba(228,212,200,0.1)',
+        borderRadius: 12,
+        padding: 10,
+        textAlign: 'center',
+        boxShadow: 'var(--shadow-sm)',
+      }}
+    >
+      <div
+        style={{
+          fontFamily: "'Unbounded',sans-serif",
+          fontWeight: 800,
+          fontSize: 17,
+          color: accent || 'var(--text)',
+        }}
+      >
         {rank ? `#${rank}` : '—'}
       </div>
-      <div style={{ fontSize: 8.5, color: 'var(--text-muted)' }}>{label} · {points ?? 0} pt</div>
+      <div style={{ fontSize: 8.5, color: 'var(--text-muted)' }}>
+        {label} · {points ?? 0} pt
+      </div>
     </div>
   );
 }

@@ -52,37 +52,91 @@ export default function ProfileDetail({ userId, arenaSessionId, onClose, onBack 
       }
     }
     load();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [userId, arenaSessionId]);
 
   return (
-    <div className="pl-fullscreen-modal" style={{ position: 'fixed', inset: 0, background: 'var(--bg, #14100F)', zIndex: 65, overflowY: 'auto' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 18px 6px' }}>
+    <div
+      className="pl-fullscreen-modal"
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'var(--bg, #14100F)',
+        zIndex: 65,
+        overflowY: 'auto',
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '18px 18px 6px',
+        }}
+      >
         {/* Torna alla foto a tutto schermo, non chiude tutto — un
             passo indietro nello stesso "viaggio", non una fine. */}
-        <button onClick={onBack} style={navBtnStyle} aria-label="Indietro">‹</button>
-        <button onClick={onClose} style={navBtnStyle} aria-label="Chiudi">✕</button>
+        <button onClick={onBack} style={navBtnStyle} aria-label="Indietro">
+          ‹
+        </button>
+        <button onClick={onClose} style={navBtnStyle} aria-label="Chiudi">
+          ✕
+        </button>
       </div>
 
       {loading || !profile ? (
-        <div className="pl-hint" style={{ textAlign: 'center', marginTop: 60 }}>Caricamento…</div>
+        <div className="pl-hint" style={{ textAlign: 'center', marginTop: 60 }}>
+          Caricamento…
+        </div>
       ) : (
         <div style={{ padding: '10px 20px 40px' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
-            <div style={{ width: 96, height: 96, borderRadius: '50%', overflow: 'hidden', border: '2px solid var(--teak)', background: 'var(--surface-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 42, boxShadow: 'var(--shadow-md)' }}>
-              {profile.photoUrl
-                ? <img src={getOptimizedPhotoUrl(profile.photoUrl, { width: 96, height: 96 })} alt={profile.displayName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                : profile.avatarEmoji}
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              textAlign: 'center',
+            }}
+          >
+            <div
+              style={{
+                width: 96,
+                height: 96,
+                borderRadius: '50%',
+                overflow: 'hidden',
+                border: '2px solid var(--teak)',
+                background: 'var(--surface-2)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 42,
+                boxShadow: 'var(--shadow-md)',
+              }}
+            >
+              {profile.photoUrl ? (
+                <img
+                  src={getOptimizedPhotoUrl(profile.photoUrl, { width: 96, height: 96 })}
+                  alt={profile.displayName}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+              ) : (
+                profile.avatarEmoji
+              )}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 10 }}>
-              <span style={{ fontFamily: "'Unbounded',sans-serif", fontWeight: 700, fontSize: 18 }}>{profile.displayName}</span>
+              <span style={{ fontFamily: "'Unbounded',sans-serif", fontWeight: 700, fontSize: 18 }}>
+                {profile.displayName}
+              </span>
               {profile.isTopConnector && <Link2 size={13} color="#C7C9CC" title="Top Connector" />}
               {profile.isTopSpender && <Coins size={13} color="#E8C77E" title="Top Spender" />}
               {profile.isFounder && <Crown size={13} color="#E8C77E" title="Founder" />}
             </div>
             {profile.instantInfluencerCategory && (
               <div style={{ ...influencerPillStyle, marginTop: 8 }}>
-                <Sparkles size={12} style={{ verticalAlign: 'middle', marginRight: 4 }} /> Instant Influencer
+                <Sparkles size={12} style={{ verticalAlign: 'middle', marginRight: 4 }} /> Instant
+                Influencer
               </div>
             )}
           </div>
@@ -94,7 +148,12 @@ export default function ProfileDetail({ userId, arenaSessionId, onClose, onBack 
           {ranking && !ranking.hidden && (
             <div style={{ display: 'flex', gap: 8, margin: '18px 0' }}>
               <RankBox label="Stanotte" rank={ranking.localRank} points={ranking.localPoints} />
-              <RankBox label="Globale" rank={ranking.globalRank} points={ranking.globalPoints} accent="var(--teak)" />
+              <RankBox
+                label="Globale"
+                rank={ranking.globalRank}
+                points={ranking.globalPoints}
+                accent="var(--teak)"
+              />
             </div>
           )}
           {ranking?.hidden && (
@@ -115,7 +174,9 @@ export default function ProfileDetail({ userId, arenaSessionId, onClose, onBack 
               <div className="pl-section-label">Hashtag</div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                 {profile.hashtags.map((h) => (
-                  <span key={h} className="pl-hashtag">{h}</span>
+                  <span key={h} className="pl-hashtag">
+                    {h}
+                  </span>
                 ))}
               </div>
             </div>
@@ -135,10 +196,17 @@ export default function ProfileDetail({ userId, arenaSessionId, onClose, onBack 
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{
-                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                      background: 'var(--surface-2)', border: '1px solid rgba(228,212,200,0.14)',
-                      borderRadius: 12, padding: '10px 14px', textDecoration: 'none',
-                      color: 'var(--text)', fontSize: 12.5, fontWeight: 600,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      background: 'var(--surface-2)',
+                      border: '1px solid rgba(228,212,200,0.14)',
+                      borderRadius: 12,
+                      padding: '10px 14px',
+                      textDecoration: 'none',
+                      color: 'var(--text)',
+                      fontSize: 12.5,
+                      fontWeight: 600,
                     }}
                   >
                     {p.name}
@@ -156,11 +224,30 @@ export default function ProfileDetail({ userId, arenaSessionId, onClose, onBack 
 
 function RankBox({ label, rank, points, accent }) {
   return (
-    <div style={{ flex: 1, background: 'var(--surface-2)', border: '1px solid rgba(228,212,200,0.1)', borderRadius: 12, padding: 10, textAlign: 'center', boxShadow: 'var(--shadow-sm)' }}>
-      <div style={{ fontFamily: "'Unbounded',sans-serif", fontWeight: 800, fontSize: 17, color: accent || 'var(--text)' }}>
+    <div
+      style={{
+        flex: 1,
+        background: 'var(--surface-2)',
+        border: '1px solid rgba(228,212,200,0.1)',
+        borderRadius: 12,
+        padding: 10,
+        textAlign: 'center',
+        boxShadow: 'var(--shadow-sm)',
+      }}
+    >
+      <div
+        style={{
+          fontFamily: "'Unbounded',sans-serif",
+          fontWeight: 800,
+          fontSize: 17,
+          color: accent || 'var(--text)',
+        }}
+      >
         {rank ? `#${rank}` : '—'}
       </div>
-      <div style={{ fontSize: 8.5, color: 'var(--text-muted)' }}>{label} · {points ?? 0} pt</div>
+      <div style={{ fontSize: 8.5, color: 'var(--text-muted)' }}>
+        {label} · {points ?? 0} pt
+      </div>
     </div>
   );
 }

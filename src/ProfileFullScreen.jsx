@@ -18,7 +18,16 @@ import { Heart, Star, PulseWaveIcon, Link2, Coins, Crown, Sparkles } from './Pop
  * schermata".
  * ============================================================
  */
-export default function ProfileFullScreen({ userId, arenaSessionId, currentUserId, venueId, onClose, viaHistoricalBoard, decisionActions, hideActionButtons }) {
+export default function ProfileFullScreen({
+  userId,
+  arenaSessionId,
+  currentUserId,
+  venueId,
+  onClose,
+  viaHistoricalBoard,
+  decisionActions,
+  hideActionButtons,
+}) {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [actionState, setActionState] = useState(null); // null | 'liked' | 'superliked' | 'sending'
@@ -38,7 +47,9 @@ export default function ProfileFullScreen({ userId, arenaSessionId, currentUserI
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = previousOverflow; };
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
   }, []);
 
   useEffect(() => {
@@ -46,7 +57,9 @@ export default function ProfileFullScreen({ userId, arenaSessionId, currentUserI
     async function load() {
       setLoading(true);
       try {
-        const res = await apiFetch(`/api/users/${userId}/public-profile?arenaSessionId=${arenaSessionId || ''}`);
+        const res = await apiFetch(
+          `/api/users/${userId}/public-profile?arenaSessionId=${arenaSessionId || ''}`
+        );
         const data = await res.json();
         if (!cancelled && data.success) setProfile(data.profile);
 
@@ -69,7 +82,9 @@ export default function ProfileFullScreen({ userId, arenaSessionId, currentUserI
       }
     }
     load();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [userId, arenaSessionId, viaHistoricalBoard]);
 
   async function sendQuickInteraction(type) {
@@ -93,16 +108,22 @@ export default function ProfileFullScreen({ userId, arenaSessionId, currentUserI
         // già colorato da subito, niente da fare qui
       } else if (data.reason === 'requires_premium_for_historical_board') {
         setActionState(null);
-        window.alert('Serve Premium per contattare qualcuno dalla Bacheca Storica — puoi attivarlo dal tuo profilo.');
+        window.alert(
+          'Serve Premium per contattare qualcuno dalla Bacheca Storica — puoi attivarlo dal tuo profilo.'
+        );
       } else if (data.reason === 'superlike_balance_exhausted') {
         setActionState(null);
         offerSuperlikePurchase();
       } else if (data.reason === 'like_already_sent_tonight') {
         setActionState(null);
-        window.alert('Hai già mandato un Like a questa persona stasera — puoi riprovare in un\'altra serata.');
+        window.alert(
+          "Hai già mandato un Like a questa persona stasera — puoi riprovare in un'altra serata."
+        );
       } else if (data.reason === 'superlike_already_sent_tonight') {
         setActionState(null);
-        window.alert('Hai già mandato un Superlike a questa persona stasera — puoi riprovare in un\'altra serata.');
+        window.alert(
+          "Hai già mandato un Superlike a questa persona stasera — puoi riprovare in un'altra serata."
+        );
       } else {
         setActionState(null);
       }
@@ -116,7 +137,9 @@ export default function ProfileFullScreen({ userId, arenaSessionId, currentUserI
   // non fa nulla. Il prodotto si cerca per SKU nel catalogo (l'id
   // vero è generato dal database, non lo conosciamo in anticipo).
   async function offerSuperlikePurchase() {
-    const confirmed = window.confirm('Superlike esauriti per questa settimana. Vuoi acquistarne altri 5?');
+    const confirmed = window.confirm(
+      'Superlike esauriti per questa settimana. Vuoi acquistarne altri 5?'
+    );
     if (!confirmed) return;
 
     try {
@@ -145,7 +168,19 @@ export default function ProfileFullScreen({ userId, arenaSessionId, currentUserI
   if (showPulseSend) {
     return createPortal(
       <div className="pl-fullscreen-modal" style={overlayStyle}>
-        <div style={{ width: '100%', maxWidth: 420, background: 'var(--surface)', borderRadius: '24px 24px 0 0', padding: 20, boxSizing: 'border-box', maxHeight: '85vh', overflowY: 'auto', boxShadow: 'var(--shadow-lg)' }}>
+        <div
+          style={{
+            width: '100%',
+            maxWidth: 420,
+            background: 'var(--surface)',
+            borderRadius: '24px 24px 0 0',
+            padding: 20,
+            boxSizing: 'border-box',
+            maxHeight: '85vh',
+            overflowY: 'auto',
+            boxShadow: 'var(--shadow-lg)',
+          }}
+        >
           <PulseSend
             senderId={currentUserId}
             receiverId={userId}
@@ -167,10 +202,19 @@ export default function ProfileFullScreen({ userId, arenaSessionId, currentUserI
   return createPortal(
     <div className="pl-fullscreen-modal" style={fullScreenStyle}>
       {/* X per chiudere — sempre in alto, sempre raggiungibile */}
-      <button onClick={onClose} style={closeButtonStyle} aria-label="Chiudi">✕</button>
+      <button onClick={onClose} style={closeButtonStyle} aria-label="Chiudi">
+        ✕
+      </button>
 
       {loading || !profile ? (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: '100%',
+          }}
+        >
           <div className="pl-hint">Caricamento…</div>
         </div>
       ) : (
@@ -191,9 +235,24 @@ export default function ProfileFullScreen({ userId, arenaSessionId, currentUserI
               riquadri della lista. */}
           <div style={photoContainerStyle}>
             {profile.photoUrl ? (
-              <div style={{ ...photoImgStyle, backgroundImage: `url(${getOptimizedPhotoUrl(profile.photoUrl, { width: 600, height: 800, crop: false })})` }} role="img" aria-label={profile.displayName} />
+              <div
+                style={{
+                  ...photoImgStyle,
+                  backgroundImage: `url(${getOptimizedPhotoUrl(profile.photoUrl, { width: 600, height: 800, crop: false })})`,
+                }}
+                role="img"
+                aria-label={profile.displayName}
+              />
             ) : (
-              <div style={{ ...photoImgStyle, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 120 }}>
+              <div
+                style={{
+                  ...photoImgStyle,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 120,
+                }}
+              >
                 {profile.avatarEmoji}
               </div>
             )}
@@ -207,15 +266,27 @@ export default function ProfileFullScreen({ userId, arenaSessionId, currentUserI
           <div style={infoOverlayStyle}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontFamily: "'Unbounded',sans-serif", fontWeight: 700, fontSize: 22 }}>{profile.displayName}</span>
-                {profile.isTopConnector && <Link2 size={14} color="#C7C9CC" title="Top Connector" />}
+                <span
+                  style={{ fontFamily: "'Unbounded',sans-serif", fontWeight: 700, fontSize: 22 }}
+                >
+                  {profile.displayName}
+                </span>
+                {profile.isTopConnector && (
+                  <Link2 size={14} color="#C7C9CC" title="Top Connector" />
+                )}
                 {profile.isTopSpender && <Coins size={14} color="#E8C77E" title="Top Spender" />}
                 {profile.isFounder && <Crown size={14} color="#E8C77E" title="Founder" />}
               </div>
               {/* La freccetta verso il profilo completo — bio per
                   intero e la sua posizione in classifica, se ha
                   scelto di mostrarla. */}
-              <button onClick={() => setShowProfileDetail(true)} style={arrowButtonStyle} aria-label="Profilo completo">›</button>
+              <button
+                onClick={() => setShowProfileDetail(true)}
+                style={arrowButtonStyle}
+                aria-label="Profilo completo"
+              >
+                ›
+              </button>
             </div>
             {/* "Ci siamo già incontrati" (25/8) — solo per la vera
                 seconda occasione: una chat GIÀ CHIUSA in passato con
@@ -225,14 +296,26 @@ export default function ProfileFullScreen({ userId, arenaSessionId, currentUserI
                 far ricordare che c'era già stata una scintilla,
                 senza scomodare l'account/statistiche di nessuno. */}
             {profile.pastMatch && (
-              <div style={{
-                display: 'flex', alignItems: 'center', gap: 6, marginTop: 8,
-                background: 'rgba(255,61,110,0.16)', border: '1px solid rgba(255,61,110,0.35)',
-                borderRadius: 999, padding: '6px 12px', width: 'fit-content',
-              }}>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  marginTop: 8,
+                  background: 'rgba(255,61,110,0.16)',
+                  border: '1px solid rgba(255,61,110,0.35)',
+                  borderRadius: 999,
+                  padding: '6px 12px',
+                  width: 'fit-content',
+                }}
+              >
                 <Heart size={12} color="var(--cyan)" fill="var(--cyan)" />
                 <span style={{ fontSize: 11.5, fontWeight: 600 }}>
-                  Match presso {profile.pastMatch.venueName} il {new Date(profile.pastMatch.matchedAt).toLocaleDateString('it-IT', { day: 'numeric', month: 'long' })}
+                  Match presso {profile.pastMatch.venueName} il{' '}
+                  {new Date(profile.pastMatch.matchedAt).toLocaleDateString('it-IT', {
+                    day: 'numeric',
+                    month: 'long',
+                  })}
                 </span>
               </div>
             )}
@@ -245,19 +328,38 @@ export default function ProfileFullScreen({ userId, arenaSessionId, currentUserI
                 e perderebbe peso. */}
             {profile.instantInfluencerCategory && (
               <div style={influencerPillStyle}>
-                <Sparkles size={12} style={{ verticalAlign: 'middle', marginRight: 4 }} /> Instant Influencer
+                <Sparkles size={12} style={{ verticalAlign: 'middle', marginRight: 4 }} /> Instant
+                Influencer
               </div>
             )}
-            {profile.bio && <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.85)', textShadow: '0 1px 3px rgba(0,0,0,0.6)', margin: '6px 0 0' }}>{profile.bio}</p>}
+            {profile.bio && (
+              <p
+                style={{
+                  fontSize: 13,
+                  color: 'rgba(255,255,255,0.85)',
+                  textShadow: '0 1px 3px rgba(0,0,0,0.6)',
+                  margin: '6px 0 0',
+                }}
+              >
+                {profile.bio}
+              </p>
+            )}
             {profile.hashtags?.length > 0 && (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
                 {profile.hashtags.map((h) => (
                   <span
                     key={h}
                     style={{
-                      display: 'inline-block', background: 'rgba(20,16,15,0.65)', border: '1px solid rgba(255,255,255,0.25)',
-                      color: '#fff', fontSize: 11, fontWeight: 600, padding: '5px 10px', borderRadius: 999,
-                      backdropFilter: 'blur(4px)', textShadow: '0 1px 2px rgba(0,0,0,0.4)',
+                      display: 'inline-block',
+                      background: 'rgba(20,16,15,0.65)',
+                      border: '1px solid rgba(255,255,255,0.25)',
+                      color: '#fff',
+                      fontSize: 11,
+                      fontWeight: 600,
+                      padding: '5px 10px',
+                      borderRadius: 999,
+                      backdropFilter: 'blur(4px)',
+                      textShadow: '0 1px 2px rgba(0,0,0,0.4)',
                     }}
                   >
                     {h}
@@ -274,19 +376,43 @@ export default function ProfileFullScreen({ userId, arenaSessionId, currentUserI
                 chiudere il profilo e tornare indietro. */}
             {hideActionButtons ? null : decisionActions ? (
               <div style={{ marginTop: 16 }}>
-                <button className="pl-send-btn" onClick={decisionActions.onAccept} style={{ marginBottom: 8 }}>
+                <button
+                  className="pl-send-btn"
+                  onClick={decisionActions.onAccept}
+                  style={{ marginBottom: 8 }}
+                >
                   Accetta — apri la chat
                 </button>
                 <div style={{ display: 'flex', gap: 8 }}>
                   <button
                     onClick={decisionActions.onIgnore}
-                    style={{ flex: 1, padding: '10px', borderRadius: 10, border: '1px solid rgba(228,212,200,0.2)', background: 'transparent', color: 'var(--text-muted)', fontSize: 11.5, fontWeight: 600, cursor: 'pointer' }}
+                    style={{
+                      flex: 1,
+                      padding: '10px',
+                      borderRadius: 10,
+                      border: '1px solid rgba(228,212,200,0.2)',
+                      background: 'transparent',
+                      color: 'var(--text-muted)',
+                      fontSize: 11.5,
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
                   >
                     Lascia in sospeso
                   </button>
                   <button
                     onClick={decisionActions.onReject}
-                    style={{ flex: 1, padding: '10px', borderRadius: 10, border: '1px solid rgba(228,212,200,0.2)', background: 'transparent', color: 'var(--text-muted)', fontSize: 11.5, fontWeight: 600, cursor: 'pointer' }}
+                    style={{
+                      flex: 1,
+                      padding: '10px',
+                      borderRadius: 10,
+                      border: '1px solid rgba(228,212,200,0.2)',
+                      background: 'transparent',
+                      color: 'var(--text-muted)',
+                      fontSize: 11.5,
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
                   >
                     Rifiuta
                   </button>
@@ -341,7 +467,10 @@ export default function ProfileFullScreen({ userId, arenaSessionId, currentUserI
           userId={userId}
           arenaSessionId={arenaSessionId}
           onBack={() => setShowProfileDetail(false)}
-          onClose={() => { setShowProfileDetail(false); onClose(); }}
+          onClose={() => {
+            setShowProfileDetail(false);
+            onClose();
+          }}
         />
       )}
     </div>,

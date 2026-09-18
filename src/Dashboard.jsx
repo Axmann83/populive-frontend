@@ -3,7 +3,15 @@ import QRCode from 'qrcode';
 import QrScannerModal from './QrScannerModal';
 import VenueSearchSelect from './VenueSearchSelect';
 import { apiFetch, getOptimizedPhotoUrl } from './apiClient';
-import { Target, Settings as SettingsIcon, TrendingUp, Coins, Search, Armchair, Crown } from './PopuLiveIcons';
+import {
+  Target,
+  Settings as SettingsIcon,
+  TrendingUp,
+  Coins,
+  Search,
+  Armchair,
+  Crown,
+} from './PopuLiveIcons';
 import LiveRanking from './LiveRanking';
 
 /**
@@ -60,7 +68,9 @@ export default function Dashboard({ userId }) {
           <p className="pl-hint" style={{ marginBottom: 20 }}>
             Questa sezione è visibile solo agli Architetti di PopuLive.
           </p>
-          <button className="pl-send-btn" onClick={goHome}>Torna all'app</button>
+          <button className="pl-send-btn" onClick={goHome}>
+            Torna all'app
+          </button>
         </div>
       </div>
     );
@@ -69,24 +79,79 @@ export default function Dashboard({ userId }) {
   return (
     <div className="pl-app-shell">
       <div className="pl-top-bar">
-        <div className="pl-brand">Popu<span className="pl-brand-live">Live</span> <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600 }}>· Dashboard</span></div>
+        <div className="pl-brand">
+          Popu<span className="pl-brand-live">Live</span>{' '}
+          <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600 }}>
+            · Dashboard
+          </span>
+        </div>
         <button
           onClick={goHome}
-          style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: 11.5, cursor: 'pointer' }}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: 'var(--text-muted)',
+            fontSize: 11.5,
+            cursor: 'pointer',
+          }}
         >
           Esci
         </button>
       </div>
 
       <div className="pl-content">
-        <div style={{ display: 'flex', gap: 5, marginBottom: 18, overflowX: 'auto', WebkitOverflowScrolling: 'touch', paddingBottom: 2 }}>
-          <SectionTab icon={Target} label="Missioni" active={activeSection === 'missioni'} onClick={() => setActiveSection('missioni')} />
-          <SectionTab icon={Armchair} label="Serata" active={activeSection === 'organizza'} onClick={() => setActiveSection('organizza')} />
-          <SectionTab icon={Crown} label="Classifiche" active={activeSection === 'classifiche'} onClick={() => setActiveSection('classifiche')} />
-          <SectionTab icon={TrendingUp} label="Locali" active={activeSection === 'locali'} onClick={() => setActiveSection('locali')} />
-          <SectionTab icon={Coins} label="Prezzi" active={activeSection === 'prezzi'} onClick={() => setActiveSection('prezzi')} />
-          <SectionTab icon={Search} label="Persone" active={activeSection === 'persone'} onClick={() => setActiveSection('persone')} />
-          <SectionTab icon={SettingsIcon} label="Funzioni" active={activeSection === 'funzionalita'} onClick={() => setActiveSection('funzionalita')} />
+        <div
+          style={{
+            display: 'flex',
+            gap: 5,
+            marginBottom: 18,
+            overflowX: 'auto',
+            WebkitOverflowScrolling: 'touch',
+            paddingBottom: 2,
+          }}
+        >
+          <SectionTab
+            icon={Target}
+            label="Missioni"
+            active={activeSection === 'missioni'}
+            onClick={() => setActiveSection('missioni')}
+          />
+          <SectionTab
+            icon={Armchair}
+            label="Serata"
+            active={activeSection === 'organizza'}
+            onClick={() => setActiveSection('organizza')}
+          />
+          <SectionTab
+            icon={Crown}
+            label="Classifiche"
+            active={activeSection === 'classifiche'}
+            onClick={() => setActiveSection('classifiche')}
+          />
+          <SectionTab
+            icon={TrendingUp}
+            label="Locali"
+            active={activeSection === 'locali'}
+            onClick={() => setActiveSection('locali')}
+          />
+          <SectionTab
+            icon={Coins}
+            label="Prezzi"
+            active={activeSection === 'prezzi'}
+            onClick={() => setActiveSection('prezzi')}
+          />
+          <SectionTab
+            icon={Search}
+            label="Persone"
+            active={activeSection === 'persone'}
+            onClick={() => setActiveSection('persone')}
+          />
+          <SectionTab
+            icon={SettingsIcon}
+            label="Funzioni"
+            active={activeSection === 'funzionalita'}
+            onClick={() => setActiveSection('funzionalita')}
+          />
         </div>
 
         {activeSection === 'missioni' && <MissionsSection />}
@@ -112,8 +177,14 @@ function SectionTab({ icon: Icon, label, active, onClick }) {
     <button
       onClick={onClick}
       style={{
-        flexShrink: 0, minWidth: 68, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
-        padding: '9px 8px', borderRadius: 12,
+        flexShrink: 0,
+        minWidth: 68,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: 3,
+        padding: '9px 8px',
+        borderRadius: 12,
         border: active ? '1px solid var(--cyan)' : '1px solid rgba(228,212,200,0.14)',
         background: active ? 'rgba(255,61,110,0.12)' : 'var(--surface)',
         color: active ? 'var(--cyan)' : 'var(--text-muted)',
@@ -146,7 +217,9 @@ function RankingsSection({ currentUserId }) {
   useEffect(() => {
     apiFetch('/api/venues/map')
       .then((r) => r.json())
-      .then((data) => { if (data.success) setVenues(data.venues); });
+      .then((data) => {
+        if (data.success) setVenues(data.venues);
+      });
   }, []);
 
   const activeVenues = venues.filter((v) => v.arenaActive && v.arenaSessionId);
@@ -158,8 +231,15 @@ function RankingsSection({ currentUserId }) {
         <button
           onClick={() => setView('generale')}
           style={{
-            padding: '8px 16px', borderRadius: 999, cursor: 'pointer', fontSize: 12.5, fontWeight: 700,
-            border: view === 'generale' ? '1.5px solid var(--cyan)' : '1.5px solid rgba(228,212,200,0.16)',
+            padding: '8px 16px',
+            borderRadius: 999,
+            cursor: 'pointer',
+            fontSize: 12.5,
+            fontWeight: 700,
+            border:
+              view === 'generale'
+                ? '1.5px solid var(--cyan)'
+                : '1.5px solid rgba(228,212,200,0.16)',
             background: view === 'generale' ? 'rgba(255,61,110,0.1)' : 'transparent',
             color: view === 'generale' ? 'var(--cyan)' : 'var(--text-muted)',
           }}
@@ -169,8 +249,13 @@ function RankingsSection({ currentUserId }) {
         <button
           onClick={() => setView('locale')}
           style={{
-            padding: '8px 16px', borderRadius: 999, cursor: 'pointer', fontSize: 12.5, fontWeight: 700,
-            border: view === 'locale' ? '1.5px solid var(--cyan)' : '1.5px solid rgba(228,212,200,0.16)',
+            padding: '8px 16px',
+            borderRadius: 999,
+            cursor: 'pointer',
+            fontSize: 12.5,
+            fontWeight: 700,
+            border:
+              view === 'locale' ? '1.5px solid var(--cyan)' : '1.5px solid rgba(228,212,200,0.16)',
             background: view === 'locale' ? 'rgba(255,61,110,0.1)' : 'transparent',
             color: view === 'locale' ? 'var(--cyan)' : 'var(--text-muted)',
           }}
@@ -179,9 +264,7 @@ function RankingsSection({ currentUserId }) {
         </button>
       </div>
 
-      {view === 'generale' && (
-        <LiveRanking isGlobal currentUserId={currentUserId} isDashboard />
-      )}
+      {view === 'generale' && <LiveRanking isGlobal currentUserId={currentUserId} isDashboard />}
 
       {view === 'locale' && (
         <>
@@ -226,7 +309,9 @@ function VenueMetricsSection() {
   useEffect(() => {
     apiFetch('/api/venues/map')
       .then((r) => r.json())
-      .then((data) => { if (data.success) setVenues(data.venues); });
+      .then((data) => {
+        if (data.success) setVenues(data.venues);
+      });
   }, []);
 
   const loadReport = useCallback((venueId) => {
@@ -234,7 +319,9 @@ function VenueMetricsSection() {
     setLoading(true);
     apiFetch(`/api/dashboard/venue-report/${venueId}`)
       .then((r) => r.json())
-      .then((data) => { if (data.success) setReport(data.report); })
+      .then((data) => {
+        if (data.success) setReport(data.report);
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -247,7 +334,8 @@ function VenueMetricsSection() {
   return (
     <div>
       <p className="pl-hint" style={{ marginBottom: 12 }}>
-        Dati aggregati degli ultimi 30 giorni — pensati per essere mostrati ai proprietari, mai singoli profili individuali.
+        Dati aggregati degli ultimi 30 giorni — pensati per essere mostrati ai proprietari, mai
+        singoli profili individuali.
       </p>
 
       <VenueSearchSelect venues={venues} value={selectedVenueId} onChange={handleSelect} />
@@ -259,7 +347,10 @@ function VenueMetricsSection() {
           <MetricCard title="Orari di arrivo">
             {report.arrivals.available ? (
               <BarList
-                items={report.arrivals.distribution.map((d) => ({ label: `${d.hour}:00`, value: parseInt(d.arrivals) }))}
+                items={report.arrivals.distribution.map((d) => ({
+                  label: `${d.hour}:00`,
+                  value: parseInt(d.arrivals),
+                }))}
                 suffix=" arrivi"
               />
             ) : (
@@ -269,9 +360,23 @@ function VenueMetricsSection() {
 
           <MetricCard title="Permanenza media">
             {report.dwellTime.available ? (
-              <div style={{ fontSize: 22, fontWeight: 800, fontFamily: "'Unbounded',sans-serif", color: 'var(--cyan)' }}>
+              <div
+                style={{
+                  fontSize: 22,
+                  fontWeight: 800,
+                  fontFamily: "'Unbounded',sans-serif",
+                  color: 'var(--cyan)',
+                }}
+              >
                 {report.dwellTime.avgMinutes} min
-                <span style={{ fontSize: 10.5, color: 'var(--text-muted)', fontWeight: 500, marginLeft: 8 }}>
+                <span
+                  style={{
+                    fontSize: 10.5,
+                    color: 'var(--text-muted)',
+                    fontWeight: 500,
+                    marginLeft: 8,
+                  }}
+                >
                   su {report.dwellTime.sampleSize} persone
                 </span>
               </div>
@@ -290,15 +395,47 @@ function VenueMetricsSection() {
                   const shared = male + female + other;
                   return (
                     <div key={day.session_date} style={{ fontSize: 11 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
-                        <span style={{ color: 'var(--text-muted)' }}>{new Date(day.session_date).toLocaleDateString('it-IT')}</span>
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          marginBottom: 2,
+                        }}
+                      >
+                        <span style={{ color: 'var(--text-muted)' }}>
+                          {new Date(day.session_date).toLocaleDateString('it-IT')}
+                        </span>
                         <span>{day.attendees} presenze</span>
                       </div>
                       {shared > 0 && (
-                        <div style={{ display: 'flex', height: 4, borderRadius: 999, overflow: 'hidden' }}>
-                          <div style={{ background: 'var(--teak)', width: `${Math.round((female / shared) * 100)}%` }} />
-                          <div style={{ background: 'var(--cyan)', width: `${Math.round((male / shared) * 100)}%` }} />
-                          {other > 0 && <div style={{ background: 'var(--gold-medal, #E8C77E)', width: `${Math.round((other / shared) * 100)}%` }} />}
+                        <div
+                          style={{
+                            display: 'flex',
+                            height: 4,
+                            borderRadius: 999,
+                            overflow: 'hidden',
+                          }}
+                        >
+                          <div
+                            style={{
+                              background: 'var(--teak)',
+                              width: `${Math.round((female / shared) * 100)}%`,
+                            }}
+                          />
+                          <div
+                            style={{
+                              background: 'var(--cyan)',
+                              width: `${Math.round((male / shared) * 100)}%`,
+                            }}
+                          />
+                          {other > 0 && (
+                            <div
+                              style={{
+                                background: 'var(--gold-medal, #E8C77E)',
+                                width: `${Math.round((other / shared) * 100)}%`,
+                              }}
+                            />
+                          )}
                         </div>
                       )}
                     </div>
@@ -313,7 +450,10 @@ function VenueMetricsSection() {
           <MetricCard title="Consumazioni più richieste">
             {report.drinks.available ? (
               <BarList
-                items={report.drinks.drinks.map((d) => ({ label: d.drink_type, value: parseInt(d.redemptions) }))}
+                items={report.drinks.drinks.map((d) => ({
+                  label: d.drink_type,
+                  value: parseInt(d.redemptions),
+                }))}
                 suffix=" riscatti"
               />
             ) : (
@@ -324,11 +464,19 @@ function VenueMetricsSection() {
           <MetricCard title="Interazioni sociali generate">
             {report.socialInteractions.available ? (
               <div>
-                <div style={{ fontSize: 22, fontWeight: 800, fontFamily: "'Unbounded',sans-serif", color: 'var(--cyan)' }}>
+                <div
+                  style={{
+                    fontSize: 22,
+                    fontWeight: 800,
+                    fontFamily: "'Unbounded',sans-serif",
+                    color: 'var(--cyan)',
+                  }}
+                >
                   {report.socialInteractions.total}
                 </div>
                 <div style={{ fontSize: 10.5, color: 'var(--text-muted)' }}>
-                  {report.socialInteractions.likes} Like · {report.socialInteractions.superlikes} Superlike scambiati qui
+                  {report.socialInteractions.likes} Like · {report.socialInteractions.superlikes}{' '}
+                  Superlike scambiati qui
                 </div>
               </div>
             ) : (
@@ -339,11 +487,19 @@ function VenueMetricsSection() {
           <MetricCard title="Tasso di ritorno">
             {report.returnRate.available ? (
               <div>
-                <div style={{ fontSize: 22, fontWeight: 800, fontFamily: "'Unbounded',sans-serif", color: 'var(--cyan)' }}>
+                <div
+                  style={{
+                    fontSize: 22,
+                    fontWeight: 800,
+                    fontFamily: "'Unbounded',sans-serif",
+                    color: 'var(--cyan)',
+                  }}
+                >
                   {report.returnRate.returnRatePct}%
                 </div>
                 <div style={{ fontSize: 10.5, color: 'var(--text-muted)' }}>
-                  {report.returnRate.returningVisitors} su {report.returnRate.totalVisitors} sono tornati almeno una seconda volta
+                  {report.returnRate.returningVisitors} su {report.returnRate.totalVisitors} sono
+                  tornati almeno una seconda volta
                 </div>
               </div>
             ) : (
@@ -354,11 +510,19 @@ function VenueMetricsSection() {
           <MetricCard title="Picco di presenze simultanee">
             {report.peakAttendance.available ? (
               <div>
-                <div style={{ fontSize: 22, fontWeight: 800, fontFamily: "'Unbounded',sans-serif", color: 'var(--cyan)' }}>
+                <div
+                  style={{
+                    fontSize: 22,
+                    fontWeight: 800,
+                    fontFamily: "'Unbounded',sans-serif",
+                    color: 'var(--cyan)',
+                  }}
+                >
                   {report.peakAttendance.allTimeHigh} persone
                 </div>
                 <div style={{ fontSize: 10.5, color: 'var(--text-muted)' }}>
-                  Picco più alto registrato · media {report.peakAttendance.avgPeakPerNight} persone a serata
+                  Picco più alto registrato · media {report.peakAttendance.avgPeakPerNight} persone
+                  a serata
                 </div>
               </div>
             ) : (
@@ -373,8 +537,18 @@ function VenueMetricsSection() {
 
 function MetricCard({ title, children }) {
   return (
-    <div style={{ background: 'var(--surface)', border: '1px solid rgba(228,212,200,0.12)', borderRadius: 14, padding: 14, boxShadow: 'var(--shadow-sm)' }}>
-      <div className="pl-section-label" style={{ margin: '0 0 8px' }}>{title}</div>
+    <div
+      style={{
+        background: 'var(--surface)',
+        border: '1px solid rgba(228,212,200,0.12)',
+        borderRadius: 14,
+        padding: 14,
+        boxShadow: 'var(--shadow-sm)',
+      }}
+    >
+      <div className="pl-section-label" style={{ margin: '0 0 8px' }}>
+        {title}
+      </div>
       {children}
     </div>
   );
@@ -386,12 +560,36 @@ function BarList({ items, suffix }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
       {items.map((item) => (
         <div key={item.label}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10.5, marginBottom: 2 }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              fontSize: 10.5,
+              marginBottom: 2,
+            }}
+          >
             <span>{item.label}</span>
-            <span style={{ color: 'var(--text-muted)' }}>{item.value}{suffix}</span>
+            <span style={{ color: 'var(--text-muted)' }}>
+              {item.value}
+              {suffix}
+            </span>
           </div>
-          <div style={{ height: 5, background: 'var(--surface-2)', borderRadius: 999, overflow: 'hidden' }}>
-            <div style={{ height: '100%', width: `${(item.value / max) * 100}%`, background: 'var(--cyan)', borderRadius: 999 }} />
+          <div
+            style={{
+              height: 5,
+              background: 'var(--surface-2)',
+              borderRadius: 999,
+              overflow: 'hidden',
+            }}
+          >
+            <div
+              style={{
+                height: '100%',
+                width: `${(item.value / max) * 100}%`,
+                background: 'var(--cyan)',
+                borderRadius: 999,
+              }}
+            />
           </div>
         </div>
       ))}
@@ -402,7 +600,8 @@ function BarList({ items, suffix }) {
 function NotEnoughData({ minRequired }) {
   return (
     <p className="pl-hint">
-      Non ancora abbastanza dati per questo grafico (servono almeno {minRequired} eventi) — normale per un locale appena partito.
+      Non ancora abbastanza dati per questo grafico (servono almeno {minRequired} eventi) — normale
+      per un locale appena partito.
     </p>
   );
 }
@@ -430,7 +629,9 @@ function PricingSection() {
   useEffect(() => {
     apiFetch('/api/products')
       .then((r) => r.json())
-      .then((data) => { if (data.success) setProducts(data.products); })
+      .then((data) => {
+        if (data.success) setProducts(data.products);
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -452,7 +653,9 @@ function PricingSection() {
       });
       const data = await res.json();
       if (data.success) {
-        setProducts((prev) => prev.map((p) => (p.id === product.id ? { ...p, price_cents: priceCents } : p)));
+        setProducts((prev) =>
+          prev.map((p) => (p.id === product.id ? { ...p, price_cents: priceCents } : p))
+        );
         setSavedId(product.id);
         setTimeout(() => setSavedId(null), 2000);
       } else {
@@ -468,7 +671,8 @@ function PricingSection() {
   return (
     <div>
       <p className="pl-hint" style={{ marginBottom: 12 }}>
-        Il prezzo resta unico per tutta la piattaforma (un Pulse è spendibile in qualunque locale) — cambialo qui quando gli accordi coi locali partner cambiano.
+        Il prezzo resta unico per tutta la piattaforma (un Pulse è spendibile in qualunque locale) —
+        cambialo qui quando gli accordi coi locali partner cambiano.
       </p>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -478,9 +682,22 @@ function PricingSection() {
           const changed = editValue !== currentEuros;
 
           return (
-            <div key={p.id} style={{ background: 'var(--surface)', border: '1px solid rgba(228,212,200,0.12)', borderRadius: 14, padding: 12, boxShadow: 'var(--shadow-sm)' }}>
-              <div style={{ fontSize: 12.5, fontWeight: 700, marginBottom: 2 }}>{p.display_name}</div>
-              <div style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 10 }}>{p.sku}</div>
+            <div
+              key={p.id}
+              style={{
+                background: 'var(--surface)',
+                border: '1px solid rgba(228,212,200,0.12)',
+                borderRadius: 14,
+                padding: 12,
+                boxShadow: 'var(--shadow-sm)',
+              }}
+            >
+              <div style={{ fontSize: 12.5, fontWeight: 700, marginBottom: 2 }}>
+                {p.display_name}
+              </div>
+              <div style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 10 }}>
+                {p.sku}
+              </div>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 <div style={{ position: 'relative', flex: 1 }}>
                   <input
@@ -489,13 +706,29 @@ function PricingSection() {
                     inputMode="decimal"
                     style={{ marginBottom: 0, paddingRight: 26 }}
                   />
-                  <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 12, color: 'var(--text-muted)' }}>€</span>
+                  <span
+                    style={{
+                      position: 'absolute',
+                      right: 12,
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      fontSize: 12,
+                      color: 'var(--text-muted)',
+                    }}
+                  >
+                    €
+                  </span>
                 </div>
                 <button
                   onClick={() => savePrice(p)}
                   disabled={!changed || savingId === p.id}
                   style={{
-                    padding: '10px 14px', borderRadius: 10, border: 'none', fontSize: 11, fontWeight: 700, flexShrink: 0,
+                    padding: '10px 14px',
+                    borderRadius: 10,
+                    border: 'none',
+                    fontSize: 11,
+                    fontWeight: 700,
+                    flexShrink: 0,
                     background: savedId === p.id ? 'rgba(255,61,110,0.3)' : 'var(--cyan)',
                     color: '#fff',
                     cursor: !changed || savingId === p.id ? 'default' : 'pointer',
@@ -530,22 +763,32 @@ function MissionsSection() {
   const [newMissionQr, setNewMissionQr] = useState(null); // { missionId, qrDataUrl } — appena creata
 
   const [form, setForm] = useState({
-    sponsorName: '', venueId: '', claimText: '', bonusPoints: '',
-    radiusMeters: '2000', hashtagFilter: '', dateFrom: '', dateTo: '',
+    sponsorName: '',
+    venueId: '',
+    claimText: '',
+    bonusPoints: '',
+    radiusMeters: '2000',
+    hashtagFilter: '',
+    dateFrom: '',
+    dateTo: '',
   });
 
   const loadMissions = useCallback(() => {
     setLoadingMissions(true);
     apiFetch('/api/dashboard/missions')
       .then((r) => r.json())
-      .then((data) => { if (data.success) setMissions(data.missions); })
+      .then((data) => {
+        if (data.success) setMissions(data.missions);
+      })
       .finally(() => setLoadingMissions(false));
   }, []);
 
   useEffect(() => {
     apiFetch('/api/venues/map')
       .then((r) => r.json())
-      .then((data) => { if (data.success) setVenues(data.venues); });
+      .then((data) => {
+        if (data.success) setVenues(data.venues);
+      });
     loadMissions();
   }, [loadMissions]);
 
@@ -561,7 +804,14 @@ function MissionsSection() {
   }
 
   async function handleCreate() {
-    if (!form.sponsorName || !form.venueId || !form.claimText || !form.bonusPoints || !form.dateFrom || !form.dateTo) {
+    if (
+      !form.sponsorName ||
+      !form.venueId ||
+      !form.claimText ||
+      !form.bonusPoints ||
+      !form.dateFrom ||
+      !form.dateTo
+    ) {
       window.alert('Compila almeno sponsor, locale, claim, punti e le due date.');
       return;
     }
@@ -578,7 +828,10 @@ function MissionsSection() {
           bonusPoints: parseInt(form.bonusPoints, 10),
           radiusMeters: parseInt(form.radiusMeters, 10) || 2000,
           hashtagFilter: form.hashtagFilter.trim()
-            ? form.hashtagFilter.split(',').map((h) => h.trim().replace(/^#/, '')).filter(Boolean)
+            ? form.hashtagFilter
+                .split(',')
+                .map((h) => h.trim().replace(/^#/, ''))
+                .filter(Boolean)
             : null,
           dateFrom: form.dateFrom,
           dateTo: form.dateTo,
@@ -588,7 +841,16 @@ function MissionsSection() {
       if (data.success) {
         const qrDataUrl = await generateQrFor(data.missionId);
         setNewMissionQr({ missionId: data.missionId, qrDataUrl });
-        setForm({ sponsorName: '', venueId: '', claimText: '', bonusPoints: '', radiusMeters: '2000', hashtagFilter: '', dateFrom: '', dateTo: '' });
+        setForm({
+          sponsorName: '',
+          venueId: '',
+          claimText: '',
+          bonusPoints: '',
+          radiusMeters: '2000',
+          hashtagFilter: '',
+          dateFrom: '',
+          dateTo: '',
+        });
         loadMissions();
       } else {
         window.alert('Qualcosa è andato storto — riprova.');
@@ -602,53 +864,121 @@ function MissionsSection() {
     <div>
       <MetricCard title="Crea una nuova missione">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <input placeholder="Nome sponsor (es. Profumeria Bianchi)" value={form.sponsorName} onChange={(e) => updateField('sponsorName', e.target.value)} style={{ marginBottom: 0 }} />
+          <input
+            placeholder="Nome sponsor (es. Profumeria Bianchi)"
+            value={form.sponsorName}
+            onChange={(e) => updateField('sponsorName', e.target.value)}
+            style={{ marginBottom: 0 }}
+          />
 
-          <VenueSearchSelect venues={venues} value={form.venueId} onChange={(id) => updateField('venueId', id)} placeholder="Scegli il locale…" />
+          <VenueSearchSelect
+            venues={venues}
+            value={form.venueId}
+            onChange={(id) => updateField('venueId', id)}
+            placeholder="Scegli il locale…"
+          />
 
           <textarea
             placeholder='Claim (es. "Recati oggi da Profumeria Bianchi per 30 punti")'
             value={form.claimText}
             onChange={(e) => updateField('claimText', e.target.value)}
             rows={2}
-            style={{ marginBottom: 0, width: '100%', padding: 12, borderRadius: 10, border: '1px solid rgba(228,212,200,0.2)', background: 'var(--surface-2)', color: 'var(--text)', fontSize: 13, fontFamily: 'inherit', resize: 'vertical' }}
+            style={{
+              marginBottom: 0,
+              width: '100%',
+              padding: 12,
+              borderRadius: 10,
+              border: '1px solid rgba(228,212,200,0.2)',
+              background: 'var(--surface-2)',
+              color: 'var(--text)',
+              fontSize: 13,
+              fontFamily: 'inherit',
+              resize: 'vertical',
+            }}
           />
 
           <div style={{ display: 'flex', gap: 8 }}>
-            <input placeholder="Punti bonus" type="number" value={form.bonusPoints} onChange={(e) => updateField('bonusPoints', e.target.value)} style={{ marginBottom: 0, flex: 1 }} />
-            <input placeholder="Raggio in metri" type="number" value={form.radiusMeters} onChange={(e) => updateField('radiusMeters', e.target.value)} style={{ marginBottom: 0, flex: 1 }} />
+            <input
+              placeholder="Punti bonus"
+              type="number"
+              value={form.bonusPoints}
+              onChange={(e) => updateField('bonusPoints', e.target.value)}
+              style={{ marginBottom: 0, flex: 1 }}
+            />
+            <input
+              placeholder="Raggio in metri"
+              type="number"
+              value={form.radiusMeters}
+              onChange={(e) => updateField('radiusMeters', e.target.value)}
+              style={{ marginBottom: 0, flex: 1 }}
+            />
           </div>
 
-          <input placeholder="Hashtag (facoltativo, separati da virgola — es. beauty, cosmetics)" value={form.hashtagFilter} onChange={(e) => updateField('hashtagFilter', e.target.value)} style={{ marginBottom: 0 }} />
+          <input
+            placeholder="Hashtag (facoltativo, separati da virgola — es. beauty, cosmetics)"
+            value={form.hashtagFilter}
+            onChange={(e) => updateField('hashtagFilter', e.target.value)}
+            style={{ marginBottom: 0 }}
+          />
 
           <div style={{ display: 'flex', gap: 8 }}>
             <div style={{ flex: 1 }}>
               <label style={{ fontSize: 9.5, color: 'var(--text-muted)' }}>Da</label>
-              <input type="date" value={form.dateFrom} onChange={(e) => updateField('dateFrom', e.target.value)} style={{ marginBottom: 0 }} />
+              <input
+                type="date"
+                value={form.dateFrom}
+                onChange={(e) => updateField('dateFrom', e.target.value)}
+                style={{ marginBottom: 0 }}
+              />
             </div>
             <div style={{ flex: 1 }}>
               <label style={{ fontSize: 9.5, color: 'var(--text-muted)' }}>A</label>
-              <input type="date" value={form.dateTo} onChange={(e) => updateField('dateTo', e.target.value)} style={{ marginBottom: 0 }} />
+              <input
+                type="date"
+                value={form.dateTo}
+                onChange={(e) => updateField('dateTo', e.target.value)}
+                style={{ marginBottom: 0 }}
+              />
             </div>
           </div>
 
-          <button className="pl-send-btn" onClick={handleCreate} disabled={creating} style={{ marginTop: 4 }}>
+          <button
+            className="pl-send-btn"
+            onClick={handleCreate}
+            disabled={creating}
+            style={{ marginTop: 4 }}
+          >
             {creating ? 'Un attimo…' : 'Crea missione e genera QR'}
           </button>
         </div>
       </MetricCard>
 
       {newMissionQr && (
-        <div style={{ background: '#fff', borderRadius: 14, padding: 20, marginTop: 12, textAlign: 'center' }}>
+        <div
+          style={{
+            background: '#fff',
+            borderRadius: 14,
+            padding: 20,
+            marginTop: 12,
+            textAlign: 'center',
+          }}
+        >
           <img src={newMissionQr.qrDataUrl} alt="QR missione" style={{ width: 220, height: 220 }} />
-          <p style={{ fontSize: 10.5, color: '#666', marginTop: 8, wordBreak: 'break-all' }}>{MISSION_LINK_BASE}{newMissionQr.missionId}</p>
+          <p style={{ fontSize: 10.5, color: '#666', marginTop: 8, wordBreak: 'break-all' }}>
+            {MISSION_LINK_BASE}
+            {newMissionQr.missionId}
+          </p>
         </div>
       )}
 
       <div style={{ marginTop: 20 }}>
-        <div className="pl-section-label" style={{ marginBottom: 10 }}>Missioni esistenti</div>
+        <div className="pl-section-label" style={{ marginBottom: 10 }}>
+          Missioni esistenti
+        </div>
         {loadingMissions && <p className="pl-hint">Caricamento…</p>}
-        {!loadingMissions && missions.length === 0 && <p className="pl-hint">Ancora nessuna missione creata.</p>}
+        {!loadingMissions && missions.length === 0 && (
+          <p className="pl-hint">Ancora nessuna missione creata.</p>
+        )}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {missions.map((m) => (
             <ExistingMissionRow key={m.missionId} mission={m} onGenerateQr={generateQrFor} />
@@ -664,28 +994,65 @@ function ExistingMissionRow({ mission, onGenerateQr }) {
   const [loadingQr, setLoadingQr] = useState(false);
 
   async function toggleQr() {
-    if (qrDataUrl) { setQrDataUrl(null); return; }
+    if (qrDataUrl) {
+      setQrDataUrl(null);
+      return;
+    }
     setLoadingQr(true);
     setQrDataUrl(await onGenerateQr(mission.missionId));
     setLoadingQr(false);
   }
 
   return (
-    <div style={{ background: 'var(--surface)', border: '1px solid rgba(228,212,200,0.12)', borderRadius: 12, padding: 12 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+    <div
+      style={{
+        background: 'var(--surface)',
+        border: '1px solid rgba(228,212,200,0.12)',
+        borderRadius: 12,
+        padding: 12,
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          gap: 8,
+        }}
+      >
         <div>
           <div style={{ fontSize: 12, fontWeight: 700 }}>{mission.sponsorName}</div>
-          <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>{mission.venueName} · +{mission.bonusPoints} punti</div>
+          <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>
+            {mission.venueName} · +{mission.bonusPoints} punti
+          </div>
         </div>
         <button
           onClick={toggleQr}
-          style={{ flexShrink: 0, padding: '6px 10px', borderRadius: 8, border: 'none', background: 'var(--cyan)', color: '#fff', fontSize: 10, fontWeight: 700, cursor: 'pointer' }}
+          style={{
+            flexShrink: 0,
+            padding: '6px 10px',
+            borderRadius: 8,
+            border: 'none',
+            background: 'var(--cyan)',
+            color: '#fff',
+            fontSize: 10,
+            fontWeight: 700,
+            cursor: 'pointer',
+          }}
         >
           {loadingQr ? '…' : qrDataUrl ? 'Nascondi QR' : 'Mostra QR'}
         </button>
       </div>
       {qrDataUrl && (
-        <div style={{ background: '#fff', borderRadius: 10, padding: 14, marginTop: 10, textAlign: 'center' }}>
+        <div
+          style={{
+            background: '#fff',
+            borderRadius: 10,
+            padding: 14,
+            marginTop: 10,
+            textAlign: 'center',
+          }}
+        >
           <img src={qrDataUrl} alt="QR missione" style={{ width: 160, height: 160 }} />
         </div>
       )}
@@ -733,15 +1100,22 @@ function OrganizeNightSection() {
   useEffect(() => {
     apiFetch('/api/venues/map')
       .then((r) => r.json())
-      .then((data) => { if (data.success) setVenues(data.venues); });
+      .then((data) => {
+        if (data.success) setVenues(data.venues);
+      });
   }, []);
 
   const loadVenue = useCallback((venueId) => {
-    if (!venueId) { setVenue(null); return; }
+    if (!venueId) {
+      setVenue(null);
+      return;
+    }
     setLoadingVenue(true);
     apiFetch(`/api/dashboard/venues/${venueId}/full-settings`)
       .then((r) => r.json())
-      .then((data) => { if (data.success) setVenue(data.venue); })
+      .then((data) => {
+        if (data.success) setVenue(data.venue);
+      })
       .finally(() => setLoadingVenue(false));
   }, []);
 
@@ -766,8 +1140,10 @@ function OrganizeNightSection() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: newVenueName.trim(), area: 'Roma',
-          latitude: 41.9028, longitude: 12.4964,
+          name: newVenueName.trim(),
+          area: 'Roma',
+          latitude: 41.9028,
+          longitude: 12.4964,
           venueType: newVenueType,
         }),
       });
@@ -790,15 +1166,19 @@ function OrganizeNightSection() {
   return (
     <div>
       <p className="pl-hint" style={{ marginBottom: 12 }}>
-        Scegli un locale già presente, o aggiungine uno nuovo — poi trovi qui sotto tutte le sue impostazioni in un posto solo.
+        Scegli un locale già presente, o aggiungine uno nuovo — poi trovi qui sotto tutte le sue
+        impostazioni in un posto solo.
       </p>
 
       <VenueSearchSelect
         venues={venues}
         value={addingManually ? '__manual__' : selectedVenueId}
         onChange={(id) => {
-          if (id === '__manual__') { setAddingManually(true); setSelectedVenueId(''); setVenue(null); }
-          else handleSelect(id);
+          if (id === '__manual__') {
+            setAddingManually(true);
+            setSelectedVenueId('');
+            setVenue(null);
+          } else handleSelect(id);
         }}
         extraOptions={[{ value: '__manual__', label: '+ Inserisci manualmente…' }]}
       />
@@ -811,8 +1191,16 @@ function OrganizeNightSection() {
             placeholder="Nome del locale"
             style={{ marginBottom: 8 }}
           />
-          <select value={newVenueType} onChange={(e) => setNewVenueType(e.target.value)} style={{ marginBottom: 10 }}>
-            {VENUE_TYPE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+          <select
+            value={newVenueType}
+            onChange={(e) => setNewVenueType(e.target.value)}
+            style={{ marginBottom: 10 }}
+          >
+            {VENUE_TYPE_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
           </select>
           <button className="pl-send-btn" onClick={createVenue} disabled={creatingVenue}>
             {creatingVenue ? 'Un attimo…' : 'Crea locale'}
@@ -836,13 +1224,21 @@ function VenueOrganizePanel({ venue, onVenueUpdate }) {
   const [savingPct, setSavingPct] = useState(false);
   const [savedPct, setSavedPct] = useState(false);
 
-  const [pulsePriceEdit, setPulsePriceEdit] = useState(venue.pulsePriceCents ? (venue.pulsePriceCents / 100).toString() : '');
-  const [bundlePriceEdit, setBundlePriceEdit] = useState(venue.pulseBundle5PriceCents ? (venue.pulseBundle5PriceCents / 100).toString() : '');
+  const [pulsePriceEdit, setPulsePriceEdit] = useState(
+    venue.pulsePriceCents ? (venue.pulsePriceCents / 100).toString() : ''
+  );
+  const [bundlePriceEdit, setBundlePriceEdit] = useState(
+    venue.pulseBundle5PriceCents ? (venue.pulseBundle5PriceCents / 100).toString() : ''
+  );
   const [savingPrices, setSavingPrices] = useState(false);
   const [savedPrices, setSavedPrices] = useState(false);
 
-  const [thresholdEdit, setThresholdEdit] = useState(venue.spendingThresholdCents ? (venue.spendingThresholdCents / 100).toString() : '');
-  const [bonusEdit, setBonusEdit] = useState(venue.spendingBonusPoints ? String(venue.spendingBonusPoints) : '');
+  const [thresholdEdit, setThresholdEdit] = useState(
+    venue.spendingThresholdCents ? (venue.spendingThresholdCents / 100).toString() : ''
+  );
+  const [bonusEdit, setBonusEdit] = useState(
+    venue.spendingBonusPoints ? String(venue.spendingBonusPoints) : ''
+  );
   const [savingSpending, setSavingSpending] = useState(false);
   const [savedSpending, setSavedSpending] = useState(false);
 
@@ -857,7 +1253,9 @@ function VenueOrganizePanel({ venue, onVenueUpdate }) {
   const [savingHours, setSavingHours] = useState(false);
   const [savedHours, setSavedHours] = useState(false);
 
-  const [minUsersEdit, setMinUsersEdit] = useState(venue.minUsersForLocalRanking ? String(venue.minUsersForLocalRanking) : '5');
+  const [minUsersEdit, setMinUsersEdit] = useState(
+    venue.minUsersForLocalRanking ? String(venue.minUsersForLocalRanking) : '5'
+  );
   const [savingMinUsers, setSavingMinUsers] = useState(false);
   const [savedMinUsers, setSavedMinUsers] = useState(false);
 
@@ -899,8 +1297,12 @@ function VenueOrganizePanel({ venue, onVenueUpdate }) {
   }
 
   async function savePrices() {
-    const single = pulsePriceEdit.trim() ? Math.round(parseFloat(pulsePriceEdit.replace(',', '.')) * 100) : null;
-    const bundle = bundlePriceEdit.trim() ? Math.round(parseFloat(bundlePriceEdit.replace(',', '.')) * 100) : null;
+    const single = pulsePriceEdit.trim()
+      ? Math.round(parseFloat(pulsePriceEdit.replace(',', '.')) * 100)
+      : null;
+    const bundle = bundlePriceEdit.trim()
+      ? Math.round(parseFloat(bundlePriceEdit.replace(',', '.')) * 100)
+      : null;
     setSavingPrices(true);
     try {
       const res = await apiFetch(`/api/dashboard/venues/${venue.venueId}/pulse-prices`, {
@@ -924,7 +1326,12 @@ function VenueOrganizePanel({ venue, onVenueUpdate }) {
   async function saveSpendingConfig() {
     const thresholdEuros = parseFloat(thresholdEdit.replace(',', '.'));
     const points = parseInt(bonusEdit, 10);
-    if (!Number.isFinite(thresholdEuros) || thresholdEuros <= 0 || !Number.isInteger(points) || points <= 0) {
+    if (
+      !Number.isFinite(thresholdEuros) ||
+      thresholdEuros <= 0 ||
+      !Number.isInteger(points) ||
+      points <= 0
+    ) {
       window.alert('Inserisci una soglia e un numero di punti validi, entrambi maggiori di zero.');
       return;
     }
@@ -933,11 +1340,18 @@ function VenueOrganizePanel({ venue, onVenueUpdate }) {
       const res = await apiFetch(`/api/dashboard/venues/${venue.venueId}/spending-config`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ thresholdCents: Math.round(thresholdEuros * 100), bonusPoints: points }),
+        body: JSON.stringify({
+          thresholdCents: Math.round(thresholdEuros * 100),
+          bonusPoints: points,
+        }),
       });
       const data = await res.json();
       if (data.success) {
-        onVenueUpdate({ ...venue, spendingThresholdCents: Math.round(thresholdEuros * 100), spendingBonusPoints: points });
+        onVenueUpdate({
+          ...venue,
+          spendingThresholdCents: Math.round(thresholdEuros * 100),
+          spendingBonusPoints: points,
+        });
         setSavedSpending(true);
         setTimeout(() => setSavedSpending(false), 2000);
       } else {
@@ -960,21 +1374,29 @@ function VenueOrganizePanel({ venue, onVenueUpdate }) {
       const res = await apiFetch('/api/dashboard/award-table-spending', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ venueId: venue.venueId, tableQrCode: tableCode.trim(), spentCents: Math.round(amountEuros * 100) }),
+        body: JSON.stringify({
+          venueId: venue.venueId,
+          tableQrCode: tableCode.trim(),
+          spentCents: Math.round(amountEuros * 100),
+        }),
       });
       const data = await res.json();
       if (data.success) {
-        setSpendResult(`✓ Bonus assegnato a ${data.membersRewarded} persone (+${data.perPersonPoints} punti ciascuno)`);
+        setSpendResult(
+          `✓ Bonus assegnato a ${data.membersRewarded} persone (+${data.perPersonPoints} punti ciascuno)`
+        );
         setTableCode('');
         setSpentAmount('');
       } else {
         const messages = {
-          venue_has_no_spending_threshold_configured: 'Imposta prima soglia e punti bonus qui sopra.',
-          below_threshold: 'L\'importo è sotto la soglia impostata per questo locale.',
+          venue_has_no_spending_threshold_configured:
+            'Imposta prima soglia e punti bonus qui sopra.',
+          below_threshold: "L'importo è sotto la soglia impostata per questo locale.",
           already_awarded_tonight: 'Questo tavolo ha già ricevuto il bonus stasera.',
           no_squad_found_for_table: 'Nessuno risulta agganciato a questo codice tavolo stasera.',
-          no_active_session_tonight: 'Questo locale non ha un\'Arena attiva in questo momento.',
-          big_spender_disabled: 'Il Big Spender è spento dalla scheda Funzionalità — riaccendilo da lì per confermare spese.',
+          no_active_session_tonight: "Questo locale non ha un'Arena attiva in questo momento.",
+          big_spender_disabled:
+            'Il Big Spender è spento dalla scheda Funzionalità — riaccendilo da lì per confermare spese.',
         };
         setSpendResult(messages[data.reason] || 'Qualcosa è andato storto — riprova.');
       }
@@ -985,7 +1407,7 @@ function VenueOrganizePanel({ venue, onVenueUpdate }) {
 
   async function saveHours() {
     if (!openTime || !closeTime) {
-      window.alert('Inserisci sia l\'orario di apertura sia quello di chiusura.');
+      window.alert("Inserisci sia l'orario di apertura sia quello di chiusura.");
       return;
     }
     setSavingHours(true);
@@ -1038,7 +1460,10 @@ function VenueOrganizePanel({ venue, onVenueUpdate }) {
     setGeneratingVenueQr(true);
     try {
       const url = `https://populive-frontend-production.up.railway.app/checkin/${venue.venueId}`;
-      const dataUrl = await QRCode.toDataURL(url, { width: 300, color: { dark: '#14100F', light: '#ffffff' } });
+      const dataUrl = await QRCode.toDataURL(url, {
+        width: 300,
+        color: { dark: '#14100F', light: '#ffffff' },
+      });
       setVenueQrDataUrl(dataUrl);
     } finally {
       setGeneratingVenueQr(false);
@@ -1061,7 +1486,10 @@ function VenueOrganizePanel({ venue, onVenueUpdate }) {
       for (let i = 1; i <= count; i++) {
         const code = `tavolo_${venue.venueId}_${i}`;
         const label = `${tableQrLabel.trim() || 'Tavolo'} ${i}`;
-        const dataUrl = await QRCode.toDataURL(code, { width: 220, color: { dark: '#14100F', light: '#ffffff' } });
+        const dataUrl = await QRCode.toDataURL(code, {
+          width: 220,
+          color: { dark: '#14100F', light: '#ffffff' },
+        });
         results.push({ label, code, dataUrl });
       }
       setTableQrs(results);
@@ -1074,53 +1502,126 @@ function VenueOrganizePanel({ venue, onVenueUpdate }) {
     <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 12 }}>
       <MetricCard title={`${venue.venueName} — commissione`}>
         <div style={{ fontSize: 10.5, color: 'var(--text-muted)', marginBottom: 10 }}>
-          {venue.redeemedCount} Pulse riscattati finora · {(venue.venueOwedCents / 100).toFixed(2)}€ dovuti al locale
+          {venue.redeemedCount} Pulse riscattati finora · {(venue.venueOwedCents / 100).toFixed(2)}€
+          dovuti al locale
         </div>
         <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
           <div style={{ flex: 1 }}>
             <label style={{ fontSize: 9.5, color: 'var(--text-muted)' }}>Locale %</label>
-            <input type="number" min="0" max="100" value={pctEdit} onChange={(e) => setPctEdit(e.target.value)} style={{ marginBottom: 0 }} />
+            <input
+              type="number"
+              min="0"
+              max="100"
+              value={pctEdit}
+              onChange={(e) => setPctEdit(e.target.value)}
+              style={{ marginBottom: 0 }}
+            />
           </div>
           <div style={{ flex: 1 }}>
             <label style={{ fontSize: 9.5, color: 'var(--text-muted)' }}>PopuLive %</label>
-            <input value={100 - (parseInt(pctEdit, 10) || 0)} disabled style={{ marginBottom: 0, opacity: 0.6 }} />
+            <input
+              value={100 - (parseInt(pctEdit, 10) || 0)}
+              disabled
+              style={{ marginBottom: 0, opacity: 0.6 }}
+            />
           </div>
         </div>
-        <button onClick={savePct} disabled={savingPct} style={{ width: '100%', padding: '9px', borderRadius: 10, border: 'none', fontSize: 11, fontWeight: 700, background: savedPct ? 'rgba(255,61,110,0.3)' : 'var(--cyan)', color: '#fff', cursor: savingPct ? 'default' : 'pointer' }}>
+        <button
+          onClick={savePct}
+          disabled={savingPct}
+          style={{
+            width: '100%',
+            padding: '9px',
+            borderRadius: 10,
+            border: 'none',
+            fontSize: 11,
+            fontWeight: 700,
+            background: savedPct ? 'rgba(255,61,110,0.3)' : 'var(--cyan)',
+            color: '#fff',
+            cursor: savingPct ? 'default' : 'pointer',
+          }}
+        >
           {savingPct ? 'Un attimo…' : savedPct ? 'Salvato ✓' : 'Salva percentuale'}
         </button>
       </MetricCard>
 
       <MetricCard title="Soglia classifica locale">
         <p className="pl-hint" style={{ marginBottom: 10 }}>
-          Se ci sono meno persone connesse di questo numero, la classifica locale resta nascosta per non mostrare qualcuno da solo in cima (demotivante) — Radar, interazioni e punti funzionano comunque normalmente, e i punti contano sempre per la classifica generale.
+          Se ci sono meno persone connesse di questo numero, la classifica locale resta nascosta per
+          non mostrare qualcuno da solo in cima (demotivante) — Radar, interazioni e punti
+          funzionano comunque normalmente, e i punti contano sempre per la classifica generale.
         </p>
         <div style={{ display: 'flex', gap: 8, marginBottom: 10, alignItems: 'flex-end' }}>
           <div style={{ flex: 1 }}>
             <label style={{ fontSize: 9.5, color: 'var(--text-muted)' }}>Minimo persone</label>
-            <input type="number" min="1" value={minUsersEdit} onChange={(e) => setMinUsersEdit(e.target.value)} style={{ marginBottom: 0 }} />
+            <input
+              type="number"
+              min="1"
+              value={minUsersEdit}
+              onChange={(e) => setMinUsersEdit(e.target.value)}
+              style={{ marginBottom: 0 }}
+            />
           </div>
         </div>
-        <button onClick={saveMinUsers} disabled={savingMinUsers} style={{ width: '100%', padding: '9px', borderRadius: 10, border: 'none', fontSize: 11, fontWeight: 700, background: savedMinUsers ? 'rgba(255,61,110,0.3)' : 'var(--cyan)', color: '#fff', cursor: savingMinUsers ? 'default' : 'pointer' }}>
+        <button
+          onClick={saveMinUsers}
+          disabled={savingMinUsers}
+          style={{
+            width: '100%',
+            padding: '9px',
+            borderRadius: 10,
+            border: 'none',
+            fontSize: 11,
+            fontWeight: 700,
+            background: savedMinUsers ? 'rgba(255,61,110,0.3)' : 'var(--cyan)',
+            color: '#fff',
+            cursor: savingMinUsers ? 'default' : 'pointer',
+          }}
+        >
           {savingMinUsers ? 'Un attimo…' : savedMinUsers ? 'Salvato ✓' : 'Salva soglia'}
         </button>
       </MetricCard>
 
       <MetricCard title="Prezzi Pulse di questo locale">
         <p className="pl-hint" style={{ marginBottom: 10 }}>
-          Vuoti finché non li imposti — finché resta vuoto, l'acquisto non compare in app per questo locale. Da concordare con il proprietario.
+          Vuoti finché non li imposti — finché resta vuoto, l'acquisto non compare in app per questo
+          locale. Da concordare con il proprietario.
         </p>
         <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
           <div style={{ flex: 1 }}>
             <label style={{ fontSize: 9.5, color: 'var(--text-muted)' }}>Pulse singolo (€)</label>
-            <input value={pulsePriceEdit} onChange={(e) => setPulsePriceEdit(e.target.value)} placeholder="non impostato" style={{ marginBottom: 0 }} />
+            <input
+              value={pulsePriceEdit}
+              onChange={(e) => setPulsePriceEdit(e.target.value)}
+              placeholder="non impostato"
+              style={{ marginBottom: 0 }}
+            />
           </div>
           <div style={{ flex: 1 }}>
             <label style={{ fontSize: 9.5, color: 'var(--text-muted)' }}>Pacchetto da 5 (€)</label>
-            <input value={bundlePriceEdit} onChange={(e) => setBundlePriceEdit(e.target.value)} placeholder="non impostato" style={{ marginBottom: 0 }} />
+            <input
+              value={bundlePriceEdit}
+              onChange={(e) => setBundlePriceEdit(e.target.value)}
+              placeholder="non impostato"
+              style={{ marginBottom: 0 }}
+            />
           </div>
         </div>
-        <button onClick={savePrices} disabled={savingPrices} style={{ width: '100%', padding: '9px', borderRadius: 10, border: 'none', fontSize: 11, fontWeight: 700, background: savedPrices ? 'rgba(255,61,110,0.3)' : 'var(--cyan)', color: '#fff', cursor: savingPrices ? 'default' : 'pointer' }}>
+        <button
+          onClick={savePrices}
+          disabled={savingPrices}
+          style={{
+            width: '100%',
+            padding: '9px',
+            borderRadius: 10,
+            border: 'none',
+            fontSize: 11,
+            fontWeight: 700,
+            background: savedPrices ? 'rgba(255,61,110,0.3)' : 'var(--cyan)',
+            color: '#fff',
+            cursor: savingPrices ? 'default' : 'pointer',
+          }}
+        >
           {savingPrices ? 'Un attimo…' : savedPrices ? 'Salvato ✓' : 'Salva prezzi'}
         </button>
       </MetricCard>
@@ -1131,36 +1632,110 @@ function VenueOrganizePanel({ venue, onVenueUpdate }) {
         <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
           <div style={{ flex: 1 }}>
             <label style={{ fontSize: 9.5, color: 'var(--text-muted)' }}>Soglia (€)</label>
-            <input type="number" min="0" value={thresholdEdit} onChange={(e) => setThresholdEdit(e.target.value)} placeholder="es. 50" style={{ marginBottom: 0 }} />
+            <input
+              type="number"
+              min="0"
+              value={thresholdEdit}
+              onChange={(e) => setThresholdEdit(e.target.value)}
+              placeholder="es. 50"
+              style={{ marginBottom: 0 }}
+            />
           </div>
           <div style={{ flex: 1 }}>
             <label style={{ fontSize: 9.5, color: 'var(--text-muted)' }}>Punti bonus</label>
-            <input type="number" min="0" value={bonusEdit} onChange={(e) => setBonusEdit(e.target.value)} placeholder="es. 20" style={{ marginBottom: 0 }} />
+            <input
+              type="number"
+              min="0"
+              value={bonusEdit}
+              onChange={(e) => setBonusEdit(e.target.value)}
+              placeholder="es. 20"
+              style={{ marginBottom: 0 }}
+            />
           </div>
         </div>
-        <button onClick={saveSpendingConfig} disabled={savingSpending} style={{ width: '100%', padding: '9px', borderRadius: 10, border: 'none', fontSize: 11, fontWeight: 700, background: savedSpending ? 'rgba(255,61,110,0.3)' : 'var(--cyan)', color: '#fff', cursor: savingSpending ? 'default' : 'pointer' }}>
+        <button
+          onClick={saveSpendingConfig}
+          disabled={savingSpending}
+          style={{
+            width: '100%',
+            padding: '9px',
+            borderRadius: 10,
+            border: 'none',
+            fontSize: 11,
+            fontWeight: 700,
+            background: savedSpending ? 'rgba(255,61,110,0.3)' : 'var(--cyan)',
+            color: '#fff',
+            cursor: savingSpending ? 'default' : 'pointer',
+          }}
+        >
           {savingSpending ? 'Un attimo…' : savedSpending ? 'Salvato ✓' : 'Salva soglia'}
         </button>
       </MetricCard>
 
       <MetricCard title="Conferma spesa tavolo">
         <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
-          <input value={tableCode} onChange={(e) => setTableCode(e.target.value)} placeholder="Codice tavolo" style={{ marginBottom: 0, flex: 1 }} />
+          <input
+            value={tableCode}
+            onChange={(e) => setTableCode(e.target.value)}
+            placeholder="Codice tavolo"
+            style={{ marginBottom: 0, flex: 1 }}
+          />
           <button
             type="button"
             onClick={() => setShowScanner(true)}
             title="Inquadra il QR del tavolo"
-            style={{ flexShrink: 0, width: 42, borderRadius: 10, border: '1px solid rgba(228,212,200,0.2)', background: 'var(--surface-2)', color: 'var(--teak)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            style={{
+              flexShrink: 0,
+              width: 42,
+              borderRadius: 10,
+              border: '1px solid rgba(228,212,200,0.2)',
+              background: 'var(--surface-2)',
+              color: 'var(--teak)',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
           >
             📷
           </button>
-          <input type="number" min="0" value={spentAmount} onChange={(e) => setSpentAmount(e.target.value)} placeholder="Speso (€)" style={{ marginBottom: 0, flex: 1 }} />
+          <input
+            type="number"
+            min="0"
+            value={spentAmount}
+            onChange={(e) => setSpentAmount(e.target.value)}
+            placeholder="Speso (€)"
+            style={{ marginBottom: 0, flex: 1 }}
+          />
         </div>
-        <button onClick={confirmSpending} disabled={confirmingSpend} style={{ width: '100%', padding: '9px', borderRadius: 10, border: 'none', fontSize: 11, fontWeight: 700, background: 'var(--cyan)', color: '#fff', cursor: confirmingSpend ? 'default' : 'pointer' }}>
+        <button
+          onClick={confirmSpending}
+          disabled={confirmingSpend}
+          style={{
+            width: '100%',
+            padding: '9px',
+            borderRadius: 10,
+            border: 'none',
+            fontSize: 11,
+            fontWeight: 700,
+            background: 'var(--cyan)',
+            color: '#fff',
+            cursor: confirmingSpend ? 'default' : 'pointer',
+          }}
+        >
           {confirmingSpend ? 'Un attimo…' : 'Conferma spesa'}
         </button>
         {spendResult && (
-          <p style={{ fontSize: 10, color: spendResult.startsWith('✓') ? 'var(--cyan)' : '#E85D5D', marginTop: 8, marginBottom: 0 }}>{spendResult}</p>
+          <p
+            style={{
+              fontSize: 10,
+              color: spendResult.startsWith('✓') ? 'var(--cyan)' : '#E85D5D',
+              marginTop: 8,
+              marginBottom: 0,
+            }}
+          >
+            {spendResult}
+          </p>
         )}
       </MetricCard>
 
@@ -1169,7 +1744,10 @@ function VenueOrganizePanel({ venue, onVenueUpdate }) {
           onScan={(text, error) => {
             setShowScanner(false);
             if (text) setTableCode(text);
-            else if (error === 'camera_error') window.alert('Non riesco ad accedere alla fotocamera — controlla i permessi del browser, oppure inserisci il codice a mano.');
+            else if (error === 'camera_error')
+              window.alert(
+                'Non riesco ad accedere alla fotocamera — controlla i permessi del browser, oppure inserisci il codice a mano.'
+              );
           }}
           onClose={() => setShowScanner(false)}
         />
@@ -1177,19 +1755,44 @@ function VenueOrganizePanel({ venue, onVenueUpdate }) {
 
       <MetricCard title="Orari Arena">
         <p className="pl-hint" style={{ marginBottom: 10 }}>
-          Lascia vuoto per usare gli orari automatici della categoria del locale, oppure imposta orari personalizzati qui.
+          Lascia vuoto per usare gli orari automatici della categoria del locale, oppure imposta
+          orari personalizzati qui.
         </p>
         <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
           <div style={{ flex: 1 }}>
             <label style={{ fontSize: 9.5, color: 'var(--text-muted)' }}>Apertura</label>
-            <input type="time" value={openTime} onChange={(e) => setOpenTime(e.target.value)} style={{ marginBottom: 0 }} />
+            <input
+              type="time"
+              value={openTime}
+              onChange={(e) => setOpenTime(e.target.value)}
+              style={{ marginBottom: 0 }}
+            />
           </div>
           <div style={{ flex: 1 }}>
             <label style={{ fontSize: 9.5, color: 'var(--text-muted)' }}>Chiusura</label>
-            <input type="time" value={closeTime} onChange={(e) => setCloseTime(e.target.value)} style={{ marginBottom: 0 }} />
+            <input
+              type="time"
+              value={closeTime}
+              onChange={(e) => setCloseTime(e.target.value)}
+              style={{ marginBottom: 0 }}
+            />
           </div>
         </div>
-        <button onClick={saveHours} disabled={savingHours} style={{ width: '100%', padding: '9px', borderRadius: 10, border: 'none', fontSize: 11, fontWeight: 700, background: savedHours ? 'rgba(255,61,110,0.3)' : 'var(--cyan)', color: '#fff', cursor: savingHours ? 'default' : 'pointer' }}>
+        <button
+          onClick={saveHours}
+          disabled={savingHours}
+          style={{
+            width: '100%',
+            padding: '9px',
+            borderRadius: 10,
+            border: 'none',
+            fontSize: 11,
+            fontWeight: 700,
+            background: savedHours ? 'rgba(255,61,110,0.3)' : 'var(--cyan)',
+            color: '#fff',
+            cursor: savingHours ? 'default' : 'pointer',
+          }}
+        >
           {savingHours ? 'Un attimo…' : savedHours ? 'Salvato ✓' : 'Salva orari'}
         </button>
       </MetricCard>
@@ -1198,12 +1801,38 @@ function VenueOrganizePanel({ venue, onVenueUpdate }) {
         <p className="pl-hint" style={{ marginBottom: 10 }}>
           Un solo QR per locale — chi lo scansiona fa il check-in nell'Arena.
         </p>
-        <button onClick={generateVenueQr} disabled={generatingVenueQr} style={{ width: '100%', padding: '9px', borderRadius: 10, border: 'none', fontSize: 11, fontWeight: 700, background: 'var(--cyan)', color: '#fff', cursor: generatingVenueQr ? 'default' : 'pointer' }}>
+        <button
+          onClick={generateVenueQr}
+          disabled={generatingVenueQr}
+          style={{
+            width: '100%',
+            padding: '9px',
+            borderRadius: 10,
+            border: 'none',
+            fontSize: 11,
+            fontWeight: 700,
+            background: 'var(--cyan)',
+            color: '#fff',
+            cursor: generatingVenueQr ? 'default' : 'pointer',
+          }}
+        >
           {generatingVenueQr ? 'Un attimo…' : venueQrDataUrl ? 'Rigenera QR' : 'Genera QR'}
         </button>
         {venueQrDataUrl && (
-          <div style={{ background: '#fff', borderRadius: 12, padding: 16, marginTop: 10, textAlign: 'center' }}>
-            <img src={venueQrDataUrl} alt="QR ingresso locale" style={{ width: 200, height: 200 }} />
+          <div
+            style={{
+              background: '#fff',
+              borderRadius: 12,
+              padding: 16,
+              marginTop: 10,
+              textAlign: 'center',
+            }}
+          >
+            <img
+              src={venueQrDataUrl}
+              alt="QR ingresso locale"
+              style={{ width: 200, height: 200 }}
+            />
           </div>
         )}
       </MetricCard>
@@ -1215,23 +1844,54 @@ function VenueOrganizePanel({ venue, onVenueUpdate }) {
         <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
           <div style={{ flex: 1 }}>
             <label style={{ fontSize: 9.5, color: 'var(--text-muted)' }}>Etichetta</label>
-            <input value={tableQrLabel} onChange={(e) => setTableQrLabel(e.target.value)} placeholder="Tavolo" style={{ marginBottom: 0 }} />
+            <input
+              value={tableQrLabel}
+              onChange={(e) => setTableQrLabel(e.target.value)}
+              placeholder="Tavolo"
+              style={{ marginBottom: 0 }}
+            />
           </div>
           <div style={{ flex: 1 }}>
             <label style={{ fontSize: 9.5, color: 'var(--text-muted)' }}>Quanti</label>
-            <input type="number" min="1" max="200" value={tableQrCount} onChange={(e) => setTableQrCount(e.target.value)} style={{ marginBottom: 0 }} />
+            <input
+              type="number"
+              min="1"
+              max="200"
+              value={tableQrCount}
+              onChange={(e) => setTableQrCount(e.target.value)}
+              style={{ marginBottom: 0 }}
+            />
           </div>
         </div>
-        <button onClick={generateTableQrs} disabled={generatingTableQrs} style={{ width: '100%', padding: '9px', borderRadius: 10, border: 'none', fontSize: 11, fontWeight: 700, background: 'var(--cyan)', color: '#fff', cursor: generatingTableQrs ? 'default' : 'pointer' }}>
+        <button
+          onClick={generateTableQrs}
+          disabled={generatingTableQrs}
+          style={{
+            width: '100%',
+            padding: '9px',
+            borderRadius: 10,
+            border: 'none',
+            fontSize: 11,
+            fontWeight: 700,
+            background: 'var(--cyan)',
+            color: '#fff',
+            cursor: generatingTableQrs ? 'default' : 'pointer',
+          }}
+        >
           {generatingTableQrs ? 'Genero…' : tableQrs ? 'Rigenera tutti' : 'Genera QR tavoli'}
         </button>
 
         {tableQrs && (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 12 }}>
             {tableQrs.map((t) => (
-              <div key={t.code} style={{ background: '#fff', borderRadius: 10, padding: 10, textAlign: 'center' }}>
+              <div
+                key={t.code}
+                style={{ background: '#fff', borderRadius: 10, padding: 10, textAlign: 'center' }}
+              >
                 <img src={t.dataUrl} alt={t.label} style={{ width: '100%', maxWidth: 140 }} />
-                <div style={{ fontSize: 10, color: '#333', fontWeight: 700, marginTop: 4 }}>{t.label}</div>
+                <div style={{ fontSize: 10, color: '#333', fontWeight: 700, marginTop: 4 }}>
+                  {t.label}
+                </div>
               </div>
             ))}
           </div>
@@ -1275,7 +1935,9 @@ function FeatureFlagsSection() {
       });
       const data = await res.json();
       if (data.success) {
-        setFlags((prev) => prev.map((f) => (f.key === flag.key ? { ...f, isEnabled: !f.isEnabled } : f)));
+        setFlags((prev) =>
+          prev.map((f) => (f.key === flag.key ? { ...f, isEnabled: !f.isEnabled } : f))
+        );
       } else {
         window.alert('Qualcosa è andato storto — riprova.');
       }
@@ -1293,7 +1955,8 @@ function FeatureFlagsSection() {
     pulse_like: 'Pulse + Like (minigioco)',
     pulse_simple: 'Pulse (svela subito, senza Superlike)',
     pulse_super: 'Pulse + Superlike (svela subito, richiede un Superlike)',
-    chat_keep_required: 'Chat: richiedi "Conserva" esplicito (se spento, si conservano come su Tinder/Hinge)',
+    chat_keep_required:
+      'Chat: richiedi "Conserva" esplicito (se spento, si conservano come su Tinder/Hinge)',
     big_spender: 'Big Spender (soglia di spesa)',
     top_connector: 'Top Connector (Squad via QR)',
   };
@@ -1303,28 +1966,55 @@ function FeatureFlagsSection() {
   return (
     <div>
       <p className="pl-hint" style={{ marginBottom: 12 }}>
-        Spegni una funzionalità per offrire un'app "lite" nelle prime serate test — Like, Superlike, classifiche e check-in restano sempre accesi, non sono qui. Le varianti di Pulse invece sono tutte qui sotto, comprese "Pulse" e "Pulse + Superlike" (prima quest'ultima era sempre accesa per definizione — ora è un interruttore come le altre). L'effetto è immediato per tutti, senza bisogno di ricaricare nulla lato codice.
+        Spegni una funzionalità per offrire un'app "lite" nelle prime serate test — Like, Superlike,
+        classifiche e check-in restano sempre accesi, non sono qui. Le varianti di Pulse invece sono
+        tutte qui sotto, comprese "Pulse" e "Pulse + Superlike" (prima quest'ultima era sempre
+        accesa per definizione — ora è un interruttore come le altre). L'effetto è immediato per
+        tutti, senza bisogno di ricaricare nulla lato codice.
       </p>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {flags.map((f) => (
-          <div key={f.key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--surface)', border: '1px solid rgba(228,212,200,0.12)', borderRadius: 12, padding: '12px 14px' }}>
+          <div
+            key={f.key}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              background: 'var(--surface)',
+              border: '1px solid rgba(228,212,200,0.12)',
+              borderRadius: 12,
+              padding: '12px 14px',
+            }}
+          >
             <span style={{ fontSize: 12.5, fontWeight: 600 }}>{labels[f.key] || f.key}</span>
             <button
               onClick={() => toggle(f)}
               disabled={togglingKey === f.key}
               style={{
-                width: 46, height: 26, borderRadius: 999, border: 'none', position: 'relative', flexShrink: 0,
+                width: 46,
+                height: 26,
+                borderRadius: 999,
+                border: 'none',
+                position: 'relative',
+                flexShrink: 0,
                 background: f.isEnabled ? 'var(--cyan)' : 'rgba(228,212,200,0.2)',
                 cursor: togglingKey === f.key ? 'default' : 'pointer',
                 transition: 'background 0.2s',
               }}
             >
-              <span style={{
-                position: 'absolute', top: 3, left: f.isEnabled ? 23 : 3,
-                width: 20, height: 20, borderRadius: '50%', background: '#fff',
-                transition: 'left 0.2s',
-              }} />
+              <span
+                style={{
+                  position: 'absolute',
+                  top: 3,
+                  left: f.isEnabled ? 23 : 3,
+                  width: 20,
+                  height: 20,
+                  borderRadius: '50%',
+                  background: '#fff',
+                  transition: 'left 0.2s',
+                }}
+              />
             </button>
           </div>
         ))}
@@ -1353,7 +2043,9 @@ function PeopleSearchSection() {
     if (!clean) return;
     setLoading(true);
     try {
-      const res = await apiFetch(`/api/dashboard/search-by-hashtag?hashtag=${encodeURIComponent(clean)}`);
+      const res = await apiFetch(
+        `/api/dashboard/search-by-hashtag?hashtag=${encodeURIComponent(clean)}`
+      );
       const data = await res.json();
       setPeople(data.success ? data.people : []);
     } finally {
@@ -1364,7 +2056,8 @@ function PeopleSearchSection() {
   return (
     <div>
       <p className="pl-hint" style={{ marginBottom: 12 }}>
-        Cerca tutte le persone con un dato hashtag, ordinate per punti — utile per fornire nomi veri a locali o brand che li richiedono (es. "#pr" per trovare organizzatori).
+        Cerca tutte le persone con un dato hashtag, ordinate per punti — utile per fornire nomi veri
+        a locali o brand che li richiedono (es. "#pr" per trovare organizzatori).
       </p>
 
       <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
@@ -1378,28 +2071,84 @@ function PeopleSearchSection() {
         <button
           onClick={search}
           disabled={loading}
-          style={{ padding: '0 16px', borderRadius: 10, border: 'none', background: 'var(--cyan)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+          style={{
+            padding: '0 16px',
+            borderRadius: 10,
+            border: 'none',
+            background: 'var(--cyan)',
+            color: '#fff',
+            fontSize: 12,
+            fontWeight: 700,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+          }}
         >
           <Search size={14} /> {loading ? '…' : 'Cerca'}
         </button>
       </div>
 
       {people === null && <p className="pl-hint">Scrivi un hashtag e tocca Cerca.</p>}
-      {people !== null && people.length === 0 && <p className="pl-hint">Nessuno trovato con questo hashtag.</p>}
+      {people !== null && people.length === 0 && (
+        <p className="pl-hint">Nessuno trovato con questo hashtag.</p>
+      )}
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {people?.map((p) => (
-          <div key={p.userId} style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--surface)', border: '1px solid rgba(228,212,200,0.12)', borderRadius: 12, padding: 10 }}>
-            <div style={{ width: 40, height: 40, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, background: 'var(--surface-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>
-              {p.photoUrl ? <img src={getOptimizedPhotoUrl(p.photoUrl, { width: 40, height: 40 })} alt={p.displayName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : p.avatarEmoji}
+          <div
+            key={p.userId}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              background: 'var(--surface)',
+              border: '1px solid rgba(228,212,200,0.12)',
+              borderRadius: 12,
+              padding: 10,
+            }}
+          >
+            <div
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: '50%',
+                overflow: 'hidden',
+                flexShrink: 0,
+                background: 'var(--surface-2)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 18,
+              }}
+            >
+              {p.photoUrl ? (
+                <img
+                  src={getOptimizedPhotoUrl(p.photoUrl, { width: 40, height: 40 })}
+                  alt={p.displayName}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+              ) : (
+                p.avatarEmoji
+              )}
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 12.5, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 5 }}>
+              <div
+                style={{
+                  fontSize: 12.5,
+                  fontWeight: 700,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 5,
+                }}
+              >
                 {p.displayName}
                 {p.isVerified && <span style={{ fontSize: 9, color: 'var(--cyan)' }}>✓</span>}
                 {p.isTopConnector && <span style={{ fontSize: 8.5, color: '#C7C9CC' }}>⛓</span>}
               </div>
-              <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>{p.globalPoints} punti · {p.phoneNumber}</div>
+              <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>
+                {p.globalPoints} punti · {p.phoneNumber}
+              </div>
             </div>
           </div>
         ))}
@@ -1433,7 +2182,9 @@ function InstantInfluencerSection() {
     setFoundUser(null);
     setNotFound(false);
     try {
-      const res = await apiFetch(`/api/dashboard/find-user-by-phone?phone=${encodeURIComponent(phoneInput.trim())}`);
+      const res = await apiFetch(
+        `/api/dashboard/find-user-by-phone?phone=${encodeURIComponent(phoneInput.trim())}`
+      );
       const data = await res.json();
       if (data.success) {
         setFoundUser(data.user);
@@ -1465,7 +2216,10 @@ function InstantInfluencerSection() {
       const res = await apiFetch(`/api/dashboard/users/${foundUser.userId}/instant-influencer`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ category: category.trim() || null, products: products.filter((p) => p.name.trim()) }),
+        body: JSON.stringify({
+          category: category.trim() || null,
+          products: products.filter((p) => p.name.trim()),
+        }),
       });
       const data = await res.json();
       if (data.success) {
@@ -1481,9 +2235,12 @@ function InstantInfluencerSection() {
 
   return (
     <div>
-      <div className="pl-section-label" style={{ marginBottom: 8 }}>Instant Influencer</div>
+      <div className="pl-section-label" style={{ marginBottom: 8 }}>
+        Instant Influencer
+      </div>
       <p className="pl-hint" style={{ marginBottom: 12 }}>
-        Cerca la persona per numero di telefono, poi imposta categoria e prodotti sponsorizzati — solo dopo un vero accordo brand confermato.
+        Cerca la persona per numero di telefono, poi imposta categoria e prodotti sponsorizzati —
+        solo dopo un vero accordo brand confermato.
       </p>
 
       <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
@@ -1497,7 +2254,16 @@ function InstantInfluencerSection() {
         <button
           onClick={search}
           disabled={searching}
-          style={{ padding: '0 16px', borderRadius: 10, border: 'none', background: 'var(--cyan)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+          style={{
+            padding: '0 16px',
+            borderRadius: 10,
+            border: 'none',
+            background: 'var(--cyan)',
+            color: '#fff',
+            fontSize: 12,
+            fontWeight: 700,
+            cursor: 'pointer',
+          }}
         >
           {searching ? '…' : 'Cerca'}
         </button>
@@ -1517,8 +2283,14 @@ function InstantInfluencerSection() {
           <button
             onClick={() => setCategory(category ? '' : 'attivo')}
             style={{
-              width: '100%', padding: '9px', borderRadius: 10, border: 'none', marginBottom: 10,
-              fontSize: 11.5, fontWeight: 700, cursor: 'pointer',
+              width: '100%',
+              padding: '9px',
+              borderRadius: 10,
+              border: 'none',
+              marginBottom: 10,
+              fontSize: 11.5,
+              fontWeight: 700,
+              cursor: 'pointer',
               background: category ? 'var(--cyan)' : 'rgba(228,212,200,0.12)',
               color: category ? '#fff' : 'var(--text-muted)',
             }}
@@ -1528,7 +2300,9 @@ function InstantInfluencerSection() {
 
           {category && (
             <>
-              <div style={{ fontSize: 9.5, color: 'var(--text-muted)', marginBottom: 6 }}>Prodotti sponsorizzati</div>
+              <div style={{ fontSize: 9.5, color: 'var(--text-muted)', marginBottom: 6 }}>
+                Prodotti sponsorizzati
+              </div>
               {products.map((p, i) => (
                 <div key={i} style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
                   <input
@@ -1547,7 +2321,15 @@ function InstantInfluencerSection() {
                     <button
                       type="button"
                       onClick={() => removeProductRow(i)}
-                      style={{ flexShrink: 0, width: 32, borderRadius: 8, border: '1px solid rgba(228,212,200,0.2)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}
+                      style={{
+                        flexShrink: 0,
+                        width: 32,
+                        borderRadius: 8,
+                        border: '1px solid rgba(228,212,200,0.2)',
+                        background: 'transparent',
+                        color: 'var(--text-muted)',
+                        cursor: 'pointer',
+                      }}
                     >
                       ✕
                     </button>
@@ -1557,7 +2339,17 @@ function InstantInfluencerSection() {
               <button
                 type="button"
                 onClick={addProductRow}
-                style={{ width: '100%', padding: 8, borderRadius: 10, border: '1px dashed rgba(228,212,200,0.3)', background: 'transparent', color: 'var(--teak)', fontSize: 11, cursor: 'pointer', marginBottom: 10 }}
+                style={{
+                  width: '100%',
+                  padding: 8,
+                  borderRadius: 10,
+                  border: '1px dashed rgba(228,212,200,0.3)',
+                  background: 'transparent',
+                  color: 'var(--teak)',
+                  fontSize: 11,
+                  cursor: 'pointer',
+                  marginBottom: 10,
+                }}
               >
                 + Aggiungi prodotto
               </button>
@@ -1567,7 +2359,17 @@ function InstantInfluencerSection() {
           <button
             onClick={save}
             disabled={saving}
-            style={{ width: '100%', padding: '9px', borderRadius: 10, border: 'none', fontSize: 11, fontWeight: 700, background: saved ? 'rgba(255,61,110,0.3)' : 'var(--cyan)', color: '#fff', cursor: saving ? 'default' : 'pointer' }}
+            style={{
+              width: '100%',
+              padding: '9px',
+              borderRadius: 10,
+              border: 'none',
+              fontSize: 11,
+              fontWeight: 700,
+              background: saved ? 'rgba(255,61,110,0.3)' : 'var(--cyan)',
+              color: '#fff',
+              cursor: saving ? 'default' : 'pointer',
+            }}
           >
             {saving ? 'Un attimo…' : saved ? 'Salvato ✓' : 'Salva'}
           </button>
@@ -1607,7 +2409,9 @@ function VenueDrinksSection({ venueId }) {
     }
   }, [venueId]);
 
-  useEffect(() => { loadDrinks(); }, [loadDrinks]);
+  useEffect(() => {
+    loadDrinks();
+  }, [loadDrinks]);
 
   async function addDrink() {
     const priceCents = Math.round(parseFloat(newPrice.replace(',', '.')) * 100);
@@ -1668,7 +2472,9 @@ function VenueDrinksSection({ venueId }) {
 
   async function removeDrink(drinkId) {
     if (!window.confirm('Togliere questo drink dal catalogo del locale?')) return;
-    const res = await apiFetch(`/api/dashboard/venues/${venueId}/drinks/${drinkId}`, { method: 'DELETE' });
+    const res = await apiFetch(`/api/dashboard/venues/${venueId}/drinks/${drinkId}`, {
+      method: 'DELETE',
+    });
     const data = await res.json();
     if (data.success) loadDrinks();
   }
@@ -1676,7 +2482,8 @@ function VenueDrinksSection({ venueId }) {
   return (
     <MetricCard title="Catalogo drink Pulse">
       <p className="pl-hint" style={{ marginBottom: 10 }}>
-        I drink che chi invia una Pulse può scegliere in questo locale. Senza almeno uno, l'invio resta bloccato — nessuna scelta possibile.
+        I drink che chi invia una Pulse può scegliere in questo locale. Senza almeno uno, l'invio
+        resta bloccato — nessuna scelta possibile.
       </p>
 
       {loading ? (
@@ -1689,18 +2496,62 @@ function VenueDrinksSection({ venueId }) {
             </p>
           )}
           {drinks.map((d) => (
-            <div key={d.id} style={{ background: 'var(--surface-2)', borderRadius: 10, padding: 10, marginBottom: 8 }}>
+            <div
+              key={d.id}
+              style={{
+                background: 'var(--surface-2)',
+                borderRadius: 10,
+                padding: 10,
+                marginBottom: 8,
+              }}
+            >
               {editingId === d.id ? (
                 <>
                   <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
-                    <input value={editName} onChange={(e) => setEditName(e.target.value)} placeholder="Nome" style={{ marginBottom: 0, flex: 2 }} />
-                    <input value={editPrice} onChange={(e) => setEditPrice(e.target.value)} placeholder="Prezzo (€)" style={{ marginBottom: 0, flex: 1 }} />
+                    <input
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      placeholder="Nome"
+                      style={{ marginBottom: 0, flex: 2 }}
+                    />
+                    <input
+                      value={editPrice}
+                      onChange={(e) => setEditPrice(e.target.value)}
+                      placeholder="Prezzo (€)"
+                      style={{ marginBottom: 0, flex: 1 }}
+                    />
                   </div>
                   <div style={{ display: 'flex', gap: 6 }}>
-                    <button onClick={() => saveEdit(d.id)} disabled={savingEdit} style={{ flex: 1, padding: 8, borderRadius: 8, border: 'none', background: 'var(--cyan)', color: '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>
+                    <button
+                      onClick={() => saveEdit(d.id)}
+                      disabled={savingEdit}
+                      style={{
+                        flex: 1,
+                        padding: 8,
+                        borderRadius: 8,
+                        border: 'none',
+                        background: 'var(--cyan)',
+                        color: '#fff',
+                        fontSize: 11,
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                      }}
+                    >
                       {savingEdit ? 'Un attimo…' : 'Salva'}
                     </button>
-                    <button onClick={() => setEditingId(null)} style={{ flex: 1, padding: 8, borderRadius: 8, border: '1px solid rgba(228,212,200,0.2)', background: 'transparent', color: 'var(--text-muted)', fontSize: 11, cursor: 'pointer' }}>
+                    <button
+                      onClick={() => setEditingId(null)}
+                      style={{
+                        flex: 1,
+                        padding: 8,
+                        borderRadius: 8,
+                        border: '1px solid rgba(228,212,200,0.2)',
+                        background: 'transparent',
+                        color: 'var(--text-muted)',
+                        fontSize: 11,
+                        cursor: 'pointer',
+                      }}
+                    >
                       Annulla
                     </button>
                   </div>
@@ -1709,12 +2560,36 @@ function VenueDrinksSection({ venueId }) {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 12.5, fontWeight: 600 }}>{d.name}</div>
-                    <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{(d.basePriceCents / 100).toFixed(2)}€</div>
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                      {(d.basePriceCents / 100).toFixed(2)}€
+                    </div>
                   </div>
-                  <button onClick={() => startEdit(d)} style={{ padding: '6px 10px', borderRadius: 8, border: '1px solid rgba(228,212,200,0.2)', background: 'transparent', color: 'var(--text-muted)', fontSize: 11, cursor: 'pointer' }}>
+                  <button
+                    onClick={() => startEdit(d)}
+                    style={{
+                      padding: '6px 10px',
+                      borderRadius: 8,
+                      border: '1px solid rgba(228,212,200,0.2)',
+                      background: 'transparent',
+                      color: 'var(--text-muted)',
+                      fontSize: 11,
+                      cursor: 'pointer',
+                    }}
+                  >
                     Modifica
                   </button>
-                  <button onClick={() => removeDrink(d.id)} style={{ padding: '6px 10px', borderRadius: 8, border: '1px solid rgba(229,57,53,0.3)', background: 'transparent', color: 'var(--red)', fontSize: 11, cursor: 'pointer' }}>
+                  <button
+                    onClick={() => removeDrink(d.id)}
+                    style={{
+                      padding: '6px 10px',
+                      borderRadius: 8,
+                      border: '1px solid rgba(229,57,53,0.3)',
+                      background: 'transparent',
+                      color: 'var(--red)',
+                      fontSize: 11,
+                      cursor: 'pointer',
+                    }}
+                  >
                     Rimuovi
                   </button>
                 </div>
@@ -1722,12 +2597,38 @@ function VenueDrinksSection({ venueId }) {
             </div>
           ))}
 
-          <div className="pl-section-label" style={{ marginTop: 14 }}>Aggiungi un nuovo drink</div>
-          <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
-            <input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Nome (es. Spritz)" style={{ marginBottom: 0, flex: 2 }} />
-            <input value={newPrice} onChange={(e) => setNewPrice(e.target.value)} placeholder="Prezzo (€)" style={{ marginBottom: 0, flex: 1 }} />
+          <div className="pl-section-label" style={{ marginTop: 14 }}>
+            Aggiungi un nuovo drink
           </div>
-          <button onClick={addDrink} disabled={adding} style={{ width: '100%', padding: '9px', borderRadius: 10, border: 'none', fontSize: 11, fontWeight: 700, background: 'var(--cyan)', color: '#fff', cursor: adding ? 'default' : 'pointer' }}>
+          <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+            <input
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              placeholder="Nome (es. Spritz)"
+              style={{ marginBottom: 0, flex: 2 }}
+            />
+            <input
+              value={newPrice}
+              onChange={(e) => setNewPrice(e.target.value)}
+              placeholder="Prezzo (€)"
+              style={{ marginBottom: 0, flex: 1 }}
+            />
+          </div>
+          <button
+            onClick={addDrink}
+            disabled={adding}
+            style={{
+              width: '100%',
+              padding: '9px',
+              borderRadius: 10,
+              border: 'none',
+              fontSize: 11,
+              fontWeight: 700,
+              background: 'var(--cyan)',
+              color: '#fff',
+              cursor: adding ? 'default' : 'pointer',
+            }}
+          >
             {adding ? 'Un attimo…' : '+ Aggiungi drink'}
           </button>
         </>

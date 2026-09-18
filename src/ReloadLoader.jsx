@@ -19,7 +19,9 @@ export default function ReloadLoader({ fadingOut, onExited }) {
   return (
     <div
       className={`pl-splash pl-reload-loader ${fadingOut ? 'pl-splash-out' : ''}`}
-      onTransitionEnd={() => { if (fadingOut) onExited?.(); }}
+      onTransitionEnd={() => {
+        if (fadingOut) onExited?.();
+      }}
     >
       <div style={{ position: 'relative', width: 1, height: 1 }}>
         <span className="pl-splash-antenna-node"></span>

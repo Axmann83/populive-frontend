@@ -1,0 +1,11 @@
+{
+  "extends": ["react-app", "prettier"],
+  "rules": {
+    "no-console": ["error", { "allow": ["warn", "error"] }],
+    "no-unused-vars": ["error", { "args": "after-used", "argsIgnorePattern": "^_", "ignoreRestSiblings": true }],
+    "no-var": "error",
+    "prefer-const": "error",
+    "eqeqeq": ["error", "always", { "null": "ignore" }],
+    "no-debugger": "error"
+  }
+}

@@ -1,6 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 
-import { apiFetch, requestAndSendLocation, uploadPhotoToStorage, getOptimizedPhotoUrl } from './apiClient';
+import {
+  apiFetch,
+  requestAndSendLocation,
+  uploadPhotoToStorage,
+  getOptimizedPhotoUrl,
+} from './apiClient';
 
 /**
  * ============================================================
@@ -38,7 +43,9 @@ export default function Settings({ userId, onClose, onAccountDeleted }) {
       }
     }
     load();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [userId]);
 
   // Cambiare la foto DOPO la registrazione iniziale — mancava del
@@ -105,7 +112,9 @@ export default function Settings({ userId, onClose, onAccountDeleted }) {
 
   return (
     <div className="pl-sheet">
-      <div className="pl-sheet-close" onClick={onClose}>Chiudi ✕</div>
+      <div className="pl-sheet-close" onClick={onClose}>
+        Chiudi ✕
+      </div>
       <h3>Impostazioni</h3>
 
       {/* Foto profilo — cerchietto classico con il "+" per
@@ -120,22 +129,49 @@ export default function Settings({ userId, onClose, onAccountDeleted }) {
           onClick={() => fileInputRef.current?.click()}
           style={{ position: 'relative', width: 84, height: 84, cursor: 'pointer' }}
         >
-          <div style={{
-            width: '100%', height: '100%', borderRadius: '50%', overflow: 'hidden',
-            background: 'var(--surface-2)', border: '2px solid var(--teak)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            opacity: uploadingPhoto ? 0.5 : 1,
-          }}>
-            {settings.photoUrl
-              ? <img src={getOptimizedPhotoUrl(settings.photoUrl, { width: 84, height: 84 })} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              : <span style={{ fontSize: 28, color: 'var(--text-muted)' }}>🙂</span>}
+          <div
+            style={{
+              width: '100%',
+              height: '100%',
+              borderRadius: '50%',
+              overflow: 'hidden',
+              background: 'var(--surface-2)',
+              border: '2px solid var(--teak)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              opacity: uploadingPhoto ? 0.5 : 1,
+            }}
+          >
+            {settings.photoUrl ? (
+              <img
+                src={getOptimizedPhotoUrl(settings.photoUrl, { width: 84, height: 84 })}
+                alt=""
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+            ) : (
+              <span style={{ fontSize: 28, color: 'var(--text-muted)' }}>🙂</span>
+            )}
           </div>
-          <div style={{
-            position: 'absolute', bottom: -2, right: -2, width: 28, height: 28, borderRadius: '50%',
-            background: 'var(--cyan)', border: '2px solid var(--surface)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 18, fontWeight: 700, color: '#fff', lineHeight: 1,
-          }}>
+          <div
+            style={{
+              position: 'absolute',
+              bottom: -2,
+              right: -2,
+              width: 28,
+              height: 28,
+              borderRadius: '50%',
+              background: 'var(--cyan)',
+              border: '2px solid var(--surface)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: 18,
+              fontWeight: 700,
+              color: '#fff',
+              lineHeight: 1,
+            }}
+          >
             +
           </div>
           <input
@@ -147,8 +183,16 @@ export default function Settings({ userId, onClose, onAccountDeleted }) {
           />
         </div>
       </div>
-      {uploadingPhoto && <p className="pl-hint" style={{ textAlign: 'center', marginTop: -12, marginBottom: 16 }}>Caricamento…</p>}
-      {photoError && <p className="pl-error" style={{ textAlign: 'center', marginTop: -12, marginBottom: 16 }}>{photoError}</p>}
+      {uploadingPhoto && (
+        <p className="pl-hint" style={{ textAlign: 'center', marginTop: -12, marginBottom: 16 }}>
+          Caricamento…
+        </p>
+      )}
+      {photoError && (
+        <p className="pl-error" style={{ textAlign: 'center', marginTop: -12, marginBottom: 16 }}>
+          {photoError}
+        </p>
+      )}
 
       <div className="pl-section-label">Autopresentazione</div>
       <ToggleRow
@@ -158,7 +202,9 @@ export default function Settings({ userId, onClose, onAccountDeleted }) {
         onChange={(v) => setSettings({ ...settings, showRankingOnProfile: v })}
       />
 
-      <div className="pl-section-label" style={{ marginTop: 16 }}>Visibilità nel Radar</div>
+      <div className="pl-section-label" style={{ marginTop: 16 }}>
+        Visibilità nel Radar
+      </div>
       <ToggleRow
         label="Ghost Mode"
         sub="Non comparirai nel Radar di nessuno — se invii tu un'interazione, quella persona vedrà comunque il tuo profilo tra i candidati, ma solo lei"
@@ -166,7 +212,9 @@ export default function Settings({ userId, onClose, onAccountDeleted }) {
         onChange={(v) => setSettings({ ...settings, ghostModeEnabled: v })}
       />
 
-      <div className="pl-section-label" style={{ marginTop: 16 }}>Notifiche</div>
+      <div className="pl-section-label" style={{ marginTop: 16 }}>
+        Notifiche
+      </div>
       <ToggleRow
         label="Notifiche aptiche (vibrazione)"
         sub="Se disattivata, non sentirai il telefono vibrare per Like/Superlike/Pulse ricevuti — vedrai comunque il resoconto quando riapri l'app da solo"
@@ -174,7 +222,9 @@ export default function Settings({ userId, onClose, onAccountDeleted }) {
         onChange={(v) => setSettings({ ...settings, hapticNotificationsEnabled: v })}
       />
 
-      <div className="pl-section-label" style={{ marginTop: 16 }}>Consenso e privacy</div>
+      <div className="pl-section-label" style={{ marginTop: 16 }}>
+        Consenso e privacy
+      </div>
       <p className="pl-hint">
         Queste opzioni restano tutte facoltative — ognuna attiva ti dà +5% sui punti che guadagni
         (fino a +15% con tutte e tre), mai una penalità per averle spente.
@@ -223,17 +273,39 @@ export default function Settings({ userId, onClose, onAccountDeleted }) {
       {/* Sezione legale — link ai testi veri (placeholder finché non
           arrivano dallo studio) + richiesta di cancellazione account,
           un diritto GDPR a sé che non passa dai toggle sopra. */}
-      <div className="pl-section-label" style={{ marginTop: 20 }}>Legale</div>
-      <a href="/privacy-policy" target="_blank" rel="noopener noreferrer" className="pl-hint" style={{ display: 'block', marginBottom: 4 }}>
+      <div className="pl-section-label" style={{ marginTop: 20 }}>
+        Legale
+      </div>
+      <a
+        href="/privacy-policy"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="pl-hint"
+        style={{ display: 'block', marginBottom: 4 }}
+      >
         Privacy Policy →
       </a>
-      <a href="/termini-di-servizio" target="_blank" rel="noopener noreferrer" className="pl-hint" style={{ display: 'block', marginBottom: 12 }}>
+      <a
+        href="/termini-di-servizio"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="pl-hint"
+        style={{ display: 'block', marginBottom: 12 }}
+      >
         Termini di Servizio →
       </a>
       {!showDeleteConfirm ? (
         <button
           className="pl-hint"
-          style={{ background: 'none', border: '1px solid rgba(229,57,53,0.3)', color: 'var(--red)', borderRadius: 12, padding: 10, width: '100%', cursor: 'pointer' }}
+          style={{
+            background: 'none',
+            border: '1px solid rgba(229,57,53,0.3)',
+            color: 'var(--red)',
+            borderRadius: 12,
+            padding: 10,
+            width: '100%',
+            cursor: 'pointer',
+          }}
           onClick={() => setShowDeleteConfirm(true)}
         >
           Richiedi la cancellazione del tuo account
@@ -241,19 +313,37 @@ export default function Settings({ userId, onClose, onAccountDeleted }) {
       ) : (
         <div style={{ border: '1px solid rgba(229,57,53,0.4)', borderRadius: 12, padding: 12 }}>
           <p className="pl-hint" style={{ marginBottom: 10, color: 'var(--red)' }}>
-            Questa azione è definitiva: profilo, foto e bio verranno cancellati per sempre, e non potrai più accedere con questo account. Sei sicuro?
+            Questa azione è definitiva: profilo, foto e bio verranno cancellati per sempre, e non
+            potrai più accedere con questo account. Sei sicuro?
           </p>
           <div style={{ display: 'flex', gap: 8 }}>
             <button
               onClick={() => setShowDeleteConfirm(false)}
-              style={{ flex: 1, padding: 10, borderRadius: 10, border: '1px solid rgba(228,212,200,0.3)', background: 'none', color: 'var(--text)', cursor: 'pointer' }}
+              style={{
+                flex: 1,
+                padding: 10,
+                borderRadius: 10,
+                border: '1px solid rgba(228,212,200,0.3)',
+                background: 'none',
+                color: 'var(--text)',
+                cursor: 'pointer',
+              }}
             >
               Annulla
             </button>
             <button
               onClick={handleDeleteAccount}
               disabled={deleting}
-              style={{ flex: 1, padding: 10, borderRadius: 10, border: 'none', background: 'var(--red)', color: '#fff', fontWeight: 700, cursor: 'pointer' }}
+              style={{
+                flex: 1,
+                padding: 10,
+                borderRadius: 10,
+                border: 'none',
+                background: 'var(--red)',
+                color: '#fff',
+                fontWeight: 700,
+                cursor: 'pointer',
+              }}
             >
               {deleting ? 'Cancellazione…' : 'Sì, cancella per sempre'}
             </button>

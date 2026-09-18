@@ -99,7 +99,9 @@ export default function Login({ onLoggedIn }) {
       {step === 'code' && (
         <form onSubmit={submitCode}>
           <h2>Inserisci il codice</h2>
-          <p className="pl-hint">Ti abbiamo mandato un codice a 6 cifre via SMS al numero inserito.</p>
+          <p className="pl-hint">
+            Ti abbiamo mandato un codice a 6 cifre via SMS al numero inserito.
+          </p>
           <input
             type="text"
             inputMode="numeric"
@@ -115,8 +117,17 @@ export default function Login({ onLoggedIn }) {
           </button>
           <p
             className="pl-hint"
-            style={{ textAlign: 'center', marginTop: 10, cursor: 'pointer', textDecoration: 'underline' }}
-            onClick={() => { setStep('phone'); setCode(''); setError(null); }}
+            style={{
+              textAlign: 'center',
+              marginTop: 10,
+              cursor: 'pointer',
+              textDecoration: 'underline',
+            }}
+            onClick={() => {
+              setStep('phone');
+              setCode('');
+              setError(null);
+            }}
           >
             Numero sbagliato? Torna indietro
           </p>
@@ -129,7 +140,7 @@ export default function Login({ onLoggedIn }) {
 function reasonToMessage(reason) {
   const messages = {
     invalid_phone_number: 'Numero di telefono non valido.',
-    sms_send_failed: 'Non siamo riusciti a inviare l\'SMS — riprova tra poco.',
+    sms_send_failed: "Non siamo riusciti a inviare l'SMS — riprova tra poco.",
     no_pending_code: 'Nessun codice in attesa per questo numero — richiedine uno nuovo.',
     code_expired: 'Il codice è scaduto — richiedine uno nuovo.',
     too_many_attempts: 'Troppi tentativi sbagliati — richiedi un nuovo codice.',

@@ -17,7 +17,12 @@ import { apiFetch } from './apiClient';
  * nella scheda Funzionalità.
  * ============================================================
  */
-export default function AdminChatPanel({ targetUserId, targetDisplayName, currentUserId, onClose }) {
+export default function AdminChatPanel({
+  targetUserId,
+  targetDisplayName,
+  currentUserId,
+  onClose,
+}) {
   const [conversationId, setConversationId] = useState(null);
   const [messages, setMessages] = useState([]);
   const [draft, setDraft] = useState('');
@@ -41,9 +46,15 @@ export default function AdminChatPanel({ targetUserId, targetDisplayName, curren
         if (data.success) setConversationId(data.conversationId);
         else setError('Non è stato possibile aprire la chat.');
       })
-      .catch(() => { if (!cancelled) setError('Errore di rete.'); })
-      .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
+      .catch(() => {
+        if (!cancelled) setError('Errore di rete.');
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [targetUserId]);
 
   // Carica i messaggi appena la conversazione è pronta, poi
@@ -56,13 +67,18 @@ export default function AdminChatPanel({ targetUserId, targetDisplayName, curren
     function loadMessages() {
       apiFetch(`/api/chat/${conversationId}/messages`)
         .then((r) => r.json())
-        .then((data) => { if (!cancelled && data.success) setMessages(data.messages); })
+        .then((data) => {
+          if (!cancelled && data.success) setMessages(data.messages);
+        })
         .catch(() => {});
     }
 
     loadMessages();
     const interval = setInterval(loadMessages, 4000);
-    return () => { cancelled = true; clearInterval(interval); };
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
   }, [conversationId]);
 
   useEffect(() => {
@@ -81,7 +97,10 @@ export default function AdminChatPanel({ targetUserId, targetDisplayName, curren
       });
       const data = await res.json();
       if (data.success) {
-        setMessages((prev) => [...prev, { id: data.messageId, sender_id: currentUserId, body, created_at: data.createdAt }]);
+        setMessages((prev) => [
+          ...prev,
+          { id: data.messageId, sender_id: currentUserId, body, created_at: data.createdAt },
+        ]);
       }
     } catch {
       setDraft(body); // rimesso nel campo se l'invio fallisce, non perso
@@ -112,25 +131,77 @@ export default function AdminChatPanel({ targetUserId, targetDisplayName, curren
   }
 
   return (
-    <div style={{
-      position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(0,0,0,0.6)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
-    }}>
-      <div style={{
-        width: '100%', maxWidth: 480, maxHeight: '85vh', display: 'flex', flexDirection: 'column',
-        background: 'var(--surface)', borderRadius: 16, overflow: 'hidden',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderBottom: '1px solid rgba(228,212,200,0.12)' }}>
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 60,
+        background: 'rgba(0,0,0,0.6)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 16,
+      }}
+    >
+      <div
+        style={{
+          width: '100%',
+          maxWidth: 480,
+          maxHeight: '85vh',
+          display: 'flex',
+          flexDirection: 'column',
+          background: 'var(--surface)',
+          borderRadius: 16,
+          overflow: 'hidden',
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '14px 16px',
+            borderBottom: '1px solid rgba(228,212,200,0.12)',
+          }}
+        >
           <div style={{ fontWeight: 700 }}>Messaggio diretto — {targetDisplayName || 'Utente'}</div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: 20, cursor: 'pointer' }}>✕</button>
+          <button
+            onClick={onClose}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--text-muted)',
+              fontSize: 20,
+              cursor: 'pointer',
+            }}
+          >
+            ✕
+          </button>
         </div>
 
-        {loading && <p className="pl-hint" style={{ padding: 16 }}>Apertura della chat…</p>}
-        {error && <p className="pl-error" style={{ padding: 16 }}>{error}</p>}
+        {loading && (
+          <p className="pl-hint" style={{ padding: 16 }}>
+            Apertura della chat…
+          </p>
+        )}
+        {error && (
+          <p className="pl-error" style={{ padding: 16 }}>
+            {error}
+          </p>
+        )}
 
         {!loading && !error && (
           <>
-            <div style={{ flex: 1, overflowY: 'auto', padding: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div
+              style={{
+                flex: 1,
+                overflowY: 'auto',
+                padding: 16,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 8,
+              }}
+            >
               {messages.length === 0 && (
                 <p className="pl-hint">Nessun messaggio ancora — scrivi il primo qui sotto.</p>
               )}
@@ -141,7 +212,10 @@ export default function AdminChatPanel({ targetUserId, targetDisplayName, curren
                     alignSelf: m.sender_id === currentUserId ? 'flex-end' : 'flex-start',
                     background: m.sender_id === currentUserId ? 'var(--cyan)' : 'var(--surface-2)',
                     color: m.sender_id === currentUserId ? '#fff' : 'var(--text)',
-                    padding: '8px 12px', borderRadius: 14, maxWidth: '80%', fontSize: 13,
+                    padding: '8px 12px',
+                    borderRadius: 14,
+                    maxWidth: '80%',
+                    fontSize: 13,
                   }}
                 >
                   {m.body}
@@ -150,15 +224,30 @@ export default function AdminChatPanel({ targetUserId, targetDisplayName, curren
               <div ref={bottomRef} />
             </div>
 
-            <div style={{ display: 'flex', gap: 8, padding: 12, borderTop: '1px solid rgba(228,212,200,0.12)' }}>
+            <div
+              style={{
+                display: 'flex',
+                gap: 8,
+                padding: 12,
+                borderTop: '1px solid rgba(228,212,200,0.12)',
+              }}
+            >
               <input
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') handleSend(); }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleSend();
+                }}
                 placeholder="Scrivi un messaggio…"
                 style={{ flex: 1, marginBottom: 0 }}
               />
-              <button onClick={handleSend} className="pl-send-btn" style={{ width: 'auto', padding: '10px 16px' }}>Invia</button>
+              <button
+                onClick={handleSend}
+                className="pl-send-btn"
+                style={{ width: 'auto', padding: '10px 16px' }}
+              >
+                Invia
+              </button>
             </div>
 
             {/* Attiva Instant Influencer, senza dover tornare alla
@@ -168,7 +257,15 @@ export default function AdminChatPanel({ targetUserId, targetDisplayName, curren
             <div style={{ borderTop: '1px solid rgba(228,212,200,0.12)', padding: 12 }}>
               <button
                 onClick={() => setShowInfluencerForm((v) => !v)}
-                style={{ background: 'none', border: 'none', color: 'var(--cyan)', fontWeight: 600, fontSize: 12.5, cursor: 'pointer', padding: 0 }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--cyan)',
+                  fontWeight: 600,
+                  fontSize: 12.5,
+                  cursor: 'pointer',
+                  padding: 0,
+                }}
               >
                 {showInfluencerForm ? '▾' : '▸'} Attiva Instant Influencer
               </button>
@@ -184,8 +281,12 @@ export default function AdminChatPanel({ targetUserId, targetDisplayName, curren
                     type="button"
                     onClick={() => setCategory(category ? '' : 'attivo')}
                     style={{
-                      padding: '9px', borderRadius: 10, border: 'none',
-                      fontSize: 11.5, fontWeight: 700, cursor: 'pointer',
+                      padding: '9px',
+                      borderRadius: 10,
+                      border: 'none',
+                      fontSize: 11.5,
+                      fontWeight: 700,
+                      cursor: 'pointer',
                       background: category ? 'var(--cyan)' : 'rgba(228,212,200,0.12)',
                       color: category ? '#fff' : 'var(--text-muted)',
                     }}
@@ -193,35 +294,52 @@ export default function AdminChatPanel({ targetUserId, targetDisplayName, curren
                     {category ? '✓ Instant Influencer attivo' : 'Attiva Instant Influencer'}
                   </button>
 
-                  {category && products.map((p, i) => (
-                    <div key={i} style={{ display: 'flex', gap: 6 }}>
-                      <input
-                        value={p.name}
-                        onChange={(e) => updateProduct(i, 'name', e.target.value)}
-                        placeholder="Nome prodotto"
-                        style={{ flex: 1, marginBottom: 0 }}
-                      />
-                      <input
-                        value={p.url}
-                        onChange={(e) => updateProduct(i, 'url', e.target.value)}
-                        placeholder="Link (facoltativo)"
-                        style={{ flex: 1, marginBottom: 0 }}
-                      />
-                    </div>
-                  ))}
+                  {category &&
+                    products.map((p, i) => (
+                      <div key={i} style={{ display: 'flex', gap: 6 }}>
+                        <input
+                          value={p.name}
+                          onChange={(e) => updateProduct(i, 'name', e.target.value)}
+                          placeholder="Nome prodotto"
+                          style={{ flex: 1, marginBottom: 0 }}
+                        />
+                        <input
+                          value={p.url}
+                          onChange={(e) => updateProduct(i, 'url', e.target.value)}
+                          placeholder="Link (facoltativo)"
+                          style={{ flex: 1, marginBottom: 0 }}
+                        />
+                      </div>
+                    ))}
                   {category && (
                     <button
                       onClick={() => setProducts((prev) => [...prev, { name: '', url: '' }])}
-                      style={{ background: 'none', border: '1px dashed rgba(228,212,200,0.3)', borderRadius: 8, padding: 6, fontSize: 11.5, color: 'var(--text-muted)', cursor: 'pointer' }}
+                      style={{
+                        background: 'none',
+                        border: '1px dashed rgba(228,212,200,0.3)',
+                        borderRadius: 8,
+                        padding: 6,
+                        fontSize: 11.5,
+                        color: 'var(--text-muted)',
+                        cursor: 'pointer',
+                      }}
                     >
                       + Aggiungi prodotto
                     </button>
                   )}
 
-                  <button onClick={handleSaveInfluencer} disabled={savingInfluencer} className="pl-send-btn">
+                  <button
+                    onClick={handleSaveInfluencer}
+                    disabled={savingInfluencer}
+                    className="pl-send-btn"
+                  >
                     {savingInfluencer ? 'Salvataggio…' : 'Salva'}
                   </button>
-                  {influencerSaved && <p className="pl-hint" style={{ color: 'var(--cyan)' }}>Salvato.</p>}
+                  {influencerSaved && (
+                    <p className="pl-hint" style={{ color: 'var(--cyan)' }}>
+                      Salvato.
+                    </p>
+                  )}
                 </div>
               )}
             </div>

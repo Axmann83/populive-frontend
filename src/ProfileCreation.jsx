@@ -19,6 +19,7 @@ import { apiFetch, requestAndSendLocation, uploadPhotoToStorage } from './apiCli
  */
 
 const MAX_HASHTAGS = 5;
+const MAX_PHOTOS = 6; // stessa galleria di Settings.jsx — scorrimento verticale stile Hinge nel profilo a tutto schermo
 
 export default function ProfileCreation({ onComplete }) {
   const [step, setStep] = useState(1);
@@ -31,7 +32,11 @@ export default function ProfileCreation({ onComplete }) {
   const [genderForStats, setGenderForStats] = useState(null);
   const [hashtagInput, setHashtagInput] = useState('');
   const [hashtags, setHashtags] = useState([]);
-  const [photoFile, setPhotoFile] = useState(null);
+  // Galleria (18/9) — fino a MAX_PHOTOS file scelti, non ancora
+  // caricati. L'upload vero verso Cloudinary avviene solo al
+  // passaggio "Continua", una foto alla volta, riusando la stessa
+  // uploadPhotoToStorage di sempre.
+  const [photoFiles, setPhotoFiles] = useState([]);
   const [consent, setConsent] = useState({
     sponsoredMissionsEnabled: false,
     appearsInHistoricalSearch: true,
@@ -90,28 +95,43 @@ export default function ProfileCreation({ onComplete }) {
   }
 
   // --------------------------------------------------------
-  // Step 2 → foto (upload verso storage esterno + salvataggio URL)
+  // Step 2 → galleria (upload verso storage esterno, una foto alla
+  // volta, poi si salva l'elenco completo degli indirizzi risultanti)
   // --------------------------------------------------------
+  function addPhotoFiles(files) {
+    const room = MAX_PHOTOS - photoFiles.length;
+    if (room <= 0) return;
+    setPhotoFiles([...photoFiles, ...Array.from(files).slice(0, room)]);
+  }
+
+  function removePhotoFile(index) {
+    setPhotoFiles(photoFiles.filter((_, i) => i !== index));
+  }
+
   async function submitPhoto() {
     setLoading(true);
     setError(null);
 
     try {
-      let photoUrl = null;
-      if (photoFile) {
+      if (photoFiles.length > 0) {
         // Caricamento reale verso Cloudinary (v. uploadPhotoToStorage
-        // in apiClient.js, condivisa anche con Settings.jsx per
-        // cambiare la foto dopo la registrazione iniziale).
-        photoUrl = await uploadPhotoToStorage(photoFile);
-        await apiFetch('/api/profile/me/photo', {
+        // in apiClient.js, condivisa anche con Settings.jsx), UNA
+        // foto alla volta e IN ORDINE — l'ordine di arrivo diventa
+        // l'ordine della galleria, la prima è quella mostrata ovunque
+        // nell'app fuori dal profilo a tutto schermo.
+        const photoUrls = [];
+        for (const file of photoFiles) {
+          photoUrls.push(await uploadPhotoToStorage(file));
+        }
+        await apiFetch('/api/profile/me/photos', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ photoUrl }),
+          body: JSON.stringify({ photoUrls }),
         });
       }
       setStep(3);
     } catch {
-      setError('Caricamento foto non riuscito — puoi comunque continuare e aggiungerla dopo.');
+      setError('Caricamento foto non riuscito — puoi comunque continuare e aggiungerle dopo.');
       setStep(3);
     } finally {
       setLoading(false);
@@ -260,15 +280,34 @@ export default function ProfileCreation({ onComplete }) {
 
       {step === 2 && (
         <div>
-          <h2>Aggiungi una foto</h2>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => setPhotoFile(e.target.files[0])}
-          />
+          <h2>Aggiungi le tue foto</h2>
+          <p className="pl-hint" style={{ marginBottom: 10 }}>
+            Fino a {MAX_PHOTOS} — la prima è quella che gli altri vedono nel radar e nelle notifiche, tutte insieme si scorrono nel tuo profilo completo.
+          </p>
+          <div style={photoGridStyle}>
+            {photoFiles.map((file, i) => (
+              <div key={i} style={photoTileStyle}>
+                <img src={URL.createObjectURL(file)} alt="" style={photoTileImgStyle} />
+                <button type="button" onClick={() => removePhotoFile(i)} style={photoTileRemoveStyle} aria-label="Rimuovi">✕</button>
+                {i === 0 && <span style={photoTilePrimaryBadgeStyle}>Principale</span>}
+              </div>
+            ))}
+            {photoFiles.length < MAX_PHOTOS && (
+              <label style={{ ...photoTileStyle, ...photoTileAddStyle }}>
+                <span style={{ fontSize: 26, color: 'var(--text-muted)' }}>+</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={(e) => { addPhotoFiles(e.target.files); e.target.value = ''; }}
+                  style={{ display: 'none' }}
+                />
+              </label>
+            )}
+          </div>
           {error && <p className="pl-error">{error}</p>}
           <button onClick={submitPhoto} disabled={loading}>
-            {loading ? 'Un attimo…' : photoFile ? 'Continua' : 'Salta per ora'}
+            {loading ? 'Un attimo…' : photoFiles.length > 0 ? 'Continua' : 'Salta per ora'}
           </button>
         </div>
       )}
@@ -354,3 +393,65 @@ function ConsentToggle({ label, sub, checked, onChange }) {
     </div>
   );
 }
+
+// Griglia di miniature per la galleria (18/9) — stessa griglia
+// riusata identica in Settings.jsx per modificarla dopo la
+// registrazione, così chi impara a usarla qui la ritrova identica.
+const photoGridStyle = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(3, 1fr)',
+  gap: 8,
+  marginBottom: 14,
+};
+
+const photoTileStyle = {
+  position: 'relative',
+  aspectRatio: '1',
+  borderRadius: 12,
+  overflow: 'hidden',
+  background: 'var(--surface-2)',
+};
+
+const photoTileImgStyle = {
+  width: '100%',
+  height: '100%',
+  objectFit: 'cover',
+  display: 'block',
+};
+
+const photoTileAddStyle = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  border: '1.5px dashed rgba(228,212,200,0.3)',
+  cursor: 'pointer',
+};
+
+const photoTileRemoveStyle = {
+  position: 'absolute',
+  top: 4,
+  right: 4,
+  width: 22,
+  height: 22,
+  borderRadius: '50%',
+  border: 'none',
+  background: 'rgba(0,0,0,0.6)',
+  color: '#fff',
+  fontSize: 11,
+  cursor: 'pointer',
+  lineHeight: 1,
+};
+
+const photoTilePrimaryBadgeStyle = {
+  position: 'absolute',
+  bottom: 4,
+  left: 4,
+  right: 4,
+  fontSize: 8.5,
+  fontWeight: 700,
+  textAlign: 'center',
+  color: '#fff',
+  background: 'rgba(0,0,0,0.6)',
+  borderRadius: 6,
+  padding: '2px 0',
+};

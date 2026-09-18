@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { apiFetch, requestAndSendLocation, uploadPhotoToStorage } from './apiClient';
 
 /**
@@ -37,6 +37,12 @@ export default function ProfileCreation({ onComplete }) {
   // passaggio "Continua", una foto alla volta, riusando la stessa
   // uploadPhotoToStorage di sempre.
   const [photoFiles, setPhotoFiles] = useState([]);
+  // Riordino via trascinamento (18/9) — stesso meccanismo a Pointer
+  // Events di Settings.jsx (v. lì il commento esteso sul perché non
+  // il drag-and-drop HTML5 nativo).
+  const [dragIndex, setDragIndex] = useState(null);
+  const [overIndex, setOverIndex] = useState(null);
+  const dragStartRef = useRef(null);
   const [consent, setConsent] = useState({
     sponsoredMissionsEnabled: false,
     appearsInHistoricalSearch: true,
@@ -106,6 +112,43 @@ export default function ProfileCreation({ onComplete }) {
 
   function removePhotoFile(index) {
     setPhotoFiles(photoFiles.filter((_, i) => i !== index));
+  }
+
+  const DRAG_THRESHOLD = 6;
+
+  function handleTilePointerDown(e, index) {
+    dragStartRef.current = { index, x: e.clientX, y: e.clientY };
+    e.currentTarget.setPointerCapture(e.pointerId);
+  }
+
+  function handleTilePointerMove(e) {
+    const start = dragStartRef.current;
+    if (!start) return;
+
+    if (dragIndex === null) {
+      const dx = e.clientX - start.x;
+      const dy = e.clientY - start.y;
+      if (Math.hypot(dx, dy) < DRAG_THRESHOLD) return;
+      setDragIndex(start.index);
+    }
+
+    const el = document.elementFromPoint(e.clientX, e.clientY)?.closest('[data-photo-index]');
+    setOverIndex(el ? Number(el.dataset.photoIndex) : null);
+  }
+
+  function handleTilePointerUp(e) {
+    const start = dragStartRef.current;
+    dragStartRef.current = null;
+    try { e.currentTarget.releasePointerCapture(e.pointerId); } catch { /* già rilasciato */ }
+
+    if (start && dragIndex !== null && overIndex !== null && overIndex !== dragIndex) {
+      const list = [...photoFiles];
+      const [moved] = list.splice(dragIndex, 1);
+      list.splice(overIndex, 0, moved);
+      setPhotoFiles(list);
+    }
+    setDragIndex(null);
+    setOverIndex(null);
   }
 
   async function submitPhoto() {
@@ -284,11 +327,38 @@ export default function ProfileCreation({ onComplete }) {
           <p className="pl-hint" style={{ marginBottom: 10 }}>
             Fino a {MAX_PHOTOS} — la prima è quella che gli altri vedono nel radar e nelle notifiche, tutte insieme si scorrono nel tuo profilo completo.
           </p>
+          {photoFiles.length > 1 && (
+            <p className="pl-hint" style={{ marginTop: -6, marginBottom: 10 }}>Tieni premuto e trascina per riordinare.</p>
+          )}
           <div style={photoGridStyle}>
             {photoFiles.map((file, i) => (
-              <div key={i} style={photoTileStyle}>
-                <img src={URL.createObjectURL(file)} alt="" style={photoTileImgStyle} />
-                <button type="button" onClick={() => removePhotoFile(i)} style={photoTileRemoveStyle} aria-label="Rimuovi">✕</button>
+              <div
+                key={i}
+                data-photo-index={i}
+                onPointerDown={(e) => handleTilePointerDown(e, i)}
+                onPointerMove={handleTilePointerMove}
+                onPointerUp={handleTilePointerUp}
+                onPointerCancel={handleTilePointerUp}
+                style={{
+                  ...photoTileStyle,
+                  opacity: dragIndex === i ? 0.45 : 1,
+                  transform: dragIndex === i ? 'scale(1.05)' : 'none',
+                  boxShadow: dragIndex !== null && overIndex === i && overIndex !== dragIndex ? '0 0 0 2px var(--cyan) inset' : 'none',
+                  touchAction: 'none',
+                  cursor: 'grab',
+                  transition: dragIndex === i ? 'none' : 'transform 0.15s ease, box-shadow 0.15s ease',
+                }}
+              >
+                <img src={URL.createObjectURL(file)} alt="" style={photoTileImgStyle} draggable={false} />
+                <button
+                  type="button"
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onClick={() => removePhotoFile(i)}
+                  style={photoTileRemoveStyle}
+                  aria-label="Rimuovi"
+                >
+                  ✕
+                </button>
                 {i === 0 && <span style={photoTilePrimaryBadgeStyle}>Principale</span>}
               </div>
             ))}

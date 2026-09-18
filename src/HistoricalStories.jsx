@@ -43,7 +43,10 @@ export default function HistoricalStories({ people, currentUserId, onClose }) {
   if (!current) return null;
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: '#000', zIndex: 85 }}>
+    <div
+      className="pl-safe-top"
+      style={{ position: 'fixed', inset: 0, background: '#000', zIndex: 85 }}
+    >
       {/* Barra di avanzamento — un segmento per persona, pieno fino
           a quella corrente. Non è un limite di visualizzazione,
           solo un riferimento visivo di "dove sei nella sequenza". */}

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { io } from 'socket.io-client';
-import { getOptimizedPhotoUrl } from './apiClient';
+import { API_BASE, getOptimizedPhotoUrl } from './apiClient';
 import ProfileFullScreen from './ProfileFullScreen';
 import ProfileDetail from './ProfileDetail';
 import AdminChatPanel from './AdminChatPanel';
@@ -18,8 +18,6 @@ import { Link2, Coins, Crown } from './PopuLiveIcons';
  * server per questo, era già tutto pronto.
  * ============================================================
  */
-
-const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:3000';
 
 export default function LiveRanking({
   arenaSessionId,

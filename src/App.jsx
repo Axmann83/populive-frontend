@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { io } from 'socket.io-client';
+import { openExternal, onAppUrlOpen, closeInAppBrowser } from './native';
 
 import Login from './Login';
 import ProfileCreation from './ProfileCreation';
@@ -137,13 +138,42 @@ export default function App() {
   // riconosciuto da qualunque fotocamera di sistema.
   const [pendingMissionId, setPendingMissionId] = useState(null);
 
-  useEffect(() => {
-    const match = window.location.pathname.match(/^\/checkin\/([a-zA-Z0-9-]+)/);
+  // Interpreta un indirizzo "in ingresso" — all'avvio (web) oppure
+  // quando l'app nativa viene aperta da un QR / Universal Link
+  // (iOS e Android consegnano l'URL all'app già avviata, senza
+  // nessun ricaricamento di pagina).
+  const handleIncomingUrl = useCallback((pathname, search) => {
+    let handled = false;
+
+    const match = pathname.match(/^\/checkin\/([a-zA-Z0-9-]+)/);
     if (match) {
       setVenueId(match[1]);
       setArrivedViaQr(true);
-      window.history.replaceState(null, '', '/');
-    } else {
+      handled = true;
+    }
+
+    const missionMatch = pathname.match(/^\/mission\/([a-zA-Z0-9-]+)/);
+    if (missionMatch) {
+      setPendingMissionId(missionMatch[1]);
+      handled = true;
+    }
+
+    // Ritorno da Stripe dopo il pagamento di una Pulse (riuscito o
+    // annullato) — non c'è altro da fare qui: se il pagamento è
+    // andato a buon fine, il popup punti universale scatterà da
+    // solo appena il webhook avrà creato la Pulse. Ripuliamo solo
+    // l'indirizzo, che altrimenti resterebbe sporco.
+    if (search.includes('pulse_sent') || search.includes('pulse_cancelled')) {
+      handled = true;
+    }
+
+    if (handled) window.history.replaceState(null, '', '/');
+    return handled;
+  }, []);
+
+  useEffect(() => {
+    const handled = handleIncomingUrl(window.location.pathname, window.location.search);
+    if (!handled) {
       // Nessuna scansione vera in questo caricamento — ma se
       // eravamo già dentro un locale prima dell'aggiornamento
       // della pagina, ritentiamo da soli invece di costringere a
@@ -159,24 +189,14 @@ export default function App() {
       }
     }
 
-    const missionMatch = window.location.pathname.match(/^\/mission\/([a-zA-Z0-9-]+)/);
-    if (missionMatch) {
-      setPendingMissionId(missionMatch[1]);
-      window.history.replaceState(null, '', '/');
-    }
-
-    // Ritorno da Stripe dopo il pagamento di una Pulse (riuscito o
-    // annullato) — non c'è altro da fare qui: se il pagamento è
-    // andato a buon fine, il popup punti universale scatterà da
-    // solo appena il webhook avrà creato la Pulse. Ripuliamo solo
-    // l'indirizzo, che altrimenti resterebbe sporco.
-    if (
-      window.location.search.includes('pulse_sent') ||
-      window.location.search.includes('pulse_cancelled')
-    ) {
-      window.history.replaceState(null, '', '/');
-    }
-  }, []);
+    // App nativa: QR scansionato con la fotocamera di sistema o
+    // ritorno da Stripe → l'URL arriva qui. Chiudiamo il browser
+    // in-app (se era aperto per il checkout) e gestiamo l'indirizzo.
+    return onAppUrlOpen(({ pathname, search }) => {
+      closeInAppBrowser();
+      handleIncomingUrl(pathname, search);
+    });
+  }, [handleIncomingUrl]);
 
   const [arenaSessionId, setArenaSessionId] = useState(null);
 
@@ -524,7 +544,7 @@ export default function App() {
       const purchaseData = await purchaseRes.json();
 
       if (purchaseData.requiresPayment) {
-        window.location.href = purchaseData.checkoutUrl;
+        openExternal(purchaseData.checkoutUrl);
       }
     } catch (err) {
       console.error('Errore nella proposta di acquisto Like extra:', err);

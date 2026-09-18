@@ -1,0 +1,13 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.populive.app",
+      "sha256_cert_fingerprints": [
+        "7C:E8:B3:2B:8B:DF:32:15:1E:8A:A1:BD:49:E7:E7:10:87:0F:55:09:FE:B3:20:86:28:04:AB:2C:06:09:A5:8F",
+        "SOSTITUIRE_CON_SHA256_DEL_CERTIFICATO_DI_RELEASE"
+      ]
+    }
+  }
+]

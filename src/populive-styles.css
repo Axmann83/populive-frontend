@@ -150,6 +150,8 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 20px 18px 10px;
+  /* App nativa: non finire sotto il notch / la status bar (0 sul web) */
+  padding-top: calc(20px + env(safe-area-inset-top, 0px));
 }
 .pl-top-bar-left {
   display: flex;
@@ -311,6 +313,8 @@ body.pl-day-mode .pl-brand-live {
   justify-content: space-around;
   align-items: center;
   padding: 10px 10px 14px;
+  /* App nativa: spazio per la home indicator di iPhone (0 sul web) */
+  padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
   border-top: 1px solid rgba(217, 204, 192, 0.1);
   background: #14100f;
   box-shadow: 0 -8px 24px -8px rgba(0, 0, 0, 0.5);
@@ -1269,4 +1273,16 @@ body.pl-day-mode .pl-seal-flash {
     opacity: 0;
     transform: scale(7);
   }
+}
+
+/* --- Safe area (app nativa) ---
+   Da applicare ai contenitori a tutto schermo (position: fixed; inset: 0)
+   perché il loro contenuto non finisca sotto notch e home indicator.
+   Sul web env() vale 0 e la classe non ha effetto. */
+.pl-safe-top,
+.pl-fullscreen-modal {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+.pl-safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }

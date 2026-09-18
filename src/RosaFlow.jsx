@@ -3,6 +3,7 @@ import { PartyPopper } from './PopuLiveIcons';
 import ProfileFullScreen from './ProfileFullScreen';
 
 import { apiFetch, getOptimizedPhotoUrl } from './apiClient';
+import { openExternal } from './native';
 
 const TIER_META = {
   standalone: { label: 'Solo Pulse', sub: 'Anonima al 100% — nessun contatto' },
@@ -109,7 +110,7 @@ export function PulseSend({ receiverId, arenaSessionId, venueId, onSent, onCance
       const purchaseData = await purchaseRes.json();
 
       if (purchaseData.requiresPayment) {
-        window.location.href = purchaseData.checkoutUrl;
+        openExternal(purchaseData.checkoutUrl);
       } else {
         // Account di prova/gratis: il saldo è già ricaricato lato
         // server, la persona può semplicemente riprovare a inviare.
@@ -153,7 +154,7 @@ export function PulseSend({ receiverId, arenaSessionId, venueId, onSent, onCance
       // pagare davvero, e Stripe ci dà un indirizzo a cui mandare
       // il cliente per completare il pagamento con la sua carta.
       if (data.requiresPayment) {
-        window.location.href = data.checkoutUrl;
+        openExternal(data.checkoutUrl);
         return; // usciamo dall'app per andare su Stripe — non c'è altro da fare qui
       }
 

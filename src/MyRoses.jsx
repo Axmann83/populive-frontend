@@ -5,6 +5,7 @@ import SwipeableRow from './SwipeableRow';
 import ProfileFullScreen from './ProfileFullScreen';
 
 import { apiFetch, getOptimizedPhotoUrl } from './apiClient';
+import { openExternal } from './native';
 
 /**
  * ============================================================
@@ -94,7 +95,7 @@ export default function MyPulses({
         const purchaseData = await purchaseRes.json();
 
         if (purchaseData.requiresPayment) {
-          window.location.href = purchaseData.checkoutUrl;
+          openExternal(purchaseData.checkoutUrl);
           return;
         }
 

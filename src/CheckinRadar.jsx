@@ -492,6 +492,7 @@ export default function CheckinRadar({
             flusso video a mano. */}
         {scannerOpen && (
           <div
+            className="pl-safe-top"
             style={{
               position: 'fixed',
               inset: 0,

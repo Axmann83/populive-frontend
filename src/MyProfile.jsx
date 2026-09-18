@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Settings as SettingsIcon, Zap, BadgeCheck } from './PopuLiveIcons';
 
 import { apiFetch, getOptimizedPhotoUrl } from './apiClient';
+import { openExternal } from './native';
 
 const MAX_HASHTAGS = 5;
 
@@ -289,7 +290,7 @@ function PremiumVerifiedSection({ profile, arenaSessionId, onProfileRefresh }) {
         const purchaseData = await purchaseRes.json();
 
         if (purchaseData.requiresPayment) {
-          window.location.href = purchaseData.checkoutUrl;
+          openExternal(purchaseData.checkoutUrl);
           return; // usciamo dall'app per andare su Stripe
         }
 

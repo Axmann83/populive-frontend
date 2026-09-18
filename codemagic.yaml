@@ -1,0 +1,85 @@
+# Build iOS su Codemagic → TestFlight (non serve un Mac in locale).
+#
+# Configurazione una tantum nella UI di Codemagic:
+#   1. Teams > Integrations > App Store Connect: aggiungi una API key
+#      (Users and Access > Integrations > App Store Connect API su appstoreconnect.apple.com)
+#      e chiamala "populive_asc" (vedi `integrations` sotto).
+#   2. Crea l'App ID `com.populive.app` (developer.apple.com > Identifiers, con
+#      capability "Associated Domains") e l'app in App Store Connect.
+#   3. Aggiungi il tuo iPhone come tester interno in TestFlight.
+# Piano gratuito: 500 minuti/mese su macOS M2.
+workflows:
+  ios-testflight:
+    name: iOS → TestFlight
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    environment:
+      node: 22
+      xcode: latest
+    integrations:
+      app_store_connect: populive_asc
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: main
+          include: true
+      cancel_previous_builds: true
+    scripts:
+      - name: Installa dipendenze
+        script: npm ci
+      - name: Build web
+        script: npm run build
+      - name: Sincronizza Capacitor iOS
+        script: npx cap sync ios
+      - name: Numero di build incrementale
+        script: |
+          # BUILD_NUMBER è fornito da Codemagic e cresce a ogni build:
+          # TestFlight rifiuta due upload con lo stesso numero.
+          cd ios/App
+          agvtool new-version -all "$BUILD_NUMBER"
+      - name: Firma automatica
+        script: |
+          xcode-project use-profiles
+      - name: Build IPA
+        script: |
+          xcode-project build-ipa \
+            --workspace ios/App/App.xcworkspace \
+            --scheme App
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+        beta_groups:
+          - Interni
+
+  android-debug-apk:
+    name: Android → APK di debug
+    instance_type: linux_x2
+    max_build_duration: 30
+    environment:
+      node: 22
+      java: 21
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: main
+          include: true
+    scripts:
+      - name: Installa dipendenze
+        script: npm ci
+      - name: Build web
+        script: npm run build
+      - name: Sincronizza Capacitor Android
+        script: npx cap sync android
+      - name: Build APK
+        script: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+    artifacts:
+      - android/app/build/outputs/apk/debug/*.apk

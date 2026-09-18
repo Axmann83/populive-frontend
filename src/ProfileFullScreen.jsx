@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { apiFetch, getOptimizedPhotoUrl } from './apiClient';
+import { openExternal } from './native';
 import { PulseSend } from './RosaFlow';
 import ProfileDetail from './ProfileDetail';
 import { Heart, Star, PulseWaveIcon, Link2, Coins, Crown, Sparkles } from './PopuLiveIcons';
@@ -156,7 +157,7 @@ export default function ProfileFullScreen({
       const purchaseData = await purchaseRes.json();
 
       if (purchaseData.requiresPayment) {
-        window.location.href = purchaseData.checkoutUrl;
+        openExternal(purchaseData.checkoutUrl);
       }
       // Se freeOrTest (account di prova), il saldo è già ricaricato
       // lato server — nessun'altra azione necessaria qui.
@@ -167,7 +168,7 @@ export default function ProfileFullScreen({
 
   if (showPulseSend) {
     return createPortal(
-      <div className="pl-fullscreen-modal" style={overlayStyle}>
+      <div className="pl-fullscreen-modal" style={{ ...overlayStyle, paddingTop: 0 }}>
         <div
           style={{
             width: '100%',

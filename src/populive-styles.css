@@ -450,6 +450,25 @@ button {
   gap: 12px;
   padding-top: 10px;
 }
+
+.pl-onboarding-screen > form > button,
+.pl-onboarding-screen > div > button {
+  width: 100%;
+  background: var(--cyan);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 4px;
+}
+.pl-onboarding-screen > form > button:disabled,
+.pl-onboarding-screen > div > button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
 .pl-step-indicator {
   font-size: 10.5px;
   color: var(--text-muted);

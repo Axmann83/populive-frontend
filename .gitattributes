@@ -1,0 +1,16 @@
+# Fine riga: sempre LF nel repo e sul disco, indipendentemente dalla config Git di ciascuno
+* text=auto eol=lf
+
+# File binari
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+*.jar binary
+*.keystore binary
+
+# Script Windows: devono restare CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf

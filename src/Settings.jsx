@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 import { apiFetch, requestAndSendLocation, uploadPhotoToStorage, getOptimizedPhotoUrl } from './apiClient';
 
@@ -24,6 +24,9 @@ export default function Settings({ userId, onClose, onAccountDeleted }) {
   const [saving, setSaving] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [photoError, setPhotoError] = useState(null);
+  const [dragIndex, setDragIndex] = useState(null);
+  const [overIndex, setOverIndex] = useState(null);
+  const dragStartRef = useRef(null); // { index, x, y } — solo mentre il dito/mouse è giù
 
   useEffect(() => {
     let cancelled = false;
@@ -114,6 +117,52 @@ export default function Settings({ userId, onClose, onAccountDeleted }) {
     }
   }
 
+  // Riordino della galleria via trascinamento (18/9) — Pointer Events
+  // invece del drag-and-drop HTML5 nativo, perché quest'ultimo è
+  // inaffidabile sul touch (su Safari iOS in pratica non parte mai
+  // toccando con un dito). I Pointer Events invece funzionano
+  // identici con mouse, dito e penna, ed è lo stesso motivo per cui
+  // li abbiamo già scelti altrove nell'app. Soglia di qualche pixel
+  // prima di considerarlo un trascinamento vero, altrimenti un
+  // semplice tocco sulla ✕ per rimuovere verrebbe scambiato per un
+  // tentativo di drag.
+  const DRAG_THRESHOLD = 6;
+
+  function handleTilePointerDown(e, index) {
+    dragStartRef.current = { index, x: e.clientX, y: e.clientY };
+    e.currentTarget.setPointerCapture(e.pointerId);
+  }
+
+  function handleTilePointerMove(e) {
+    const start = dragStartRef.current;
+    if (!start) return;
+
+    if (dragIndex === null) {
+      const dx = e.clientX - start.x;
+      const dy = e.clientY - start.y;
+      if (Math.hypot(dx, dy) < DRAG_THRESHOLD) return;
+      setDragIndex(start.index);
+    }
+
+    const el = document.elementFromPoint(e.clientX, e.clientY)?.closest('[data-photo-index]');
+    setOverIndex(el ? Number(el.dataset.photoIndex) : null);
+  }
+
+  function handleTilePointerUp(e) {
+    const start = dragStartRef.current;
+    dragStartRef.current = null;
+    try { e.currentTarget.releasePointerCapture(e.pointerId); } catch { /* già rilasciato */ }
+
+    if (start && dragIndex !== null && overIndex !== null && overIndex !== dragIndex) {
+      const list = [...(settings.photoUrls || [])];
+      const [moved] = list.splice(dragIndex, 1);
+      list.splice(overIndex, 0, moved);
+      saveGallery(list);
+    }
+    setDragIndex(null);
+    setOverIndex(null);
+  }
+
   async function save() {
     setSaving(true);
     await apiFetch(`/api/profile/${userId}/settings`, {
@@ -142,11 +191,39 @@ export default function Settings({ userId, onClose, onAccountDeleted }) {
           "Libreria foto" — capture l'avrebbe tolta, forzando solo
           la fotocamera. */}
       <div className="pl-section-label">La tua galleria</div>
+      {(settings.photoUrls?.length || 0) > 1 && (
+        <p className="pl-hint" style={{ marginTop: -6, marginBottom: 10 }}>Tieni premuto e trascina per riordinare — la prima resta quella "Principale".</p>
+      )}
       <div style={photoGridStyle}>
         {(settings.photoUrls || []).map((url, i) => (
-          <div key={i} style={{ ...photoTileStyle, opacity: uploadingPhoto ? 0.5 : 1 }}>
-            <img src={getOptimizedPhotoUrl(url, { width: 120, height: 120 })} alt="" style={photoTileImgStyle} />
-            <button type="button" onClick={() => handleRemovePhoto(i)} disabled={uploadingPhoto} style={photoTileRemoveStyle} aria-label="Rimuovi">✕</button>
+          <div
+            key={i}
+            data-photo-index={i}
+            onPointerDown={(e) => handleTilePointerDown(e, i)}
+            onPointerMove={handleTilePointerMove}
+            onPointerUp={handleTilePointerUp}
+            onPointerCancel={handleTilePointerUp}
+            style={{
+              ...photoTileStyle,
+              opacity: uploadingPhoto ? 0.5 : (dragIndex === i ? 0.45 : 1),
+              transform: dragIndex === i ? 'scale(1.05)' : 'none',
+              boxShadow: dragIndex !== null && overIndex === i && overIndex !== dragIndex ? '0 0 0 2px var(--cyan) inset' : 'none',
+              touchAction: 'none',
+              cursor: 'grab',
+              transition: dragIndex === i ? 'none' : 'transform 0.15s ease, box-shadow 0.15s ease',
+            }}
+          >
+            <img src={getOptimizedPhotoUrl(url, { width: 120, height: 120 })} alt="" style={photoTileImgStyle} draggable={false} />
+            <button
+              type="button"
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={() => handleRemovePhoto(i)}
+              disabled={uploadingPhoto}
+              style={photoTileRemoveStyle}
+              aria-label="Rimuovi"
+            >
+              ✕
+            </button>
             {i === 0 && <span style={photoTilePrimaryBadgeStyle}>Principale</span>}
           </div>
         ))}

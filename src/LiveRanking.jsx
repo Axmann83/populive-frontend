@@ -313,6 +313,29 @@ function RankRow({ entry, isMe, delta, onClick }) {
 
       <span className="pl-rank-name">{entry.displayName}</span>
 
+      {/* Badge Top Connector A VITA (19/9, idea dell'utente) — a
+          differenza dell'iconcina ⛓ nell'angolino (quella è SOLO
+          stasera, sparisce e ricompare durante la serata), questo è
+          un contatore permanente ("quante serate hai chiuso da Top
+          Connector, in totale") pensato apposta per essere VISIBILE
+          e raccontabile — credibilità pubblica per un PR che gestisce
+          più tavoli, non solo un altro numero nascosto dietro un
+          tooltip. Mai punti: il punteggio a fianco resta quello
+          tappato dal tetto di equità come per chiunque altro. */}
+      {entry.topConnectorNightsWon > 0 && (
+        <span
+          title={`Top Connector per ${entry.topConnectorNightsWon} serate`}
+          style={{
+            flexShrink: 0, display: 'flex', alignItems: 'center', gap: 3,
+            fontSize: 9.5, fontWeight: 700, color: '#C7C9CC',
+            background: 'rgba(199,201,204,0.14)', border: '1px solid rgba(199,201,204,0.3)',
+            borderRadius: 999, padding: '3px 7px', marginRight: 6,
+          }}
+        >
+          <Link2 size={9} /> ×{entry.topConnectorNightsWon}
+        </span>
+      )}
+
       <span className="pl-rank-points">
         {entry.points} pt
         {delta && (

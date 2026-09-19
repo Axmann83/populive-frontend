@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
 import { apiFetch, setLastVenueId, clearLastVenueId, getOptimizedPhotoUrl } from './apiClient';
 import ProfileFullScreen from './ProfileFullScreen';
+import QrScannerModal from './QrScannerModal';
 import { Armchair, Radar as RadarIcon } from './PopuLiveIcons';
 
 /**
@@ -54,6 +55,13 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
   const [wantsConnector, setWantsConnector] = useState(false);
   const [tableJoined, setTableJoined] = useState(false);
   const [tableJoinLoading, setTableJoinLoading] = useState(false);
+  // Fotocamera vera per il QR del tavolo (19/9) — prima qui c'era
+  // solo il campo testo, "in attesa della fotocamera vera": ora
+  // riusiamo lo stesso QrScannerModal.jsx già collaudato in
+  // Dashboard.jsx per il bonus Big Spender. Nessun QR nuovo da
+  // generare, è sempre lo stesso table_qr_code di generateTableQrs,
+  // solo reso scansionabile anche lato utente e non solo lato staff.
+  const [showTableScanner, setShowTableScanner] = useState(false);
   // Chi hai toccato nel radar, se qualcuno — apre la schermata a
   // tutto schermo. null = nessuno, quindi il radar è mostrato normale.
   const [selectedProfileUserId, setSelectedProfileUserId] = useState(null);
@@ -522,13 +530,14 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
       )}
 
       {/* "Aggancia il tuo tavolo" — bottone dentro l'app, non un
-          secondo QR esterno: apre la fotocamera nativa (qui,
-          nell'attesa della fotocamera vera, un campo testo che
-          simula il codice letto) per collegarsi alla squadra del
-          tavolo. Visibile SOLO dopo un vero check-in nel locale
-          (arenaSessionId esiste solo a quel punto) — prima non ha
-          senso mostrarlo, il collegamento al tavolo non avrebbe
-          nessuna sessione a cui agganciarsi. */}
+          secondo QR esterno: apre la fotocamera per inquadrare il
+          QR già stampato sul tavolo (stesso table_qr_code di
+          sempre), con il campo testo lasciato lì sotto come
+          alternativa per chi preferisce digitarlo a mano. Visibile
+          SOLO dopo un vero check-in nel locale (arenaSessionId
+          esiste solo a quel punto) — prima non ha senso mostrarlo,
+          il collegamento al tavolo non avrebbe nessuna sessione a
+          cui agganciarsi. */}
       {arenaSessionId && (tableJoined ? (
         <div className="pl-hint" style={{ textAlign: 'center', marginTop: 14 }}>
           ✓ Agganciato al tavolo — i bonus di spesa si divideranno con chi altro si unisce.
@@ -542,11 +551,22 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
         </button>
       ) : (
         <div className="pl-sheet" style={{ marginTop: 14 }}>
-          <input
-            value={tableCode}
-            onChange={(e) => setTableCode(e.target.value)}
-            placeholder="Codice del tavolo"
-          />
+          <div style={{ display: 'flex', gap: 8 }}>
+            <input
+              value={tableCode}
+              onChange={(e) => setTableCode(e.target.value)}
+              placeholder="Codice del tavolo"
+              style={{ flex: 1 }}
+            />
+            <button
+              type="button"
+              onClick={() => setShowTableScanner(true)}
+              title="Inquadra il QR del tavolo"
+              style={{ flexShrink: 0, width: 42, borderRadius: 10, border: '1px solid rgba(228,212,200,0.2)', background: 'var(--surface-2)', color: 'var(--teak)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            >
+              📷
+            </button>
+          </div>
           <div className="pl-consent-row">
             <div>
               <div className="pl-consent-label">Vuoi essere il Connector di questo gruppo?</div>
@@ -559,6 +579,17 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
           </button>
         </div>
       ))}
+
+      {showTableScanner && (
+        <QrScannerModal
+          onScan={(text, error) => {
+            setShowTableScanner(false);
+            if (text) setTableCode(text);
+            else if (error === 'camera_error') window.alert('Non riesco ad accedere alla fotocamera — controlla i permessi del browser, oppure inserisci il codice a mano.');
+          }}
+          onClose={() => setShowTableScanner(false)}
+        />
+      )}
 
       {selectedProfileUserId && (
         <ProfileFullScreen

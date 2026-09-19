@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { apiFetch, getOptimizedPhotoUrl } from './apiClient';
 import { openExternal } from './native';
@@ -35,6 +35,17 @@ export default function ProfileFullScreen({
   const [showPulseSend, setShowPulseSend] = useState(false);
   const [pulseSentConfirmation, setPulseSentConfirmation] = useState(false);
   const [showProfileDetail, setShowProfileDetail] = useState(false);
+  // Galleria foto (18/9) — quale foto è a schermo in questo momento,
+  // solo per accendere il puntino giusto nell'indicatore laterale.
+  const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+  const galleryScrollRef = useRef(null);
+
+  function handleGalleryScroll() {
+    const el = galleryScrollRef.current;
+    if (!el || el.clientHeight === 0) return;
+    const index = Math.round(el.scrollTop / el.clientHeight);
+    setCurrentPhotoIndex(index);
+  }
 
   // Bug vero capitato dal vivo (24/8), subito dopo il portale: con
   // il profilo ora montato correttamente fuori dalla lista che
@@ -166,6 +177,17 @@ export default function ProfileFullScreen({
     }
   }
 
+  // Galleria vera se c'è, altrimenti ricadiamo sulla singola
+  // photoUrl di sempre (profilo non ancora migrato) — mai un array
+  // vuoto quando in realtà una foto esiste.
+  const photos = profile
+    ? profile.photoUrls?.length > 0
+      ? profile.photoUrls
+      : profile.photoUrl
+        ? [profile.photoUrl]
+        : []
+    : [];
+
   if (showPulseSend) {
     return createPortal(
       <div className="pl-fullscreen-modal" style={{ ...overlayStyle, paddingTop: 0 }}>
@@ -220,30 +242,40 @@ export default function ProfileFullScreen({
         </div>
       ) : (
         <>
-          {/* Foto grande sullo sfondo — il pezzo chiave per
-              riconoscere qualcuno al buio, in un locale affollato.
-              Se non ha una foto, un grande sfondo con l'emoji.
-              Bug vero trovato dal vivo (24/8): un tag <img> con
-              object-fit:cover qui dentro mostrava la foto alla sua
-              grandezza NATIVA su alcuni telefoni (le foto di uno
-              smartphone sono enormi, migliaia di pixel) invece di
-              ritagliarla correttamente — visibile solo aprendo il
-              profilo dalla scheda Inviati della schermata Like,
-              mai dalla lista stessa (che usa già lo stesso metodo
-              qui sotto, sempre corretto). Sistemato passando dallo
-              stesso <img> a un div con background-image, esattamente
-              lo stesso approccio già collaudato e funzionante nei
-              riquadri della lista. */}
+          {/* Galleria foto (18/9) — fino a 6, a scorrimento VERTICALE
+              esattamente come Hinge: una foto piena per schermata,
+              si scorre in su/giù per passare alla successiva (mai un
+              tocco laterale, che qui è già preso dai gesti di
+              navigazione tra profili). photoUrls è la galleria vera;
+              se manca (profilo non ancora migrato) ricadiamo sulla
+              singola photoUrl di sempre, mai un errore.
+              Bug vero trovato dal vivo (24/8) e rimasto valido anche
+              qui: un tag <img> con object-fit:cover mostrava la foto
+              alla sua grandezza NATIVA su alcuni telefoni invece di
+              ritagliarla — per questo ogni foto della galleria resta
+              un div con background-image, non un <img>. */}
           <div style={photoContainerStyle}>
-            {profile.photoUrl ? (
+            {photos.length > 0 ? (
               <div
-                style={{
-                  ...photoImgStyle,
-                  backgroundImage: `url(${getOptimizedPhotoUrl(profile.photoUrl, { width: 600, height: 800, crop: false })})`,
-                }}
-                role="img"
-                aria-label={profile.displayName}
-              />
+                ref={galleryScrollRef}
+                onScroll={handleGalleryScroll}
+                className="pl-photo-gallery-scroll"
+                style={galleryScrollStyle}
+              >
+                {photos.map((url, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      ...photoImgStyle,
+                      scrollSnapAlign: 'start',
+                      flexShrink: 0,
+                      backgroundImage: `url(${getOptimizedPhotoUrl(url, { width: 600, height: 800, crop: false })})`,
+                    }}
+                    role="img"
+                    aria-label={`${profile.displayName} — foto ${i + 1} di ${photos.length}`}
+                  />
+                ))}
+              </div>
             ) : (
               <div
                 style={{
@@ -255,6 +287,19 @@ export default function ProfileFullScreen({
                 }}
               >
                 {profile.avatarEmoji}
+              </div>
+            )}
+            {/* Indicatore laterale — un puntino per foto, acceso
+                quello corrente. Mostrato solo con più di una foto,
+                altrimenti sarebbe un singolo puntino inutile. */}
+            {photos.length > 1 && (
+              <div style={galleryIndicatorWrapStyle}>
+                {photos.map((_, i) => (
+                  <div
+                    key={i}
+                    style={{ ...galleryDotStyle, opacity: i === currentPhotoIndex ? 1 : 0.35 }}
+                  />
+                ))}
               </div>
             )}
             {/* Sfumatura scura in basso, per leggere nome/hashtag
@@ -594,6 +639,40 @@ const photoImgStyle = {
   backgroundSize: 'cover',
   backgroundPosition: 'center',
   backgroundColor: 'var(--surface-2)',
+};
+
+// Scorrimento verticale della galleria — una foto piena per
+// "pagina", si aggancia (scroll-snap) sempre a schermo intero, mai
+// una via di mezzo tra due foto. La classe pl-photo-gallery-scroll
+// (populive-styles.css) nasconde solo la barra di scorrimento —
+// il resto resta qui, coerente con lo stile inline di tutto il file.
+const galleryScrollStyle = {
+  width: '100%',
+  height: '100%',
+  overflowY: 'scroll',
+  scrollSnapType: 'y mandatory',
+  display: 'flex',
+  flexDirection: 'column',
+};
+
+const galleryIndicatorWrapStyle = {
+  position: 'absolute',
+  top: '50%',
+  right: 10,
+  transform: 'translateY(-50%)',
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 5,
+  zIndex: 3,
+};
+
+const galleryDotStyle = {
+  width: 5,
+  height: 5,
+  borderRadius: '50%',
+  background: '#fff',
+  boxShadow: '0 1px 3px rgba(0,0,0,0.5)',
+  transition: 'opacity 0.2s',
 };
 
 const gradientOverlayStyle = {

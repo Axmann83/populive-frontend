@@ -1305,3 +1305,17 @@ body.pl-day-mode .pl-seal-flash {
 .pl-safe-bottom {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
+
+/* ============================================================
+   GALLERIA FOTO PROFILO — scorrimento verticale (18/9)
+   ============================================================
+   Nasconde solo la barra di scorrimento (su schermo intero, a
+   tutto schermo scuro, sarebbe l'unico elemento fuori posto) — lo
+   scroll-snap vero resta nello style inline di ProfileFullScreen.jsx.
+   ============================================================ */
+.pl-photo-gallery-scroll {
+  scrollbar-width: none;
+}
+.pl-photo-gallery-scroll::-webkit-scrollbar {
+  display: none;
+}

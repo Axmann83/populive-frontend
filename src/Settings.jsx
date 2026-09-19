@@ -7,6 +7,8 @@ import {
   getOptimizedPhotoUrl,
 } from './apiClient';
 
+const MAX_PHOTOS = 6; // stessa galleria di ProfileCreation.jsx
+
 /**
  * ============================================================
  * POPULIVE — IMPOSTAZIONI (componente reale)
@@ -27,7 +29,9 @@ export default function Settings({ userId, onClose, onAccountDeleted }) {
   const [saving, setSaving] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [photoError, setPhotoError] = useState(null);
-  const fileInputRef = useRef(null);
+  const [dragIndex, setDragIndex] = useState(null);
+  const [overIndex, setOverIndex] = useState(null);
+  const dragStartRef = useRef(null); // { index, x, y } — solo mentre il dito/mouse è giù
 
   useEffect(() => {
     let cancelled = false;
@@ -76,25 +80,102 @@ export default function Settings({ userId, onClose, onAccountDeleted }) {
     }
   }
 
-  async function handlePhotoSelected(e) {
-    const file = e.target.files[0];
-    if (!file) return;
+  // Galleria vera, fino a MAX_PHOTOS (18/9) — a differenza degli
+  // altri campi qui sotto, ogni aggiunta/rimozione si salva SUBITO
+  // (stesso principio già in vigore per la foto singola prima di
+  // oggi), non aspetta il bottone "Salva impostazioni" in fondo.
+  async function saveGallery(newPhotoUrls) {
+    await apiFetch('/api/profile/me/photos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ photoUrls: newPhotoUrls }),
+    });
+    setSettings((prev) => ({
+      ...prev,
+      photoUrls: newPhotoUrls,
+      photoUrl: newPhotoUrls[0] || null,
+    }));
+  }
+
+  async function handlePhotosSelected(e) {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    const room = MAX_PHOTOS - (settings.photoUrls?.length || 0);
+    const toUpload = files.slice(0, room);
+
     setUploadingPhoto(true);
     setPhotoError(null);
     try {
-      const photoUrl = await uploadPhotoToStorage(file);
-      await apiFetch('/api/profile/me/photo', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ photoUrl }),
-      });
-      setSettings((prev) => ({ ...prev, photoUrl }));
+      const newUrls = [];
+      for (const file of toUpload) {
+        newUrls.push(await uploadPhotoToStorage(file));
+      }
+      await saveGallery([...(settings.photoUrls || []), ...newUrls]);
     } catch {
       setPhotoError('Caricamento non riuscito — riprova.');
     } finally {
       setUploadingPhoto(false);
       e.target.value = ''; // permette di selezionare di nuovo lo stesso file, se serve riprovare
     }
+  }
+
+  async function handleRemovePhoto(index) {
+    setPhotoError(null);
+    try {
+      await saveGallery((settings.photoUrls || []).filter((_, i) => i !== index));
+    } catch {
+      setPhotoError('Rimozione non riuscita — riprova.');
+    }
+  }
+
+  // Riordino della galleria via trascinamento (18/9) — Pointer Events
+  // invece del drag-and-drop HTML5 nativo, perché quest'ultimo è
+  // inaffidabile sul touch (su Safari iOS in pratica non parte mai
+  // toccando con un dito). I Pointer Events invece funzionano
+  // identici con mouse, dito e penna, ed è lo stesso motivo per cui
+  // li abbiamo già scelti altrove nell'app. Soglia di qualche pixel
+  // prima di considerarlo un trascinamento vero, altrimenti un
+  // semplice tocco sulla ✕ per rimuovere verrebbe scambiato per un
+  // tentativo di drag.
+  const DRAG_THRESHOLD = 6;
+
+  function handleTilePointerDown(e, index) {
+    dragStartRef.current = { index, x: e.clientX, y: e.clientY };
+    e.currentTarget.setPointerCapture(e.pointerId);
+  }
+
+  function handleTilePointerMove(e) {
+    const start = dragStartRef.current;
+    if (!start) return;
+
+    if (dragIndex === null) {
+      const dx = e.clientX - start.x;
+      const dy = e.clientY - start.y;
+      if (Math.hypot(dx, dy) < DRAG_THRESHOLD) return;
+      setDragIndex(start.index);
+    }
+
+    const el = document.elementFromPoint(e.clientX, e.clientY)?.closest('[data-photo-index]');
+    setOverIndex(el ? Number(el.dataset.photoIndex) : null);
+  }
+
+  function handleTilePointerUp(e) {
+    const start = dragStartRef.current;
+    dragStartRef.current = null;
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch {
+      /* già rilasciato */
+    }
+
+    if (start && dragIndex !== null && overIndex !== null && overIndex !== dragIndex) {
+      const list = [...(settings.photoUrls || [])];
+      const [moved] = list.splice(dragIndex, 1);
+      list.splice(overIndex, 0, moved);
+      saveGallery(list);
+    }
+    setDragIndex(null);
+    setOverIndex(null);
   }
 
   async function save() {
@@ -117,79 +198,85 @@ export default function Settings({ userId, onClose, onAccountDeleted }) {
       </div>
       <h3>Impostazioni</h3>
 
-      {/* Foto profilo — cerchietto classico con il "+" per
-          cambiarla in ogni momento, non solo la prima volta in
-          fase di registrazione (29/8). Un solo input nascosto,
-          senza l'attributo "capture": su iOS/Android questo basta
-          da solo a far comparire la scelta nativa tra "Scatta
-          foto" e "Libreria foto" — aggiungere capture avrebbe
-          tolto la scelta, forzando solo la fotocamera. */}
-      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
-        <div
-          onClick={() => fileInputRef.current?.click()}
-          style={{ position: 'relative', width: 84, height: 84, cursor: 'pointer' }}
-        >
+      {/* Galleria vera, fino a MAX_PHOTOS (18/9) — sostituisce il
+          vecchio cerchietto singolo. La prima è sempre quella
+          mostrata ovunque nell'app fuori dal profilo a tutto
+          schermo (radar/chat/notifiche/classifiche); tutte insieme
+          si scorrono in verticale lì, stile Hinge. Nessun attributo
+          "capture" sull'input: su iOS/Android questo basta da solo a
+          far comparire la scelta nativa tra "Scatta foto" e
+          "Libreria foto" — capture l'avrebbe tolta, forzando solo
+          la fotocamera. */}
+      <div className="pl-section-label">La tua galleria</div>
+      {(settings.photoUrls?.length || 0) > 1 && (
+        <p className="pl-hint" style={{ marginTop: -6, marginBottom: 10 }}>
+          Tieni premuto e trascina per riordinare — la prima resta quella "Principale".
+        </p>
+      )}
+      <div style={photoGridStyle}>
+        {(settings.photoUrls || []).map((url, i) => (
           <div
+            key={i}
+            data-photo-index={i}
+            onPointerDown={(e) => handleTilePointerDown(e, i)}
+            onPointerMove={handleTilePointerMove}
+            onPointerUp={handleTilePointerUp}
+            onPointerCancel={handleTilePointerUp}
             style={{
-              width: '100%',
-              height: '100%',
-              borderRadius: '50%',
-              overflow: 'hidden',
-              background: 'var(--surface-2)',
-              border: '2px solid var(--teak)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              opacity: uploadingPhoto ? 0.5 : 1,
+              ...photoTileStyle,
+              opacity: uploadingPhoto ? 0.5 : dragIndex === i ? 0.45 : 1,
+              transform: dragIndex === i ? 'scale(1.05)' : 'none',
+              boxShadow:
+                dragIndex !== null && overIndex === i && overIndex !== dragIndex
+                  ? '0 0 0 2px var(--cyan) inset'
+                  : 'none',
+              touchAction: 'none',
+              cursor: 'grab',
+              transition: dragIndex === i ? 'none' : 'transform 0.15s ease, box-shadow 0.15s ease',
             }}
           >
-            {settings.photoUrl ? (
-              <img
-                src={getOptimizedPhotoUrl(settings.photoUrl, { width: 84, height: 84 })}
-                alt=""
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-              />
-            ) : (
-              <span style={{ fontSize: 28, color: 'var(--text-muted)' }}>🙂</span>
-            )}
+            <img
+              src={getOptimizedPhotoUrl(url, { width: 120, height: 120 })}
+              alt=""
+              style={photoTileImgStyle}
+              draggable={false}
+            />
+            <button
+              type="button"
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={() => handleRemovePhoto(i)}
+              disabled={uploadingPhoto}
+              style={photoTileRemoveStyle}
+              aria-label="Rimuovi"
+            >
+              ✕
+            </button>
+            {i === 0 && <span style={photoTilePrimaryBadgeStyle}>Principale</span>}
           </div>
-          <div
-            style={{
-              position: 'absolute',
-              bottom: -2,
-              right: -2,
-              width: 28,
-              height: 28,
-              borderRadius: '50%',
-              background: 'var(--cyan)',
-              border: '2px solid var(--surface)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: 18,
-              fontWeight: 700,
-              color: '#fff',
-              lineHeight: 1,
-            }}
+        ))}
+        {(settings.photoUrls?.length || 0) < MAX_PHOTOS && (
+          <label
+            style={{ ...photoTileStyle, ...photoTileAddStyle, opacity: uploadingPhoto ? 0.5 : 1 }}
           >
-            +
-          </div>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            onChange={handlePhotoSelected}
-            style={{ display: 'none' }}
-          />
-        </div>
+            <span style={{ fontSize: 26, color: 'var(--text-muted)' }}>+</span>
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              disabled={uploadingPhoto}
+              onChange={handlePhotosSelected}
+              style={{ display: 'none' }}
+            />
+          </label>
+        )}
       </div>
       {uploadingPhoto && (
-        <p className="pl-hint" style={{ textAlign: 'center', marginTop: -12, marginBottom: 16 }}>
+        <p className="pl-hint" style={{ marginTop: -8, marginBottom: 16 }}>
           Caricamento…
         </p>
       )}
       {photoError && (
-        <p className="pl-error" style={{ textAlign: 'center', marginTop: -12, marginBottom: 16 }}>
+        <p className="pl-error" style={{ marginTop: -8, marginBottom: 16 }}>
           {photoError}
         </p>
       )}
@@ -365,3 +452,65 @@ function ToggleRow({ label, sub, checked, onChange }) {
     </div>
   );
 }
+
+// Griglia di miniature per la galleria (18/9) — stessa griglia
+// identica a quella di ProfileCreation.jsx, così chi la impara lì
+// la ritrova invariata qui quando torna a modificarla.
+const photoGridStyle = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(3, 1fr)',
+  gap: 8,
+  marginBottom: 14,
+};
+
+const photoTileStyle = {
+  position: 'relative',
+  aspectRatio: '1',
+  borderRadius: 12,
+  overflow: 'hidden',
+  background: 'var(--surface-2)',
+};
+
+const photoTileImgStyle = {
+  width: '100%',
+  height: '100%',
+  objectFit: 'cover',
+  display: 'block',
+};
+
+const photoTileAddStyle = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  border: '1.5px dashed rgba(228,212,200,0.3)',
+  cursor: 'pointer',
+};
+
+const photoTileRemoveStyle = {
+  position: 'absolute',
+  top: 4,
+  right: 4,
+  width: 22,
+  height: 22,
+  borderRadius: '50%',
+  border: 'none',
+  background: 'rgba(0,0,0,0.6)',
+  color: '#fff',
+  fontSize: 11,
+  cursor: 'pointer',
+  lineHeight: 1,
+};
+
+const photoTilePrimaryBadgeStyle = {
+  position: 'absolute',
+  bottom: 4,
+  left: 4,
+  right: 4,
+  fontSize: 8.5,
+  fontWeight: 700,
+  textAlign: 'center',
+  color: '#fff',
+  background: 'rgba(0,0,0,0.6)',
+  borderRadius: 6,
+  padding: '2px 0',
+};

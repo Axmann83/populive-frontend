@@ -97,6 +97,8 @@ export default function Dashboard({ userId }) {
             <PeopleSearchSection />
             <div style={{ height: 1, background: 'rgba(228,212,200,0.12)', margin: '24px 0' }} />
             <InstantInfluencerSection />
+            <div style={{ height: 1, background: 'rgba(228,212,200,0.12)', margin: '24px 0' }} />
+            <ProfessionalConnectorSection />
           </>
         )}
         {activeSection === 'locali' && <VenueMetricsSection />}
@@ -1563,6 +1565,119 @@ function InstantInfluencerSection() {
               </button>
             </>
           )}
+
+          <button
+            onClick={save}
+            disabled={saving}
+            style={{ width: '100%', padding: '9px', borderRadius: 10, border: 'none', fontSize: 11, fontWeight: 700, background: saved ? 'rgba(255,61,110,0.3)' : 'var(--cyan)', color: '#fff', cursor: saving ? 'default' : 'pointer' }}
+          >
+            {saving ? 'Un attimo…' : saved ? 'Salvato ✓' : 'Salva'}
+          </button>
+        </MetricCard>
+      )}
+    </div>
+  );
+}
+
+/**
+ * ============================================================
+ * SEZIONE "PR PROFESSIONISTA" (19/9) — stessa identica struttura di
+ * InstantInfluencerSection qui sopra (ricerca per telefono, riusa lo
+ * stesso findUserByPhone/endpoint), ma per un flag molto più
+ * semplice: acceso/spento, niente prodotti/categoria da gestire.
+ * Sblocca claimTableAsProfessionalConnector (populive-connector-
+ * engine.js) — un PR di professione può risultare Connector di più
+ * tavoli nella stessa serata senza doversi sedere a nessuno di essi.
+ * Mai auto-attivabile dall'utente, solo da qui.
+ * ============================================================
+ */
+function ProfessionalConnectorSection() {
+  const [phoneInput, setPhoneInput] = useState('');
+  const [searching, setSearching] = useState(false);
+  const [foundUser, setFoundUser] = useState(null);
+  const [notFound, setNotFound] = useState(false);
+  const [isProfessional, setIsProfessional] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  async function search() {
+    if (!phoneInput.trim()) return;
+    setSearching(true);
+    setFoundUser(null);
+    setNotFound(false);
+    try {
+      const res = await apiFetch(`/api/dashboard/find-user-by-phone?phone=${encodeURIComponent(phoneInput.trim())}`);
+      const data = await res.json();
+      if (data.success) {
+        setFoundUser(data.user);
+        setIsProfessional(!!data.user.isProfessionalConnector);
+      } else {
+        setNotFound(true);
+      }
+    } finally {
+      setSearching(false);
+    }
+  }
+
+  async function save() {
+    setSaving(true);
+    try {
+      const res = await apiFetch(`/api/dashboard/users/${foundUser.userId}/professional-connector`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isProfessionalConnector: isProfessional }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2000);
+      } else {
+        window.alert('Qualcosa è andato storto — riprova.');
+      }
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div>
+      <div className="pl-section-label" style={{ marginBottom: 8 }}>PR professionista</div>
+      <p className="pl-hint" style={{ marginBottom: 12 }}>
+        Cerca la persona per numero di telefono, poi attiva questo flag SOLO per chi gestisce davvero più tavoli in una serata — permette di diventare Connector di più tavoli senza doversi sedere a nessuno di essi.
+      </p>
+
+      <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+        <input
+          value={phoneInput}
+          onChange={(e) => setPhoneInput(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && search()}
+          placeholder="Numero di telefono"
+          style={{ marginBottom: 0, flex: 1 }}
+        />
+        <button
+          onClick={search}
+          disabled={searching}
+          style={{ padding: '0 16px', borderRadius: 10, border: 'none', background: 'var(--cyan)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+        >
+          {searching ? '…' : 'Cerca'}
+        </button>
+      </div>
+
+      {notFound && <p className="pl-hint">Nessun utente registrato con questo numero.</p>}
+
+      {foundUser && (
+        <MetricCard title={foundUser.displayName}>
+          <button
+            onClick={() => setIsProfessional((v) => !v)}
+            style={{
+              width: '100%', padding: '9px', borderRadius: 10, border: 'none', marginBottom: 10,
+              fontSize: 11.5, fontWeight: 700, cursor: 'pointer',
+              background: isProfessional ? 'var(--cyan)' : 'rgba(228,212,200,0.12)',
+              color: isProfessional ? '#fff' : 'var(--text-muted)',
+            }}
+          >
+            {isProfessional ? '✓ PR professionista attivo' : 'Attiva PR professionista'}
+          </button>
 
           <button
             onClick={save}

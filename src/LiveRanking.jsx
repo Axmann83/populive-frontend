@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
 import { getOptimizedPhotoUrl } from './apiClient';
 import ProfileFullScreen from './ProfileFullScreen';
@@ -39,35 +39,46 @@ export default function LiveRanking({ arenaSessionId, currentUserId, isGlobal, v
   const [genderFilter, setGenderFilter] = useState('');
 
   // --------------------------------------------------------
+  // Caricamento della classifica — estratta come funzione a sé
+  // (invece che chiusa dentro il solo useEffect di caricamento
+  // iniziale) perché ora la richiama ANCHE il gestore degli
+  // aggiornamenti live qui sotto, tramite un ref sempre aggiornato
+  // (stesso identico schema già usato altrove nel codice, es.
+  // blockedPairIdsRef in CheckinRadar.jsx) — mai duplicare la stessa
+  // richiesta di rete in due posti diversi.
+  // --------------------------------------------------------
+  const mountedRef = useRef(true);
+  useEffect(() => () => { mountedRef.current = false; }, []);
+
+  async function loadRanking() {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (hashtagFilter.trim()) params.set('hashtag', hashtagFilter.trim());
+      if (genderFilter) params.set('gender', genderFilter);
+      const qs = params.toString();
+
+      const url = isGlobal
+        ? `${API_BASE}/api/ranking/global${qs ? `?${qs}` : ''}`
+        : `${API_BASE}/api/arenas/${arenaSessionId}/ranking${qs ? `?${qs}` : ''}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      if (mountedRef.current && data.success) {
+        setRanking(data.ranking);
+        setThresholdInfo(data.belowThreshold ? { currentCount: data.currentCount, minRequired: data.minRequired } : null);
+      }
+    } finally {
+      if (mountedRef.current) setLoading(false);
+    }
+  }
+  const loadRankingRef = useRef(loadRanking);
+  loadRankingRef.current = loadRanking; // sempre l'ultima versione, con filtri/arena aggiornati, senza dover riavviare il socket
+
+  // --------------------------------------------------------
   // Caricamento iniziale della classifica
   // --------------------------------------------------------
   useEffect(() => {
-    let cancelled = false;
-
-    async function loadRanking() {
-      setLoading(true);
-      try {
-        const params = new URLSearchParams();
-        if (hashtagFilter.trim()) params.set('hashtag', hashtagFilter.trim());
-        if (genderFilter) params.set('gender', genderFilter);
-        const qs = params.toString();
-
-        const url = isGlobal
-          ? `${API_BASE}/api/ranking/global${qs ? `?${qs}` : ''}`
-          : `${API_BASE}/api/arenas/${arenaSessionId}/ranking${qs ? `?${qs}` : ''}`;
-        const res = await fetch(url);
-        const data = await res.json();
-        if (!cancelled && data.success) {
-          setRanking(data.ranking);
-          setThresholdInfo(data.belowThreshold ? { currentCount: data.currentCount, minRequired: data.minRequired } : null);
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-
-    loadRanking();
-    return () => { cancelled = true; };
+    loadRankingRef.current();
   }, [arenaSessionId, isGlobal, hashtagFilter, genderFilter]);
 
   // --------------------------------------------------------
@@ -77,7 +88,19 @@ export default function LiveRanking({ arenaSessionId, currentUserId, isGlobal, v
   // caricamento della schermata, non istante per istante — meno
   // critico della locale, dove l'effetto "live" è il punto centrale
   // dell'esperienza di una serata.
+  //
+  // IMPORTANTE (19/9): il numero VERO in classifica non viene più
+  // calcolato qui sommando il delta grezzo di ogni evento — da
+  // quando esiste il tetto sui punti bonus (v. populive-ranking-cap.js
+  // sul server), una semplice somma locale finirebbe per mostrare più
+  // punti di quelli che contano davvero, perché non saprebbe nulla del
+  // tetto. Il "+N" fluttuante resta un effetto immediato e ottimistico
+  // (solo feedback visivo, non il numero ufficiale), ma la riga vera
+  // si risincronizza sempre da un nuovo giro sul server — con un piccolo
+  // debounce, perché in un locale pieno più eventi arrivano quasi
+  // insieme e non serve una richiesta per ciascuno.
   // --------------------------------------------------------
+  const refetchTimerRef = useRef(null);
   useEffect(() => {
     if (isGlobal || !arenaSessionId) return;
 
@@ -87,16 +110,9 @@ export default function LiveRanking({ arenaSessionId, currentUserId, isGlobal, v
     socket.on('points_update', (payload) => {
       const { userId, points } = payload;
 
-      setRanking((prev) => {
-        const updated = prev.map((entry) =>
-          entry.userId === userId
-            ? { ...entry, points: entry.points + points }
-            : entry
-        );
-        return updated.sort((a, b) => b.points - a.points).map((e, i) => ({ ...e, rank: i + 1 }));
-      });
-
-      // Mostra il "+N" fluttuante per un paio di secondi
+      // Mostra il "+N" fluttuante per un paio di secondi — puramente
+      // visivo, non è mai il valore che finisce nella riga della
+      // classifica.
       const key = Date.now();
       setRecentDeltas((prev) => ({ ...prev, [userId]: { points, key } }));
       setTimeout(() => {
@@ -107,9 +123,21 @@ export default function LiveRanking({ arenaSessionId, currentUserId, isGlobal, v
           return next;
         });
       }, 1800);
+
+      // Numero vero SEMPRE ripreso dal server (mai calcolato qui) —
+      // con un debounce di 600ms così un burst di eventi ravvicinati
+      // (es. tanti Like nello stesso istante) genera un solo giro di
+      // rete poco dopo l'ultimo, non uno per evento.
+      clearTimeout(refetchTimerRef.current);
+      refetchTimerRef.current = setTimeout(() => {
+        loadRankingRef.current();
+      }, 600);
     });
 
-    return () => socket.disconnect();
+    return () => {
+      clearTimeout(refetchTimerRef.current);
+      socket.disconnect();
+    };
   }, [arenaSessionId, currentUserId, isGlobal]);
 
   return (

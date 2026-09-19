@@ -98,7 +98,7 @@ export default function Dashboard({ userId }) {
             <div style={{ height: 1, background: 'rgba(228,212,200,0.12)', margin: '24px 0' }} />
             <InstantInfluencerSection />
             <div style={{ height: 1, background: 'rgba(228,212,200,0.12)', margin: '24px 0' }} />
-            <ProfessionalConnectorSection />
+            <ProfessionalConnectorSection currentUserId={userId} />
           </>
         )}
         {activeSection === 'locali' && <VenueMetricsSection />}
@@ -1581,112 +1581,60 @@ function InstantInfluencerSection() {
 
 /**
  * ============================================================
- * SEZIONE "PR PROFESSIONISTA" (19/9) — stessa identica struttura di
- * InstantInfluencerSection qui sopra (ricerca per telefono, riusa lo
- * stesso findUserByPhone/endpoint), ma per un flag molto più
- * semplice: acceso/spento, niente prodotti/categoria da gestire.
- * Sblocca claimTableAsProfessionalConnector (populive-connector-
- * engine.js) — un PR di professione può risultare Connector di più
- * tavoli nella stessa serata senza doversi sedere a nessuno di essi.
- * Mai auto-attivabile dall'utente, solo da qui.
+ * SEZIONE "PR PROFESSIONISTA" (19/9, rivista subito dopo su
+ * richiesta esplicita dell'utente) — PRIMA cercava per numero di
+ * telefono, come Instant Influencer. L'utente ha fatto notare che
+ * a un Architetto sul posto non viene in mente il numero di
+ * telefono del PR: molto più naturale scegliere il locale con la
+ * serata attiva stasera e scorrere chi è check-in in QUEL momento
+ * (stessa lista della classifica locale) — niente di nuovo da
+ * costruire per quella lista, riusiamo LiveRanking in modalità
+ * `isDashboard` esattamente come già fa RankingsSection per la vista
+ * "Locale" qui sopra: un tocco su una persona apre già da solo
+ * AdminChatPanel.jsx (chat diretta), dove ora vive anche il bottone
+ * "Attiva PR professionista" — stesso posto/stesso schema in cui
+ * Instant Influencer si attiva a fine trattativa, esplicito parallelo
+ * chiesto dall'utente.
  * ============================================================
  */
-function ProfessionalConnectorSection() {
-  const [phoneInput, setPhoneInput] = useState('');
-  const [searching, setSearching] = useState(false);
-  const [foundUser, setFoundUser] = useState(null);
-  const [notFound, setNotFound] = useState(false);
-  const [isProfessional, setIsProfessional] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
+function ProfessionalConnectorSection({ currentUserId }) {
+  const [venues, setVenues] = useState([]);
+  const [selectedVenueId, setSelectedVenueId] = useState('');
 
-  async function search() {
-    if (!phoneInput.trim()) return;
-    setSearching(true);
-    setFoundUser(null);
-    setNotFound(false);
-    try {
-      const res = await apiFetch(`/api/dashboard/find-user-by-phone?phone=${encodeURIComponent(phoneInput.trim())}`);
-      const data = await res.json();
-      if (data.success) {
-        setFoundUser(data.user);
-        setIsProfessional(!!data.user.isProfessionalConnector);
-      } else {
-        setNotFound(true);
-      }
-    } finally {
-      setSearching(false);
-    }
-  }
+  useEffect(() => {
+    apiFetch('/api/venues/map')
+      .then((r) => r.json())
+      .then((data) => { if (data.success) setVenues(data.venues); });
+  }, []);
 
-  async function save() {
-    setSaving(true);
-    try {
-      const res = await apiFetch(`/api/dashboard/users/${foundUser.userId}/professional-connector`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isProfessionalConnector: isProfessional }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setSaved(true);
-        setTimeout(() => setSaved(false), 2000);
-      } else {
-        window.alert('Qualcosa è andato storto — riprova.');
-      }
-    } finally {
-      setSaving(false);
-    }
-  }
+  const activeVenues = venues.filter((v) => v.arenaActive && v.arenaSessionId);
+  const selectedVenue = activeVenues.find((v) => v.venueId === selectedVenueId);
 
   return (
     <div>
       <div className="pl-section-label" style={{ marginBottom: 8 }}>PR professionista</div>
       <p className="pl-hint" style={{ marginBottom: 12 }}>
-        Cerca la persona per numero di telefono, poi attiva questo flag SOLO per chi gestisce davvero più tavoli in una serata — permette di diventare Connector di più tavoli senza doversi sedere a nessuno di essi.
+        Scegli un locale con una serata attiva ora, tocca chi è check-in in questo momento per aprire la chat diretta — da lì puoi attivare "PR professionista" per chi gestisce davvero più tavoli stasera, così può diventare Connector di più tavoli senza doversi sedere a nessuno di essi.
       </p>
 
-      <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-        <input
-          value={phoneInput}
-          onChange={(e) => setPhoneInput(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && search()}
-          placeholder="Numero di telefono"
-          style={{ marginBottom: 0, flex: 1 }}
+      <VenueSearchSelect
+        venues={activeVenues}
+        value={selectedVenueId}
+        onChange={setSelectedVenueId}
+        placeholder="Scegli un locale con una serata attiva ora…"
+      />
+
+      {activeVenues.length === 0 && (
+        <p className="pl-hint">Nessun locale ha una serata attiva in questo momento.</p>
+      )}
+
+      {selectedVenue && (
+        <LiveRanking
+          arenaSessionId={selectedVenue.arenaSessionId}
+          venueId={selectedVenue.venueId}
+          currentUserId={currentUserId}
+          isDashboard
         />
-        <button
-          onClick={search}
-          disabled={searching}
-          style={{ padding: '0 16px', borderRadius: 10, border: 'none', background: 'var(--cyan)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
-        >
-          {searching ? '…' : 'Cerca'}
-        </button>
-      </div>
-
-      {notFound && <p className="pl-hint">Nessun utente registrato con questo numero.</p>}
-
-      {foundUser && (
-        <MetricCard title={foundUser.displayName}>
-          <button
-            onClick={() => setIsProfessional((v) => !v)}
-            style={{
-              width: '100%', padding: '9px', borderRadius: 10, border: 'none', marginBottom: 10,
-              fontSize: 11.5, fontWeight: 700, cursor: 'pointer',
-              background: isProfessional ? 'var(--cyan)' : 'rgba(228,212,200,0.12)',
-              color: isProfessional ? '#fff' : 'var(--text-muted)',
-            }}
-          >
-            {isProfessional ? '✓ PR professionista attivo' : 'Attiva PR professionista'}
-          </button>
-
-          <button
-            onClick={save}
-            disabled={saving}
-            style={{ width: '100%', padding: '9px', borderRadius: 10, border: 'none', fontSize: 11, fontWeight: 700, background: saved ? 'rgba(255,61,110,0.3)' : 'var(--cyan)', color: '#fff', cursor: saving ? 'default' : 'pointer' }}
-          >
-            {saving ? 'Un attimo…' : saved ? 'Salvato ✓' : 'Salva'}
-          </button>
-        </MetricCard>
       )}
     </div>
   );

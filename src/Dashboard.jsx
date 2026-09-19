@@ -97,6 +97,8 @@ export default function Dashboard({ userId }) {
             <PeopleSearchSection />
             <div style={{ height: 1, background: 'rgba(228,212,200,0.12)', margin: '24px 0' }} />
             <InstantInfluencerSection />
+            <div style={{ height: 1, background: 'rgba(228,212,200,0.12)', margin: '24px 0' }} />
+            <ProfessionalConnectorSection currentUserId={userId} />
           </>
         )}
         {activeSection === 'locali' && <VenueMetricsSection />}
@@ -1572,6 +1574,67 @@ function InstantInfluencerSection() {
             {saving ? 'Un attimo…' : saved ? 'Salvato ✓' : 'Salva'}
           </button>
         </MetricCard>
+      )}
+    </div>
+  );
+}
+
+/**
+ * ============================================================
+ * SEZIONE "PR PROFESSIONISTA" (19/9, rivista subito dopo su
+ * richiesta esplicita dell'utente) — PRIMA cercava per numero di
+ * telefono, come Instant Influencer. L'utente ha fatto notare che
+ * a un Architetto sul posto non viene in mente il numero di
+ * telefono del PR: molto più naturale scegliere il locale con la
+ * serata attiva stasera e scorrere chi è check-in in QUEL momento
+ * (stessa lista della classifica locale) — niente di nuovo da
+ * costruire per quella lista, riusiamo LiveRanking in modalità
+ * `isDashboard` esattamente come già fa RankingsSection per la vista
+ * "Locale" qui sopra: un tocco su una persona apre già da solo
+ * AdminChatPanel.jsx (chat diretta), dove ora vive anche il bottone
+ * "Attiva PR professionista" — stesso posto/stesso schema in cui
+ * Instant Influencer si attiva a fine trattativa, esplicito parallelo
+ * chiesto dall'utente.
+ * ============================================================
+ */
+function ProfessionalConnectorSection({ currentUserId }) {
+  const [venues, setVenues] = useState([]);
+  const [selectedVenueId, setSelectedVenueId] = useState('');
+
+  useEffect(() => {
+    apiFetch('/api/venues/map')
+      .then((r) => r.json())
+      .then((data) => { if (data.success) setVenues(data.venues); });
+  }, []);
+
+  const activeVenues = venues.filter((v) => v.arenaActive && v.arenaSessionId);
+  const selectedVenue = activeVenues.find((v) => v.venueId === selectedVenueId);
+
+  return (
+    <div>
+      <div className="pl-section-label" style={{ marginBottom: 8 }}>PR professionista</div>
+      <p className="pl-hint" style={{ marginBottom: 12 }}>
+        Scegli un locale con una serata attiva ora, tocca chi è check-in in questo momento per aprire la chat diretta — da lì puoi attivare "PR professionista" per chi gestisce davvero più tavoli stasera, così può diventare Connector di più tavoli senza doversi sedere a nessuno di essi.
+      </p>
+
+      <VenueSearchSelect
+        venues={activeVenues}
+        value={selectedVenueId}
+        onChange={setSelectedVenueId}
+        placeholder="Scegli un locale con una serata attiva ora…"
+      />
+
+      {activeVenues.length === 0 && (
+        <p className="pl-hint">Nessun locale ha una serata attiva in questo momento.</p>
+      )}
+
+      {selectedVenue && (
+        <LiveRanking
+          arenaSessionId={selectedVenue.arenaSessionId}
+          venueId={selectedVenue.venueId}
+          currentUserId={currentUserId}
+          isDashboard
+        />
       )}
     </div>
   );

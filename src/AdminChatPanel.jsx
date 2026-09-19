@@ -31,6 +31,17 @@ export default function AdminChatPanel({ targetUserId, targetDisplayName, curren
   const [savingInfluencer, setSavingInfluencer] = useState(false);
   const [influencerSaved, setInfluencerSaved] = useState(false);
 
+  // PR professionista (19/9) — stesso identico principio del riquadro
+  // Instant Influencer qui sopra: chiude il cerchio nello stesso posto
+  // in cui si parla con la persona (tipicamente aperta dalla
+  // classifica LOCALE di un locale con la serata attiva, v.
+  // ProfessionalConnectorSection in Dashboard.jsx), invece di dover
+  // tornare alla ricerca per numero di telefono nella scheda Persone.
+  const [showPrForm, setShowPrForm] = useState(false);
+  const [isProfessionalConnector, setIsProfessionalConnector] = useState(false);
+  const [savingPr, setSavingPr] = useState(false);
+  const [prSaved, setPrSaved] = useState(false);
+
   // Apre (o ritrova) la conversazione appena il pannello monta.
   useEffect(() => {
     let cancelled = false;
@@ -108,6 +119,22 @@ export default function AdminChatPanel({ targetUserId, targetDisplayName, curren
       if (data.success) setInfluencerSaved(true);
     } finally {
       setSavingInfluencer(false);
+    }
+  }
+
+  async function handleSavePr() {
+    setSavingPr(true);
+    setPrSaved(false);
+    try {
+      const res = await apiFetch(`/api/dashboard/users/${targetUserId}/professional-connector`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isProfessionalConnector }),
+      });
+      const data = await res.json();
+      if (data.success) setPrSaved(true);
+    } finally {
+      setSavingPr(false);
     }
   }
 
@@ -222,6 +249,41 @@ export default function AdminChatPanel({ targetUserId, targetDisplayName, curren
                     {savingInfluencer ? 'Salvataggio…' : 'Salva'}
                   </button>
                   {influencerSaved && <p className="pl-hint" style={{ color: 'var(--cyan)' }}>Salvato.</p>}
+                </div>
+              )}
+            </div>
+
+            {/* PR professionista (19/9) — stesso schema del riquadro
+                Instant Influencer qui sopra, per chi gestisce davvero
+                più tavoli nella stessa serata (v. spiegazione completa
+                in populive-connector-engine.js). */}
+            <div style={{ borderTop: '1px solid rgba(228,212,200,0.12)', padding: 12 }}>
+              <button
+                onClick={() => setShowPrForm((v) => !v)}
+                style={{ background: 'none', border: 'none', color: 'var(--cyan)', fontWeight: 600, fontSize: 12.5, cursor: 'pointer', padding: 0 }}
+              >
+                {showPrForm ? '▾' : '▸'} Attiva PR professionista
+              </button>
+
+              {showPrForm && (
+                <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <button
+                    type="button"
+                    onClick={() => setIsProfessionalConnector((v) => !v)}
+                    style={{
+                      padding: '9px', borderRadius: 10, border: 'none',
+                      fontSize: 11.5, fontWeight: 700, cursor: 'pointer',
+                      background: isProfessionalConnector ? 'var(--cyan)' : 'rgba(228,212,200,0.12)',
+                      color: isProfessionalConnector ? '#fff' : 'var(--text-muted)',
+                    }}
+                  >
+                    {isProfessionalConnector ? '✓ PR professionista attivo' : 'Attiva PR professionista'}
+                  </button>
+
+                  <button onClick={handleSavePr} disabled={savingPr} className="pl-send-btn">
+                    {savingPr ? 'Salvataggio…' : 'Salva'}
+                  </button>
+                  {prSaved && <p className="pl-hint" style={{ color: 'var(--cyan)' }}>Salvato.</p>}
                 </div>
               )}
             </div>

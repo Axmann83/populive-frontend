@@ -570,7 +570,7 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
           <div className="pl-consent-row">
             <div>
               <div className="pl-consent-label">Vuoi essere il Connector di questo gruppo?</div>
-              <div className="pl-consent-sub">Chiesto solo se sei il primo ad agganciare questo tavolo</div>
+              <div className="pl-consent-sub">Conta solo se questo tavolo non ha ancora un Connector — altrimenti si eredita chi c'è già</div>
             </div>
             <input type="checkbox" checked={wantsConnector} onChange={(e) => setWantsConnector(e.target.checked)} />
           </div>

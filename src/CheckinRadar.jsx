@@ -66,6 +66,28 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
   // tutto schermo. null = nessuno, quindi il radar è mostrato normale.
   const [selectedProfileUserId, setSelectedProfileUserId] = useState(null);
 
+  // PR professionista che gestisce più tavoli (19/9) — flag letta
+  // dal server, mai auto-dichiarabile: decide se mostrare il bottone
+  // "Sono il PR di questo tavolo" nel foglio di aggancio qui sotto.
+  const [isProfessionalConnector, setIsProfessionalConnector] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    apiFetch('/api/auth/is-professional-connector')
+      .then((r) => r.json())
+      .then((data) => { if (!cancelled && data.success) setIsProfessionalConnector(data.isProfessionalConnector); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+
+  // Sei TU il Connector di questo tavolo? (19/9) — vero sia per chi
+  // ha appena "vinto" il ruolo scansionando fisicamente (isConnector
+  // nella risposta di joinSquad) sia per un PR che se lo è appena
+  // pre-assegnato — in entrambi i casi mostra il bottone per
+  // chiudere/riaprire il tavolo qui sotto.
+  const [isTableConnector, setIsTableConnector] = useState(false);
+  const [tableLocked, setTableLocked] = useState(false);
+  const [tableLockLoading, setTableLockLoading] = useState(false);
+
   const handleJoinTable = useCallback(async () => {
     if (!tableCode.trim()) return;
     setTableJoinLoading(true);
@@ -82,12 +104,59 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
       const data = await res.json();
       if (data.success) {
         setTableJoined(true);
+        setIsTableConnector(!!data.isConnector);
         setShowTableJoin(false);
+      } else if (data.reason === 'table_locked') {
+        window.alert('Questo tavolo è stato chiuso dal suo Connector — chiedi a chi lo gestisce di riaprirlo.');
       }
     } finally {
       setTableJoinLoading(false);
     }
   }, [tableCode, wantsConnector, arenaSessionId]);
+
+  // Claim del ruolo di Connector SENZA diventare membro del tavolo
+  // (19/9) — solo per chi ha is_professional_connector = true, v.
+  // claimTableAsProfessionalConnector in populive-connector-engine.js.
+  const handleClaimAsProfessional = useCallback(async () => {
+    if (!tableCode.trim()) return;
+    setTableJoinLoading(true);
+    try {
+      const res = await apiFetch('/api/table/claim-as-professional', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tableQrCode: tableCode.trim(), arenaSessionId }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setIsTableConnector(true);
+        setShowTableJoin(false);
+      } else if (data.reason === 'table_already_has_a_connector') {
+        window.alert('Questo tavolo ha già un Connector — non puoi sovrascriverlo.');
+      }
+    } finally {
+      setTableJoinLoading(false);
+    }
+  }, [tableCode, arenaSessionId]);
+
+  // Chiudi/riapri il tavolo (19/9, idea dell'utente) — visibile solo
+  // al Connector vero di questo tavolo, evita che chi ci passa
+  // semplicemente vicino dopo che il gruppo si è già formato possa
+  // infilarsi a prendere una fetta dei bonus di squadra.
+  const handleToggleTableLock = useCallback(async () => {
+    const nextLocked = !tableLocked;
+    setTableLockLoading(true);
+    try {
+      const res = await apiFetch('/api/table/lock', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tableQrCode: tableCode.trim(), arenaSessionId, locked: nextLocked }),
+      });
+      const data = await res.json();
+      if (data.success) setTableLocked(nextLocked);
+    } finally {
+      setTableLockLoading(false);
+    }
+  }, [tableLocked, tableCode, arenaSessionId]);
 
   // Lista di chi ha un rifiuto permanente con questa persona (in
   // qualunque direzione) — letta una volta all'avvio del radar,
@@ -538,9 +607,30 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
           esiste solo a quel punto) — prima non ha senso mostrarlo,
           il collegamento al tavolo non avrebbe nessuna sessione a
           cui agganciarsi. */}
-      {arenaSessionId && (tableJoined ? (
+      {arenaSessionId && (tableJoined || isTableConnector ? (
         <div className="pl-hint" style={{ textAlign: 'center', marginTop: 14 }}>
-          ✓ Agganciato al tavolo — i bonus di spesa si divideranno con chi altro si unisce.
+          {tableJoined && <div>✓ Agganciato al tavolo — i bonus di spesa si divideranno con chi altro si unisce.</div>}
+          {!tableJoined && isTableConnector && (
+            <div>✓ Sei il Connector di questo tavolo (gestione PR) — non conti come membro, ma i tuoi bonus da Connector restano tuoi.</div>
+          )}
+          {/* Chiudi/riapri il tavolo (19/9) — solo chi è VERAMENTE il
+              Connector di questo tavolo lo vede, sia che ci sia
+              arrivato scansionando fisicamente sia da PR
+              professionista. */}
+          {isTableConnector && (
+            <button
+              onClick={handleToggleTableLock}
+              disabled={tableLockLoading}
+              style={{
+                marginTop: 10, padding: '8px 14px', borderRadius: 10, fontSize: 11.5, fontWeight: 700, cursor: tableLockLoading ? 'default' : 'pointer',
+                border: tableLocked ? '1px solid var(--cyan)' : '1px solid rgba(228,212,200,0.25)',
+                background: tableLocked ? 'rgba(255,61,110,0.14)' : 'transparent',
+                color: tableLocked ? 'var(--cyan)' : 'var(--teak)',
+              }}
+            >
+              {tableLockLoading ? 'Un attimo…' : tableLocked ? '🔒 Tavolo chiuso — tocca per riaprirlo' : '🔓 Chiudi il tavolo a nuovi ingressi'}
+            </button>
+          )}
         </div>
       ) : !showTableJoin ? (
         <button
@@ -577,6 +667,21 @@ export default function CheckinRadar({ userId, venueId, onArenaSession, autoChec
           <button className="pl-send-btn" onClick={handleJoinTable} disabled={!tableCode.trim() || tableJoinLoading}>
             {tableJoinLoading ? 'Un attimo…' : 'Conferma'}
           </button>
+
+          {/* PR professionista che gestisce più tavoli (19/9) — solo
+              per chi ha il flag attivo da dashboard: diventa Connector
+              del tavolo SENZA sedersi, per poterlo ripetere su altri
+              tavoli nella stessa serata. */}
+          {isProfessionalConnector && (
+            <button
+              type="button"
+              onClick={handleClaimAsProfessional}
+              disabled={!tableCode.trim() || tableJoinLoading}
+              style={{ width: '100%', marginTop: 8, padding: 10, borderRadius: 10, border: '1px dashed rgba(228,212,200,0.3)', background: 'transparent', color: 'var(--teak)', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}
+            >
+              Sono il PR di questo tavolo — lo gestisco, non mi siedo
+            </button>
+          )}
         </div>
       ))}
 

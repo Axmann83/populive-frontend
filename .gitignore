@@ -7,3 +7,6 @@ build
 .env.development.local
 .env.test.local
 .env.production.local
+
+# contesto locale per Claude (non condiviso)
+CLAUDE.md

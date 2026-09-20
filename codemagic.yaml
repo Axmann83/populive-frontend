@@ -1,14 +1,3 @@
-# Build iOS su Codemagic → TestFlight (non serve un Mac in locale).
-#
-# Configurazione una tantum nella UI di Codemagic:
-#   1. Teams > Integrations > App Store Connect: aggiungi una API key
-#      (Users and Access > Integrations > App Store Connect API su appstoreconnect.apple.com)
-#      e chiamala "populive_asc" (vedi `integrations` sotto).
-#   2. Crea l'App ID `com.populive.app` (developer.apple.com > Identifiers, con
-#      capability "Associated Domains") e l'app in App Store Connect.
-#   3. TestFlight → Internal Testing → gruppo "Interni" con distribuzione
-#      automatica, e aggiungi il tuo utente come tester.
-# Piano gratuito: 500 minuti/mese su macOS M2.
 workflows:
   ios-testflight:
     name: iOS → TestFlight
@@ -17,10 +6,6 @@ workflows:
     environment:
       node: 22
       xcode: latest
-      # Firma automatica: Codemagic crea/scarica certificato e provisioning
-      # profile (App Store) per questo bundle id tramite la API key.
-      # Il profilo deve includere la capability "Associated Domains"
-      # (attiva sull'App ID in developer.apple.com).
       ios_signing:
         distribution_type: app_store
         bundle_identifier: com.populive.app

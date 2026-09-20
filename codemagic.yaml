@@ -6,7 +6,8 @@
 #      e chiamala "populive_asc" (vedi `integrations` sotto).
 #   2. Crea l'App ID `com.populive.app` (developer.apple.com > Identifiers, con
 #      capability "Associated Domains") e l'app in App Store Connect.
-#   3. Aggiungi il tuo iPhone come tester interno in TestFlight.
+#   3. TestFlight → Internal Testing → gruppo "Interni" con distribuzione
+#      automatica, e aggiungi il tuo utente come tester.
 # Piano gratuito: 500 minuti/mese su macOS M2.
 workflows:
   ios-testflight:
@@ -61,9 +62,9 @@ workflows:
     publishing:
       app_store_connect:
         auth: integration
+        # Il gruppo interno "Interni" ha la distribuzione automatica: riceve
+        # ogni build da solo (e Apple non permette di assegnargliele via API).
         submit_to_testflight: true
-        beta_groups:
-          - Interni
 
   android-debug-apk:
     name: Android → APK di debug

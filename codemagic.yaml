@@ -16,6 +16,13 @@ workflows:
     environment:
       node: 22
       xcode: latest
+      # Firma automatica: Codemagic crea/scarica certificato e provisioning
+      # profile (App Store) per questo bundle id tramite la API key.
+      # Il profilo deve includere la capability "Associated Domains"
+      # (attiva sull'App ID in developer.apple.com).
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.populive.app
     integrations:
       app_store_connect: populive_asc
     triggering:

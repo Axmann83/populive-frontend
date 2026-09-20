@@ -43,8 +43,10 @@ workflows:
           xcode-project use-profiles
       - name: Build IPA
         script: |
+          # Capacitor 8 usa Swift Package Manager (niente CocoaPods e niente
+          # .xcworkspace): si compila direttamente il .xcodeproj.
           xcode-project build-ipa \
-            --workspace ios/App/App.xcworkspace \
+            --project ios/App/App.xcodeproj \
             --scheme App
     artifacts:
       - build/ios/ipa/*.ipa

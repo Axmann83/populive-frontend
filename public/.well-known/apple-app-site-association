@@ -3,7 +3,7 @@
     "apps": [],
     "details": [
       {
-        "appID": "TEAMID.com.populive.app",
+        "appID": "JWW33N22VY.com.populive.app",
         "paths": ["/checkin/*", "/mission/*", "/?pulse_sent*", "/?pulse_cancelled*"]
       }
     ]

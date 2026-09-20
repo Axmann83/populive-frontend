@@ -163,7 +163,7 @@ riporta nell'app al termine del checkout Stripe. Perché funzioni il sito deve s
 - `assetlinks.json`: contiene già lo SHA-256 del keystore di debug di questa macchina; sostituire il placeholder con quello di release
   (debug: `keytool -list -v -keystore %USERPROFILE%\.android\debug.keystore -alias androiddebugkey -storepass android`;
   release: quello del keystore di release, oppure quello di Play App Signing se pubblichi sul Play Store)
-- `apple-app-site-association`: sostituire `TEAMID` con il Team ID Apple (developer.apple.com → Membership)
+- `apple-app-site-association`: già compilato con il Team ID Apple (`JWW33N22VY`)
 
 `apple-app-site-association` deve essere servito con `Content-Type: application/json` e senza redirect.
 

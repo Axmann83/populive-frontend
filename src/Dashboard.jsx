@@ -3,6 +3,7 @@ import QRCode from 'qrcode';
 import QrScannerModal from './QrScannerModal';
 import VenueSearchSelect from './VenueSearchSelect';
 import { apiFetch, getOptimizedPhotoUrl } from './apiClient';
+import { usePhotoPreview } from './PhotoPreview';
 import {
   Target,
   Settings as SettingsIcon,
@@ -2039,6 +2040,8 @@ function PeopleSearchSection() {
   const [hashtagInput, setHashtagInput] = useState('pr');
   const [people, setPeople] = useState(null);
   const [loading, setLoading] = useState(false);
+  // Tocco sulla foto → anteprima grande (v. PhotoPreview.jsx).
+  const { photoTapProps, photoPreview } = usePhotoPreview();
 
   async function search() {
     const clean = hashtagInput.trim().replace(/^#/, '');
@@ -2128,7 +2131,11 @@ function PeopleSearchSection() {
                 <img
                   src={getOptimizedPhotoUrl(p.photoUrl, { width: 40, height: 40 })}
                   alt={p.displayName}
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  {...photoTapProps(p.photoUrl, p.displayName, {
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                  })}
                 />
               ) : (
                 p.avatarEmoji
@@ -2155,6 +2162,8 @@ function PeopleSearchSection() {
           </div>
         ))}
       </div>
+
+      {photoPreview}
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { apiFetch, getOptimizedPhotoUrl } from './apiClient';
+import { usePhotoPreview } from './PhotoPreview';
 import { Link2, Coins, Crown, Sparkles } from './PopuLiveIcons';
 
 /**
@@ -18,6 +19,9 @@ export default function ProfileDetail({ userId, arenaSessionId, onClose, onBack 
   const [profile, setProfile] = useState(null);
   const [ranking, setRanking] = useState(null);
   const [loading, setLoading] = useState(true);
+  // Anche qui l'avatar è pur sempre un cerchietto: un tocco lo apre
+  // in grande (v. PhotoPreview.jsx).
+  const { photoTapProps, photoPreview } = usePhotoPreview();
 
   useEffect(() => {
     let cancelled = false;
@@ -119,7 +123,11 @@ export default function ProfileDetail({ userId, arenaSessionId, onClose, onBack 
                 <img
                   src={getOptimizedPhotoUrl(profile.photoUrl, { width: 96, height: 96 })}
                   alt={profile.displayName}
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  {...photoTapProps(profile.photoUrl, profile.displayName, {
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                  })}
                 />
               ) : (
                 profile.avatarEmoji
@@ -218,6 +226,8 @@ export default function ProfileDetail({ userId, arenaSessionId, onClose, onBack 
           )}
         </div>
       )}
+
+      {photoPreview}
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { PulseWaveIcon, MessageCircle } from './PopuLiveIcons';
 import { apiFetch, getOptimizedPhotoUrl } from './apiClient';
+import { usePhotoPreview } from './PhotoPreview';
 
 /**
  * ============================================================
@@ -58,6 +59,10 @@ export default function ChatCenter({ pendingMatches, activeChats, onOpenMatch, a
   );
   const isEmpty = (!pendingMatches || pendingMatches.length === 0) && savedChats.length === 0;
 
+  // Tocco sulla foto → anteprima grande invece di entrare nella
+  // chat (v. PhotoPreview.jsx).
+  const { photoTapProps, photoPreview } = usePhotoPreview();
+
   function renderRow(entry) {
     const info = matchProfiles[entry.withUserId];
     return (
@@ -94,8 +99,12 @@ export default function ChatCenter({ pendingMatches, activeChats, onOpenMatch, a
           {info?.photoUrl ? (
             <img
               src={getOptimizedPhotoUrl(info.photoUrl, { width: 40, height: 40 })}
-              alt=""
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              alt={info.displayName}
+              {...photoTapProps(info.photoUrl, info.displayName, {
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+              })}
             />
           ) : (
             <PulseWaveIcon size={18} color="var(--cyan)" />
@@ -148,6 +157,8 @@ export default function ChatCenter({ pendingMatches, activeChats, onOpenMatch, a
           {savedChats.map(renderRow)}
         </div>
       )}
+
+      {photoPreview}
     </div>
   );
 }

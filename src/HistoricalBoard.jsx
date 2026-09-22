@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { apiFetch, getOptimizedPhotoUrl } from './apiClient';
+import { usePhotoPreview } from './PhotoPreview';
 import { History } from './PopuLiveIcons';
 import ProfileFullScreen from './ProfileFullScreen';
 
@@ -17,6 +18,9 @@ export default function HistoricalBoard({ venueId, currentUserId, onClose }) {
   const [people, setPeople] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedUserId, setSelectedUserId] = useState(null);
+  // Tocco sulla foto → anteprima grande invece del profilo intero
+  // (v. PhotoPreview.jsx).
+  const { photoTapProps, photoPreview } = usePhotoPreview();
 
   useEffect(() => {
     let cancelled = false;
@@ -69,6 +73,7 @@ export default function HistoricalBoard({ venueId, currentUserId, onClose }) {
                 <img
                   src={getOptimizedPhotoUrl(p.photoUrl, { width: 32, height: 32 })}
                   alt={p.displayName}
+                  {...photoTapProps(p.photoUrl, p.displayName)}
                 />
               ) : (
                 p.avatarEmoji
@@ -78,6 +83,8 @@ export default function HistoricalBoard({ venueId, currentUserId, onClose }) {
           </div>
         ))}
       </div>
+
+      {photoPreview}
 
       {selectedUserId && (
         <ProfileFullScreen

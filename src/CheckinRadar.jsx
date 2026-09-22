@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
 import { apiFetch, setLastVenueId, clearLastVenueId, getOptimizedPhotoUrl } from './apiClient';
+import { usePhotoPreview } from './PhotoPreview';
 import ProfileFullScreen from './ProfileFullScreen';
 import QrScannerModal from './QrScannerModal';
 import { Armchair, Radar as RadarIcon } from './PopuLiveIcons';
@@ -974,6 +975,10 @@ export default function CheckinRadar({
  * invece di mostrare l'id grezzo del database.
  */
 function RadarCard({ personId, arenaSessionId, onClick }) {
+  // La foto in grande si apre da sola, senza passare dal profilo
+  // intero: nel radar il cerchietto è da 32px e il senso di tutto
+  // è riconoscere chi hai davanti (v. PhotoPreview.jsx).
+  const { photoTapProps, photoPreview } = usePhotoPreview();
   const [preview, setPreview] = useState(null);
 
   useEffect(() => {
@@ -1002,12 +1007,14 @@ function RadarCard({ personId, arenaSessionId, onClick }) {
           <img
             src={getOptimizedPhotoUrl(preview.photoUrl, { width: 32, height: 32 })}
             alt={preview.displayName}
+            {...photoTapProps(preview.photoUrl, preview.displayName)}
           />
         ) : (
           preview?.avatarEmoji || '🙂'
         )}
       </span>
       <span className="pl-radar-card-id">{preview?.displayName || 'Caricamento…'}</span>
+      {photoPreview}
     </div>
   );
 }

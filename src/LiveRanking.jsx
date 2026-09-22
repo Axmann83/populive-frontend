@@ -5,6 +5,7 @@ import ProfileFullScreen from './ProfileFullScreen';
 import ProfileDetail from './ProfileDetail';
 import AdminChatPanel from './AdminChatPanel';
 import { Link2, Coins, Crown } from './PopuLiveIcons';
+import { usePhotoPreview } from './PhotoPreview';
 
 /**
  * ============================================================
@@ -42,6 +43,9 @@ export default function LiveRanking({
   // quella locale (già piccola, legata a un solo locale).
   const [hashtagFilter, setHashtagFilter] = useState('');
   const [genderFilter, setGenderFilter] = useState('');
+  // Tocco sulla foto in classifica → anteprima grande, senza aprire
+  // il profilo (v. PhotoPreview.jsx).
+  const { photoTapProps, photoPreview } = usePhotoPreview();
 
   // --------------------------------------------------------
   // Caricamento della classifica — estratta come funzione a sé
@@ -297,6 +301,7 @@ export default function LiveRanking({
             key={entry.userId}
             entry={entry}
             isMe={entry.userId === currentUserId}
+            photoTapProps={photoTapProps}
             delta={recentDeltas[entry.userId]}
             onClick={() => {
               // In dashboard, mai i soliti Like/Superlike/Pulse — si
@@ -351,6 +356,8 @@ export default function LiveRanking({
         />
       )}
 
+      {photoPreview}
+
       {adminChatTarget && (
         <AdminChatPanel
           targetUserId={adminChatTarget.userId}
@@ -372,7 +379,7 @@ export default function LiveRanking({
  * è un miglioramento visivo da aggiungere sopra, non blocca la
  * funzionalità.
  */
-function RankRow({ entry, isMe, delta, onClick }) {
+function RankRow({ entry, isMe, delta, onClick, photoTapProps }) {
   return (
     <div
       className={`pl-rank-row ${isMe ? 'pl-rank-row-me' : ''}`}
@@ -392,6 +399,7 @@ function RankRow({ entry, isMe, delta, onClick }) {
             <img
               src={getOptimizedPhotoUrl(entry.photoUrl, { width: 38, height: 38 })}
               alt={entry.displayName}
+              {...photoTapProps(entry.photoUrl, entry.displayName)}
             />
           ) : (
             entry.avatarEmoji || '🙂'

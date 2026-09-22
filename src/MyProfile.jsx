@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Settings as SettingsIcon, Zap, BadgeCheck } from './PopuLiveIcons';
 
 import { apiFetch, getOptimizedPhotoUrl } from './apiClient';
+import { usePhotoPreview } from './PhotoPreview';
 import { openExternal } from './native';
 
 const MAX_HASHTAGS = 5;
@@ -26,7 +27,10 @@ export default function MyProfile({ userId, arenaSessionId, onOpenSettings }) {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
-  const [showPhoto, setShowPhoto] = useState(false);
+  // La foto a tutto schermo non è più scritta qui: è lo stesso
+  // pezzo usato da radar, classifica e chat (v. PhotoPreview.jsx),
+  // così il proprio profilo si comporta come tutti gli altri.
+  const { openPhoto, photoPreview } = usePhotoPreview();
 
   useEffect(() => {
     let cancelled = false;
@@ -109,7 +113,7 @@ export default function MyProfile({ userId, arenaSessionId, onOpenSettings }) {
       >
         <div
           className="pl-rank-avatar"
-          onClick={() => ranking?.photoUrl && setShowPhoto(true)}
+          onClick={() => openPhoto(ranking?.photoUrl, ranking?.displayName || 'Tu')}
           style={{
             width: 64,
             height: 64,
@@ -141,57 +145,7 @@ export default function MyProfile({ userId, arenaSessionId, onOpenSettings }) {
         </div>
       </div>
 
-      {/* Foto a tutto schermo — per vedere esattamente come ci si
-          presenta a chi ti trova sul radar, non solo il cerchietto
-          piccolo. Compare solo se c'è davvero una foto (niente da
-          ingrandire per chi usa ancora l'emoji come avatar). */}
-      {showPhoto && ranking?.photoUrl && (
-        <div
-          onClick={() => setShowPhoto(false)}
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.92)',
-            zIndex: 80,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-          }}
-        >
-          <button
-            onClick={() => setShowPhoto(false)}
-            style={{
-              position: 'absolute',
-              top: 18,
-              right: 18,
-              width: 38,
-              height: 38,
-              borderRadius: '50%',
-              border: 'none',
-              background: 'rgba(255,255,255,0.12)',
-              color: '#fff',
-              fontSize: 16,
-              cursor: 'pointer',
-              backdropFilter: 'blur(4px)',
-            }}
-            aria-label="Chiudi"
-          >
-            ✕
-          </button>
-          <img
-            src={getOptimizedPhotoUrl(ranking.photoUrl, { width: 1000, height: 1000, crop: false })}
-            alt={ranking.displayName || 'Tu'}
-            style={{
-              maxWidth: '92%',
-              maxHeight: '80%',
-              borderRadius: 16,
-              objectFit: 'contain',
-              boxShadow: 'var(--shadow-lg)',
-            }}
-          />
-        </div>
-      )}
+      {photoPreview}
 
       {ranking && (
         <div style={{ display: 'flex', gap: 8, margin: '14px 0' }}>

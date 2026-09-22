@@ -52,13 +52,19 @@ export default function LiveRanking({
   // blockedPairIdsRef in CheckinRadar.jsx) — mai duplicare la stessa
   // richiesta di rete in due posti diversi.
   // --------------------------------------------------------
+  // Il ref va rimesso a true a OGNI mount, non solo alla creazione:
+  // in StrictMode (solo in sviluppo) React monta, smonta e rimonta
+  // subito il componente, e senza questa riga il cleanup del primo
+  // mount lascerebbe il ref a false per sempre — la fetch partirebbe
+  // ma né la classifica né la fine del caricamento verrebbero mai
+  // applicate, lasciando "Caricamento classifica…" all'infinito.
   const mountedRef = useRef(true);
-  useEffect(
-    () => () => {
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
       mountedRef.current = false;
-    },
-    []
-  );
+    };
+  }, []);
 
   async function loadRanking() {
     setLoading(true);

@@ -95,7 +95,9 @@ export default function ChatWindow({
       // Il messaggio arriva mentre la chat è già aperta e sotto gli
       // occhi — segnato come letto subito, senza aspettare che la
       // persona esca e rientri.
-      apiFetch(`/api/chat/${conversationId}/mark-read`, { method: 'POST' }).catch(() => {});
+      apiFetch(`/api/chat/${conversationId}/mark-read`, { method: 'POST' })
+        .then(() => onMarkedRead?.())
+        .catch(() => {});
     }
 
     function handleChatClosed(payload) {
@@ -110,7 +112,7 @@ export default function ChatWindow({
       sharedSocket.off('chat_message', handleChatMessage);
       sharedSocket.off('chat_closed', handleChatClosed);
     };
-  }, [sharedSocket, conversationId, currentUserId]);
+  }, [sharedSocket, conversationId, currentUserId, onMarkedRead]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });

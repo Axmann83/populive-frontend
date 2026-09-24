@@ -360,6 +360,12 @@ export default function App() {
   useEffect(() => {
     if (authState === 'app' && userId) refreshUnreadChatCount();
   }, [authState, userId, refreshUnreadChatCount]);
+  // Chat segnata come letta: si spengono sia il pallino totale sia
+  // quello della singola riga nel Centro Chat.
+  const handleChatMarkedRead = useCallback(() => {
+    refreshUnreadChatCount();
+    refreshActiveChats();
+  }, [refreshUnreadChatCount, refreshActiveChats]);
 
   // Pallino sulla scheda Notifiche — quante interazioni ricevute da
   // quando si è aperto DAVVERO il Centro Notifiche l'ultima volta.
@@ -1068,7 +1074,7 @@ export default function App() {
               conversationId={activeChatConversationId}
               currentUserId={userId}
               otherUserName={activeChatOtherUserName || 'questa persona'}
-              onMarkedRead={refreshUnreadChatCount}
+              onMarkedRead={handleChatMarkedRead}
               sharedSocket={sharedSocket}
             />
           )}

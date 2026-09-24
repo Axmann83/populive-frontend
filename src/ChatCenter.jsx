@@ -65,6 +65,11 @@ export default function ChatCenter({ pendingMatches, activeChats, onOpenMatch, a
 
   function renderRow(entry) {
     const info = matchProfiles[entry.withUserId];
+    // Un "nuovo match" non porta con sé non letti e anteprima: li
+    // prendiamo dalla stessa conversazione in activeChats, se c'è.
+    const server = (activeChats || []).find((c) => c.conversationId === entry.conversationId);
+    const unread = server?.unreadCount || 0;
+    const lastMessage = server?.lastMessage;
     return (
       <button
         key={entry.conversationId}
@@ -110,10 +115,50 @@ export default function ChatCenter({ pendingMatches, activeChats, onOpenMatch, a
             <PulseWaveIcon size={18} color="var(--cyan)" />
           )}
         </div>
-        <span style={{ flex: 1, textAlign: 'left', fontSize: 13.5, fontWeight: 600 }}>
-          {info ? info.displayName : 'Apri la chat'}
-        </span>
-        <span style={{ color: 'var(--text-muted)' }}>›</span>
+        <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
+          <div style={{ fontSize: 13.5, fontWeight: unread > 0 ? 800 : 600 }}>
+            {info ? info.displayName : 'Apri la chat'}
+          </div>
+          {lastMessage && (
+            <div
+              style={{
+                fontSize: 12.5,
+                marginTop: 2,
+                color: unread > 0 ? 'var(--text)' : 'var(--text-muted)',
+                fontWeight: unread > 0 ? 600 : 400,
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}
+            >
+              {lastMessage.fromMe ? 'Tu: ' : ''}
+              {lastMessage.body}
+            </div>
+          )}
+        </div>
+        {unread > 0 ? (
+          <span
+            aria-label={`${unread} messaggi non letti`}
+            style={{
+              minWidth: 20,
+              height: 20,
+              padding: '0 6px',
+              borderRadius: 10,
+              background: 'var(--red)',
+              color: '#fff',
+              fontSize: 11.5,
+              fontWeight: 800,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            {unread > 99 ? '99+' : unread}
+          </span>
+        ) : (
+          <span style={{ color: 'var(--text-muted)' }}>›</span>
+        )}
       </button>
     );
   }

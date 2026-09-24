@@ -241,6 +241,7 @@ export default function App() {
     const newIndex = ANIMATION_ORDER.indexOf(newTab);
     setTabSlideDirection(newIndex > currentIndex ? 'forward' : 'back');
     setActiveTab(newTab);
+    if (newTab === 'chat_list') refreshActiveChats();
   }
 
   function handleSwipeStart(e) {
@@ -638,8 +639,12 @@ export default function App() {
     // questo momento (ChatWindow ha il suo ascoltatore a sé per
     // quando è aperta) — qui serve solo per tenere aggiornato il
     // pallino in diretta, senza aspettare il prossimo avvio dell'app.
+    // Anche la lista: il messaggio può arrivare da una conversazione
+    // che la lista in memoria non conosce ancora (bug dal vivo: con
+    // una chat aperta, la nuova persona compariva solo dopo refresh).
     socket.on('chat_message', () => {
       refreshUnreadChatCount();
+      refreshActiveChats();
     });
 
     socket.on('pulse_received', (payload) => {
@@ -689,6 +694,9 @@ export default function App() {
     });
 
     socket.on('chat_unlocked', (payload) => {
+      // Sempre, anche con un'altra chat aperta: niente banner in quel
+      // caso, ma la nuova conversazione deve comunque stare in lista.
+      refreshActiveChats();
       if (!activeChatConversationIdRef.current) {
         setPendingMatches((prev) =>
           prev.some((m) => m.conversationId === payload.conversationId)
@@ -715,7 +723,22 @@ export default function App() {
     refreshPulseBadge,
     refreshLikeCenterBadge,
     refreshUnreadChatCount,
+    refreshActiveChats,
   ]);
+
+  // App riaperta dal background (o scheda tornata visibile): il
+  // socket si riconnette da solo ma gli eventi persi nel frattempo
+  // non tornano — rileggiamo dal server lista chat e pallino.
+  useEffect(() => {
+    if (authState !== 'app' || !userId) return;
+    function onVisible() {
+      if (document.visibilityState !== 'visible') return;
+      refreshActiveChats();
+      refreshUnreadChatCount();
+    }
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, [authState, userId, refreshActiveChats, refreshUnreadChatCount]);
 
   // Appena conosciamo l'Arena in cui siamo (dopo il check-in),
   // colleghiamo QUESTA STESSA connessione anche alla sua stanza —

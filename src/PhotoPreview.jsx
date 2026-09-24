@@ -48,9 +48,19 @@ function PhotoPreview({ url, alt, onClose }) {
   // l'anteprima si ancorava al pannello dentro l'area che scorre:
   // su una schermata lunga come il profilo personale, se si era
   // scesi un po', finiva semplicemente fuori dalla vista.
+  // Il portale sposta l'anteprima nel DOM, ma NON nell'albero di
+  // React: i suoi eventi risalgono comunque fino alla riga/card che
+  // contiene la miniatura, che al click apre il profilo. Senza lo
+  // stopPropagation qui, chiudere l'anteprima (o toccarla ovunque)
+  // apriva anche il profilo a tutto schermo subito dopo.
+  const handleClick = (e) => {
+    e.stopPropagation();
+    onClose();
+  };
+
   return createPortal(
     <div
-      onClick={onClose}
+      onClick={handleClick}
       style={{
         position: 'fixed',
         inset: 0,
@@ -96,7 +106,7 @@ function PhotoPreview({ url, alt, onClose }) {
         }}
       >
         <button
-          onClick={onClose}
+          onClick={handleClick}
           style={{
             position: 'absolute',
             // Sul telefono il notch mangerebbe il bottone: la safe area
@@ -125,14 +135,27 @@ function PhotoPreview({ url, alt, onClose }) {
           alt={alt || ''}
           style={{
             display: 'block',
-            // Si arrende sempre al riquadro qui sopra, in entrambe le
-            // direzioni: una foto verticale si limita in altezza, una
-            // orizzontale in larghezza, e le proporzioni restano
-            // quelle vere in tutti e due i casi.
-            maxWidth: '100%',
-            maxHeight: '100%',
+            // Limiti espliciti sullo schermo, non in percentuale del
+            // riquadro: su iOS (WebKit) un'immagine figlia di un flex
+            // con max-height: 100% non si rimpiccioliva davvero in
+            // altezza e le foto grandi uscivano dallo schermo. Le misure
+            // ripetono il padding del riquadro (16px ai lati, 66px + notch
+            // sopra, 24px + home indicator sotto) e il telaio da 420px.
+            // Solo max-*, mai width/height: una foto grande si riduce
+            // finché entra (in larghezza o in altezza, proporzioni
+            // intatte), una piccola resta alla sua misura naturale
+            // invece di essere stirata e sgranarsi.
+            maxWidth: 'min(calc(100vw - 32px), 388px)',
+            maxHeight:
+              'calc(100dvh - 90px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px))',
             width: 'auto',
             height: 'auto',
+            // Niente dimensione minima automatica da flex item: senza
+            // questo l'immagine può rifiutarsi di scendere sotto la sua
+            // larghezza naturale.
+            minWidth: 0,
+            minHeight: 0,
+            flex: '0 0 auto',
             objectFit: 'contain',
             borderRadius: 16,
             boxShadow: 'var(--shadow-lg)',

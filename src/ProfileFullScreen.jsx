@@ -249,11 +249,13 @@ export default function ProfileFullScreen({
               navigazione tra profili). photoUrls è la galleria vera;
               se manca (profilo non ancora migrato) ricadiamo sulla
               singola photoUrl di sempre, mai un errore.
-              Bug vero trovato dal vivo (24/8) e rimasto valido anche
-              qui: un tag <img> con object-fit:cover mostrava la foto
-              alla sua grandezza NATIVA su alcuni telefoni invece di
-              ritagliarla — per questo ogni foto della galleria resta
-              un div con background-image, non un <img>. */}
+              Ogni foto è un <img> centrato che si adatta allo schermo
+              (v. photoFitStyle): intera, mai ritagliata, e mai
+              ingrandita oltre la sua misura vera. Prima era un div con
+              background-size:cover, che tagliava le foto grandi e
+              stirava (sgranandole) quelle piccole. Niente object-fit
+              qui: il bug del 24/8 (img con object-fit:cover mostrata a
+              grandezza nativa) veniva proprio da quello. */}
           <div style={photoContainerStyle}>
             {photos.length > 0 ? (
               <div
@@ -263,17 +265,14 @@ export default function ProfileFullScreen({
                 style={galleryScrollStyle}
               >
                 {photos.map((url, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      ...photoImgStyle,
-                      scrollSnapAlign: 'start',
-                      flexShrink: 0,
-                      backgroundImage: `url(${getOptimizedPhotoUrl(url, { width: 600, height: 800, crop: false })})`,
-                    }}
-                    role="img"
-                    aria-label={`${profile.displayName} — foto ${i + 1} di ${photos.length}`}
-                  />
+                  <div key={i} style={photoSlideStyle}>
+                    <img
+                      src={getOptimizedPhotoUrl(url, { width: 600, height: 800, crop: false })}
+                      alt={`${profile.displayName} — foto ${i + 1} di ${photos.length}`}
+                      style={photoFitStyle}
+                      draggable={false}
+                    />
+                  </div>
                 ))}
               </div>
             ) : (
@@ -639,6 +638,30 @@ const photoImgStyle = {
   backgroundSize: 'cover',
   backgroundPosition: 'center',
   backgroundColor: 'var(--surface-2)',
+};
+
+const photoSlideStyle = {
+  width: '100%',
+  height: '100%',
+  flexShrink: 0,
+  scrollSnapAlign: 'start',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  background: '#000',
+};
+
+const photoFitStyle = {
+  display: 'block',
+  maxWidth: '100vw',
+  maxHeight: '100dvh',
+  width: 'auto',
+  height: 'auto',
+  minWidth: 0,
+  minHeight: 0,
+  flex: '0 0 auto',
+  userSelect: 'none',
+  WebkitUserSelect: 'none',
 };
 
 // Scorrimento verticale della galleria — una foto piena per

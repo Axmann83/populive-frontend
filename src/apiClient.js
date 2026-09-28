@@ -1,3 +1,5 @@
+import { getLocationPermissionState } from './native';
+
 const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:3000';
 
 /**
@@ -168,7 +170,41 @@ function requestAndSendLocation(userId) {
   );
 }
 
-export { requestAndSendLocation };
+/**
+ * Aggiornamento della posizione nel tempo (28/9, decisione
+ * dell'utente): prima veniva salvata una volta sola, all'attivazione
+ * del consenso, e chi si spostava continuava a ricevere missioni
+ * "vicine" al punto di allora. Chiamata all'apertura dell'app e a
+ * ogni ritorno in primo piano, ma fa davvero qualcosa solo se:
+ *  - il permesso GPS è GIÀ concesso — mai un prompt a sorpresa
+ *    all'avvio. Lo stato arriva da native.js (sistema operativo
+ *    nell'app, Permissions API sul web); se è sconosciuto si
+ *    prosegue: il consenso dato in app resta il vincolo vero;
+ *  - il consenso "missioni sponsorizzate" è attivo — senza, la
+ *    posizione non viene nemmeno letta, non solo non salvata;
+ *  - sono passati almeno 10 minuti dall'ultimo aggiornamento, per
+ *    non accendere il GPS a ogni cambio di app.
+ */
+const LOCATION_REFRESH_MIN_INTERVAL_MS = 10 * 60 * 1000;
+let lastLocationRefreshAt = 0;
+
+async function refreshLocationIfConsented(userId) {
+  if (!navigator.geolocation) return;
+  if (Date.now() - lastLocationRefreshAt < LOCATION_REFRESH_MIN_INTERVAL_MS) return;
+  try {
+    const permission = await getLocationPermissionState();
+    if (permission !== 'granted' && permission !== 'unknown') return;
+    const res = await apiFetch(`/api/profile/${userId}/settings`);
+    const data = await res.json();
+    if (!data.success || !data.settings?.sponsoredMissionsEnabled) return;
+    lastLocationRefreshAt = Date.now();
+    requestAndSendLocation(userId);
+  } catch {
+    /* nessun aggiornamento questa volta — si riprova al prossimo ritorno in app */
+  }
+}
+
+export { requestAndSendLocation, refreshLocationIfConsented };
 
 /**
  * ============================================================

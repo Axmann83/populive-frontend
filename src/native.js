@@ -1,6 +1,7 @@
 import { Capacitor } from '@capacitor/core';
 import { App as CapApp } from '@capacitor/app';
 import { Browser } from '@capacitor/browser';
+import { Geolocation } from '@capacitor/geolocation';
 
 /**
  * ============================================================
@@ -61,6 +62,32 @@ export function onAppUrlOpen(handler) {
   return () => {
     listener.then((l) => l.remove());
   };
+}
+
+/**
+ * Stato del permesso di posizione SENZA chiederlo (nessun prompt):
+ * 'granted' | 'denied' | 'prompt' | 'unknown'.
+ * - app: lo chiede al sistema operativo tramite il plugin. Nella
+ *   WebView di Capacitor navigator.permissions risponde sempre
+ *   'prompt' anche a permesso concesso (verificato su Android il
+ *   28/9: Capacitor concede la posizione alla pagina una richiesta
+ *   alla volta, senza ricordarla), quindi lì non è affidabile.
+ * - web: Permissions API del browser, dove esiste.
+ */
+export async function getLocationPermissionState() {
+  try {
+    if (isNative()) {
+      const { location } = await Geolocation.checkPermissions();
+      return location === 'granted' ? 'granted' : location === 'denied' ? 'denied' : 'prompt';
+    }
+    if (navigator.permissions?.query) {
+      const status = await navigator.permissions.query({ name: 'geolocation' });
+      return status.state;
+    }
+  } catch {
+    /* plugin o API non disponibili: stato sconosciuto */
+  }
+  return 'unknown';
 }
 
 /**

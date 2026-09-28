@@ -48,6 +48,7 @@ import {
   getStoredUserId,
   clearSession,
   getLastVenueId,
+  refreshLocationIfConsented,
 } from './apiClient';
 
 import './populive-styles.css';
@@ -749,7 +750,11 @@ export default function App() {
       if (document.visibilityState !== 'visible') return;
       refreshActiveChats();
       refreshUnreadChatCount();
+      refreshLocationIfConsented(userId);
     }
+    // Anche all'apertura, non solo al ritorno dal background: la
+    // posizione per le missioni va tenuta aggiornata (v. apiClient.js).
+    refreshLocationIfConsented(userId);
     document.addEventListener('visibilitychange', onVisible);
     return () => document.removeEventListener('visibilitychange', onVisible);
   }, [authState, userId, refreshActiveChats, refreshUnreadChatCount]);

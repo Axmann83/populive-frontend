@@ -154,6 +154,14 @@ export default function VenuesMap({ currentUserId, onClose, mode = 'browse' }) {
 
     markersLayerRef.current = L.layerGroup().addTo(map);
 
+    // La posizione e il ridimensionamento qui sotto arrivano DOPO, in
+    // modo asincrono: se nel frattempo la mappa è stata distrutta
+    // (foglio chiuso prima della risposta del GPS, o il doppio
+    // montaggio di React.StrictMode in sviluppo) toccarla fa esplodere
+    // Leaflet con "Cannot read properties of undefined (reading
+    // '_leaflet_pos')". Questa bandierina le fa semplicemente ignorare.
+    let destroyed = false;
+
     // Apriamo la mappa già "vicina" a dove si trova la persona in
     // questo momento — un close-up della zona attorno a lei, che
     // può comunque allargare a piacere per guardare altre zone.
@@ -164,6 +172,7 @@ export default function VenuesMap({ currentUserId, onClose, mode = 'browse' }) {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
+          if (destroyed) return;
           map.setView([position.coords.latitude, position.coords.longitude], 15);
         },
         () => {
@@ -184,9 +193,11 @@ export default function VenuesMap({ currentUserId, onClose, mode = 'browse' }) {
     // (siamo dentro un foglio che si apre dal basso) — un piccolo
     // ritardo e un invalidateSize() risolvono senza che l'utente
     // debba fare nulla lui stesso.
-    setTimeout(() => map.invalidateSize(), 250);
+    const resizeTimer = setTimeout(() => map.invalidateSize(), 250);
 
     return () => {
+      destroyed = true;
+      clearTimeout(resizeTimer);
       map.remove();
       mapRef.current = null;
     };
@@ -308,6 +319,15 @@ export default function VenuesMap({ currentUserId, onClose, mode = 'browse' }) {
     });
   }, [venues, createUnofficialCopy, mode, openHistoricalStories]);
 
+  // Tornando alla mappa dopo "chi c'era"/storie: mentre era nascosta
+  // (display: none, v. il render) il suo contenitore misurava zero, e
+  // Leaflet va avvisato di ricalcolare le dimensioni, altrimenti
+  // disegna solo una parte delle tessere.
+  const mapHidden = !!historicalVenueId || !!storiesPeople;
+  useEffect(() => {
+    if (!mapHidden && mapRef.current) mapRef.current.invalidateSize();
+  }, [mapHidden]);
+
   // Il puntino provvisorio del nuovo locale che si sta creando.
   useEffect(() => {
     if (!mapRef.current) return;
@@ -334,8 +354,16 @@ export default function VenuesMap({ currentUserId, onClose, mode = 'browse' }) {
     found.marker.openPopup();
   }, []);
 
+  // Le schermate "chi c'era" e le storie si mostrano SOPRA la mappa,
+  // che nel frattempo resta nel DOM solo nascosta. Prima erano dei
+  // return anticipati: il div della mappa usciva dalla pagina, al
+  // ritorno React ne creava uno nuovo e vuoto, ma la mappa Leaflet
+  // (creata una volta sola, v. sopra) restava agganciata a quello
+  // vecchio — "Torna alla mappa" mostrava un riquadro grigio. Così
+  // invece si ritrova la stessa mappa, con posizione e zoom di prima.
+  let subView = null;
   if (historicalVenueId) {
-    return (
+    subView = (
       <div className="pl-sheet">
         <div
           className="pl-sheet-close"
@@ -351,11 +379,9 @@ export default function VenuesMap({ currentUserId, onClose, mode = 'browse' }) {
         />
       </div>
     );
-  }
-
-  if (storiesPeople) {
+  } else if (storiesPeople) {
     if (storiesPeople.length === 0) {
-      return (
+      subView = (
         <div className="pl-sheet">
           <div
             className="pl-sheet-close"
@@ -370,117 +396,121 @@ export default function VenuesMap({ currentUserId, onClose, mode = 'browse' }) {
           </p>
         </div>
       );
+    } else {
+      subView = (
+        <HistoricalStories
+          people={storiesPeople}
+          currentUserId={currentUserId}
+          onClose={() => setStoriesPeople(null)}
+        />
+      );
     }
-    return (
-      <HistoricalStories
-        people={storiesPeople}
-        currentUserId={currentUserId}
-        onClose={() => setStoriesPeople(null)}
-      />
-    );
   }
 
   return (
-    <div className="pl-sheet">
-      <div className="pl-sheet-close" onClick={onClose}>
-        Chiudi ✕
-      </div>
-      <h3>Sfoglia i locali</h3>
-      <p className="pl-hint" style={{ marginBottom: 10 }}>
-        <span style={{ color: 'var(--cyan)' }}>●</span> Network ufficiale — affluenza reale e
-        bacheca storica &nbsp;
-        <span style={{ color: 'var(--teak)' }}>●</span> Non ancora ufficiale — puoi attivarlo tu
-      </p>
+    <>
+      {subView}
+      <div className="pl-sheet" style={subView ? { display: 'none' } : undefined}>
+        <div className="pl-sheet-close" onClick={onClose}>
+          Chiudi ✕
+        </div>
+        <h3>Sfoglia i locali</h3>
+        <p className="pl-hint" style={{ marginBottom: 10 }}>
+          <span style={{ color: 'var(--cyan)' }}>●</span> Network ufficiale — affluenza reale e
+          bacheca storica &nbsp;
+          <span style={{ color: 'var(--teak)' }}>●</span> Non ancora ufficiale — puoi attivarlo tu
+        </p>
 
-      {loading && <p className="pl-hint">Caricamento…</p>}
+        {loading && <p className="pl-hint">Caricamento…</p>}
 
-      {!loading && venues.length > 0 && (
-        <VenueSearchSelect
-          venues={venues}
-          value=""
-          onChange={handleVenueSearchSelect}
-          placeholder="Cerca un locale per nome…"
-        />
-      )}
+        {!loading && venues.length > 0 && (
+          <VenueSearchSelect
+            venues={venues}
+            value=""
+            onChange={handleVenueSearchSelect}
+            placeholder="Cerca un locale per nome…"
+          />
+        )}
 
-      <div
-        className="pl-map-dark-wrap"
-        ref={mapContainerRef}
-        style={{
-          height: 380,
-          width: '100%',
-          borderRadius: 16,
-          overflow: 'hidden',
-          border: '1px solid rgba(228,212,200,0.14)',
-          marginBottom: 10,
-          background: '#3a3a3a',
-        }}
-      />
-
-      {loadingStories && (
         <div
+          className="pl-map-dark-wrap"
+          ref={mapContainerRef}
           style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.6)',
-            zIndex: 82,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            height: 380,
+            width: '100%',
+            borderRadius: 16,
+            overflow: 'hidden',
+            border: '1px solid rgba(228,212,200,0.14)',
+            marginBottom: 10,
+            background: '#3a3a3a',
           }}
-        >
+        />
+
+        {loadingStories && (
           <div
             style={{
-              background: 'var(--surface)',
-              borderRadius: 14,
-              padding: '14px 20px',
-              color: 'var(--text)',
-              fontSize: 12.5,
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(0,0,0,0.6)',
+              zIndex: 82,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
-            Caricamento…
+            <div
+              style={{
+                background: 'var(--surface)',
+                borderRadius: 14,
+                padding: '14px 20px',
+                color: 'var(--text)',
+                fontSize: 12.5,
+              }}
+            >
+              Caricamento…
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {!placingPin && !newPinCoords && (
-        <button
-          onClick={() => setPlacingPin(true)}
-          style={{
-            width: '100%',
-            padding: 12,
-            borderRadius: 14,
-            border: '1px dashed rgba(228,212,200,0.3)',
-            background: 'transparent',
-            color: 'var(--teak)',
-            fontSize: 12,
-            fontWeight: 600,
-            cursor: 'pointer',
-          }}
-        >
-          + Aggiungi un locale non presente sulla mappa
-        </button>
-      )}
-      {placingPin && !newPinCoords && (
-        <p className="pl-hint" style={{ textAlign: 'center' }}>
-          Tocca la mappa nel punto giusto…
-        </p>
-      )}
-      {newPinCoords && (
-        <NewVenueForm
-          coords={newPinCoords}
-          onCancel={() => {
-            setNewPinCoords(null);
-            setPlacingPin(false);
-          }}
-          onCreated={() => {
-            setNewPinCoords(null);
-            setPlacingPin(false);
-            loadVenues();
-          }}
-        />
-      )}
-    </div>
+        {!placingPin && !newPinCoords && (
+          <button
+            onClick={() => setPlacingPin(true)}
+            style={{
+              width: '100%',
+              padding: 12,
+              borderRadius: 14,
+              border: '1px dashed rgba(228,212,200,0.3)',
+              background: 'transparent',
+              color: 'var(--teak)',
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+          >
+            + Aggiungi un locale non presente sulla mappa
+          </button>
+        )}
+        {placingPin && !newPinCoords && (
+          <p className="pl-hint" style={{ textAlign: 'center' }}>
+            Tocca la mappa nel punto giusto…
+          </p>
+        )}
+        {newPinCoords && (
+          <NewVenueForm
+            coords={newPinCoords}
+            onCancel={() => {
+              setNewPinCoords(null);
+              setPlacingPin(false);
+            }}
+            onCreated={() => {
+              setNewPinCoords(null);
+              setPlacingPin(false);
+              loadVenues();
+            }}
+          />
+        )}
+      </div>
+    </>
   );
 }
 

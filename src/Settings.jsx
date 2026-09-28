@@ -185,6 +185,11 @@ export default function Settings({ userId, onClose, onAccountDeleted }) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(settings),
     });
+    // Stesso motivo dell'onboarding (ProfileCreation.jsx): la posizione
+    // mandata al tocco dell'interruttore arriva quando il consenso non
+    // è ancora salvato e il server la scarta. Qui il consenso è appena
+    // stato salvato, quindi questa viene accettata.
+    if (settings.sponsoredMissionsEnabled) requestAndSendLocation(userId);
     setSaving(false);
     onClose();
   }

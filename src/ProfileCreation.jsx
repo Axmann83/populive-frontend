@@ -208,6 +208,13 @@ export default function ProfileCreation({ onComplete }) {
       const data = await res.json();
 
       if (data.success) {
+        // SOLO ora il consenso alle missioni è salvato nel DB: la
+        // posizione mandata al tocco dell'interruttore (step 3) arriva
+        // prima e il server la scarta (consent_not_active). Quella
+        // richiesta resta perché fa comparire il permesso GPS nel
+        // momento giusto; questa, con la posizione già in cache, è
+        // quella che viene davvero salvata.
+        if (consent.sponsoredMissionsEnabled) requestAndSendLocation('me');
         onComplete();
       } else {
         setError('Qualcosa è andato storto nel salvataggio delle preferenze.');

@@ -155,8 +155,10 @@ function requestAndSendLocation(userId) {
         });
       } catch {
         // Silenzioso — un aggiornamento di posizione mancato non è
-        // mai un problema grave, semplicemente riproveremo la
-        // prossima occasione utile (prossima apertura dell'app).
+        // mai un problema grave. Attenzione: oggi NON c'è nessun nuovo
+        // tentativo automatico (es. all'apertura dell'app); si
+        // richiama solo a consenso attivato e salvato (v. Settings.jsx
+        // e ProfileCreation.jsx).
       }
     },
     () => {

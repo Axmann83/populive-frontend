@@ -459,7 +459,15 @@ export default function App() {
     apiFetch('/api/feature-flags')
       .then((r) => r.json())
       .then((data) => {
-        if (data.success) setFeatureFlags(data.flags);
+        // Unione con i default, non sostituzione: il server manda solo
+        // le righe presenti in feature_flags, e una riga mancante vuol
+        // dire funzione ACCESA (v. migrazione 001 nel backend). Prima
+        // l'oggetto veniva sostituito e venues_map, sponsored_missions e
+        // historical_board — che nel DB non hanno una riga — diventavano
+        // undefined appena arrivava la risposta: pulsanti spariti, e la
+        // mappa si apriva da sola solo se "Bentornato" si chiudeva prima
+        // di quella risposta (da qui il "a volte sì, a volte no").
+        if (data.success) setFeatureFlags((prev) => ({ ...prev, ...data.flags }));
       })
       .catch(() => {});
   }, []);

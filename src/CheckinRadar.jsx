@@ -25,6 +25,7 @@ export default function CheckinRadar({
   autoCheckin,
   onVenueIdDetected,
   sharedSocket,
+  exitNotice, // true dopo un'uscita per distanza (geofence, v. App.jsx)
 }) {
   const [arenaActive, setArenaActive] = useState(false);
   const [checkinCount, setCheckinCount] = useState(0);
@@ -480,6 +481,12 @@ export default function CheckinRadar({
               gap: 22,
             }}
           >
+            {exitNotice && (
+              <p className="pl-hint" style={{ textAlign: 'center' }}>
+                Sei uscito dal locale, quindi non sei più nel radar. Se sei tornato, inquadra di
+                nuovo il QR.
+              </p>
+            )}
             {/* Momento editoriale — stesso linguaggio delle strisce
                 di Radar e Pulse, ma qui più grande: è l'unico
                 contenuto della pagina, non un accento sopra una

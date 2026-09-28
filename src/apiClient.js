@@ -204,7 +204,48 @@ async function refreshLocationIfConsented(userId) {
   }
 }
 
-export { requestAndSendLocation, refreshLocationIfConsented };
+/**
+ * Geofence del radar (28/9) — "sei ancora nel locale?". Manda la
+ * posizione attuale UNA volta a /api/checkin/location-ping (che non
+ * la salva mai): oltre 200 m il server chiude il check-in e toglie la
+ * persona dal radar degli altri. Decisione D1 dell'utente: SOLO se il
+ * permesso di posizione è già concesso, mai un prompt nuovo — chi
+ * non l'ha dato semplicemente non viene controllato.
+ * Non manda niente se la posizione è troppo imprecisa (es. posizione
+ * "approssimativa" di Android, centinaia di metri): con un raggio di
+ * 200 m rischierebbe di buttare fuori chi è dentro.
+ * Ritorna la risposta del server, oppure null se non ha controllato.
+ */
+const GEOFENCE_MAX_ACCURACY_METERS = 150;
+
+async function checkStillAtVenue(arenaSessionId) {
+  if (!navigator.geolocation || !arenaSessionId) return null;
+  if ((await getLocationPermissionState()) !== 'granted') return null;
+  const position = await new Promise((resolve) => {
+    navigator.geolocation.getCurrentPosition(resolve, () => resolve(null), {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 60000,
+    });
+  });
+  if (!position || position.coords.accuracy > GEOFENCE_MAX_ACCURACY_METERS) return null;
+  try {
+    const res = await apiFetch('/api/checkin/location-ping', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        arenaSessionId,
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
+      }),
+    });
+    return await res.json();
+  } catch {
+    return null; // rete assente: nessuna decisione, si riprova al prossimo ritorno in app
+  }
+}
+
+export { requestAndSendLocation, refreshLocationIfConsented, checkStillAtVenue };
 
 /**
  * ============================================================

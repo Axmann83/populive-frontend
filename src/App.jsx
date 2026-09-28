@@ -48,7 +48,9 @@ import {
   getStoredUserId,
   clearSession,
   getLastVenueId,
+  clearLastVenueId,
   refreshLocationIfConsented,
+  checkStillAtVenue,
 } from './apiClient';
 
 import './populive-styles.css';
@@ -200,6 +202,51 @@ export default function App() {
   }, [handleIncomingUrl]);
 
   const [arenaSessionId, setArenaSessionId] = useState(null);
+
+  // --------------------------------------------------------
+  // Geofence del radar (28/9): uscito dal locale → fuori dal radar
+  // --------------------------------------------------------
+  // Il server chiude il check-in se la posizione è oltre il raggio
+  // (checkStillAtVenue) e rifiuta un nuovo join_arena dopo un'uscita
+  // per distanza (evento arena_access_denied). In entrambi i casi il
+  // radar torna alla schermata del QR: il locale memorizzato si
+  // cancella, altrimenti al prossimo avvio l'app rifarebbe da sola il
+  // check-in (v. getLastVenueId sopra) e lo riaprirebbe. Il key sul
+  // radar lo fa ripartire da zero, dato che il suo stato è interno.
+  const [radarResetKey, setRadarResetKey] = useState(0);
+  const [leftVenueNotice, setLeftVenueNotice] = useState(false);
+  const arenaSessionIdRef = useRef(null);
+  useEffect(() => {
+    arenaSessionIdRef.current = arenaSessionId;
+  }, [arenaSessionId]);
+
+  const handleLeftVenue = useCallback(() => {
+    clearLastVenueId();
+    setArrivedViaQr(false);
+    setArenaSessionId(null);
+    setLeftVenueNotice(true);
+    setRadarResetKey((k) => k + 1);
+  }, []);
+
+  const handleArenaSession = useCallback((id) => {
+    setLeftVenueNotice(false);
+    setArenaSessionId(id);
+  }, []);
+
+  // Controllo subito dopo ogni check-in (anche quello automatico
+  // all'avvio: chi riapre l'app da casa viene rimesso fuori) e a ogni
+  // ritorno in primo piano (v. onVisible più sotto). Solo con il
+  // permesso di posizione già concesso (decisione D1).
+  const verifyStillAtVenue = useCallback(async () => {
+    const id = arenaSessionIdRef.current;
+    if (!id) return;
+    const result = await checkStillAtVenue(id);
+    if (result?.checkedOut && arenaSessionIdRef.current === id) handleLeftVenue();
+  }, [handleLeftVenue]);
+
+  useEffect(() => {
+    if (arenaSessionId) verifyStillAtVenue();
+  }, [arenaSessionId, verifyStillAtVenue]);
 
   const [activeTab, setActiveTab] = useState('radar');
 
@@ -708,6 +755,12 @@ export default function App() {
       offerLikeCreditsPurchase();
     });
 
+    // Rientro nel radar rifiutato: il check-in era stato chiuso per
+    // distanza (geofence) e serve una nuova scansione del QR.
+    socket.on('arena_access_denied', () => {
+      handleLeftVenue();
+    });
+
     socket.on('chat_unlocked', (payload) => {
       // Sempre, anche con un'altra chat aperta: niente banner in quel
       // caso, ma la nuova conversazione deve comunque stare in lista.
@@ -739,6 +792,7 @@ export default function App() {
     refreshLikeCenterBadge,
     refreshUnreadChatCount,
     refreshActiveChats,
+    handleLeftVenue,
   ]);
 
   // App riaperta dal background (o scheda tornata visibile): il
@@ -751,13 +805,14 @@ export default function App() {
       refreshActiveChats();
       refreshUnreadChatCount();
       refreshLocationIfConsented(userId);
+      verifyStillAtVenue();
     }
     // Anche all'apertura, non solo al ritorno dal background: la
     // posizione per le missioni va tenuta aggiornata (v. apiClient.js).
     refreshLocationIfConsented(userId);
     document.addEventListener('visibilitychange', onVisible);
     return () => document.removeEventListener('visibilitychange', onVisible);
-  }, [authState, userId, refreshActiveChats, refreshUnreadChatCount]);
+  }, [authState, userId, refreshActiveChats, refreshUnreadChatCount, verifyStillAtVenue]);
 
   // Appena conosciamo l'Arena in cui siamo (dopo il check-in),
   // colleghiamo QUESTA STESSA connessione anche alla sua stanza —
@@ -930,9 +985,11 @@ export default function App() {
           {activeTab === 'radar' && (
             <>
               <CheckinRadar
+                key={radarResetKey}
                 userId={userId}
                 venueId={venueId}
-                onArenaSession={setArenaSessionId}
+                onArenaSession={handleArenaSession}
+                exitNotice={leftVenueNotice}
                 autoCheckin={arrivedViaQr}
                 onVenueIdDetected={setVenueId}
                 sharedSocket={sharedSocket}

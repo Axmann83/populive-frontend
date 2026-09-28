@@ -6,7 +6,7 @@ Web app React (Create React App), pensata per browser mobile, impacchettata come
 
 - React 18 + `react-scripts` 5 (Create React App)
 - `leaflet` (mappe), `socket.io-client` (chat realtime), `html5-qrcode` / `qrcode`, `lucide-react` (icone)
-- Capacitor 8 (`@capacitor/app`, `@capacitor/browser`) per le app iOS/Android
+- Capacitor 8 (`@capacitor/app`, `@capacitor/browser`, `@capacitor/geolocation`) per le app iOS/Android
 - ESLint + Prettier per la qualità del codice, Husky + lint-staged per il pre-commit
 
 ## Requisiti
@@ -100,8 +100,12 @@ componenti SDK che gli servono (build-tools, platform), quindi non c'è nulla da
 
 Prerequisiti:
 - **Android SDK** in `%LOCALAPPDATA%\Android\Sdk` con la variabile `ANDROID_HOME` che punta lì
-- **JDK 21 o superiore** (Capacitor 8 / Gradle 8.14). `JAVA_HOME` deve puntare alla **cartella del JDK**,
-  es. `C:\Program Files\Java\jdk-22`. Dopo averla modificata riapri il terminale.
+- **JDK 21** (LTS). Non una versione più alta: `@capacitor/geolocation` compila con `jvmToolchain(21)` e il Gradle
+  del progetto (8.14, fissato dal modello di Capacitor 8) non gira su Java 25+. `JAVA_HOME` deve puntare alla
+  **cartella del JDK**, es. `C:\Program Files\Java\jdk-21.0.12.1`. Dopo averla modificata riapri il terminale.
+- Se un antivirus intercetta l'HTTPS (es. Avast), Gradle non riesce a scaricare le dipendenze (`PKIX path validation
+  failed`): sospendere la protezione durante il build, oppure importare il certificato dell'antivirus nel `cacerts`
+  del JDK.
 - `%ANDROID_HOME%\platform-tools` nel `PATH` (per `adb`); `%JAVA_HOME%\bin` nel `PATH` (per `keytool`)
 - Sul telefono: Opzioni sviluppatore → **Debug USB** attivo; al primo collegamento accetta il prompt
   "Consentire il debug USB"
@@ -132,7 +136,9 @@ momento della build. `android:dev` (`scripts/android-dev.js`) risolve entrambe l
    attraverso il cavo USB: nessun IP da configurare, e il bundle del dev server (che punta a `localhost:3001`)
 3. `cap run android` → compila e installa
 
-`adb reverse` va rifatto a ogni ricollegamento del cavo: lo script lo fa da solo. Il backend locale deve
+`adb reverse` va rifatto a ogni ricollegamento del cavo: lo script lo fa da solo. Se l'app mostra "connection
+refused" su `localhost:3000` con i server accesi, il tunnel si è perso: `adb reverse tcp:3000 tcp:3000` e
+`adb reverse tcp:3001 tcp:3001`. Il backend locale deve
 accettare CORS da `http://localhost:3000` (lo stesso origin del dev server web).
 Per tornare all'app "vera": `npm run build:mobile`.
 
@@ -169,9 +175,17 @@ riporta nell'app al termine del checkout Stripe. Perché funzioni il sito deve s
 
 ### Permessi nativi
 
-Già dichiarati: fotocamera (scanner QR) e posizione (mappa, invio posizione) in
+Già dichiarati: fotocamera (scanner QR) e posizione (mappa, missioni, geofence del radar) in
 `android/app/src/main/AndroidManifest.xml` e `ios/App/App/Info.plist`. Le API web (`getUserMedia`,
 `navigator.geolocation`) funzionano nella WebView senza plugin aggiuntivi.
+
+Eccezione: lo **stato** del permesso di posizione (sapere se è già concesso senza mostrare un prompt). Nella WebView
+di Capacitor `navigator.permissions` risponde sempre "da chiedere", quindi `src/native.js`
+(`getLocationPermissionState`) lo chiede al sistema operativo con `@capacitor/geolocation`. Serve all'aggiornamento
+della posizione per le missioni e al geofence del radar, che partono solo a permesso già concesso.
+
+Dopo aver aggiunto o aggiornato un plugin: `npm run cap:sync` (aggiorna anche `ios/App/CapApp-SPM/Package.swift`, da
+committare per Codemagic) e reinstallare l'app, perché il codice nativo non arriva con l'hot reload.
 
 ### Cosa serve lato backend
 
@@ -186,7 +200,7 @@ src/index.js            entry point
 src/App.jsx             root dell'app e navigazione tra le schermate
 src/apiClient.js        client HTTP centralizzato (token, sessione, apiFetch)
 src/*.jsx               schermate e componenti (Login, Dashboard, ExploreMap, ChatCenter, ...)
-src/native.js           ponte verso Capacitor (unico file che lo importa)
+src/native.js           ponte verso Capacitor (unico file che lo importa): browser in-app, deep link, back, permesso posizione
 src/populive-styles.css stili globali
 capacitor.config.ts     configurazione Capacitor
 android/, ios/          progetti nativi generati da Capacitor

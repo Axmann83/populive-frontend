@@ -29,7 +29,7 @@
 	<key>NSCameraUsageDescription</key>
 	<string>PopuLive usa la fotocamera per scansionare i codici QR dei locali e delle missioni.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>PopuLive usa la tua posizione per mostrarti i locali e le missioni vicino a te.</string>
+	<string>PopuLive usa la tua posizione per mostrarti i locali e le missioni vicino a te e, quando sei nel radar di un locale, per verificare che tu sia ancora lì.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

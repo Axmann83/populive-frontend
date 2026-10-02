@@ -27,7 +27,7 @@ export default function ChatWindow({
   const [theirWantsKeep, setTheirWantsKeep] = useState(false);
   const [draft, setDraft] = useState('');
   const [loading, setLoading] = useState(true);
-  const bottomRef = useRef(null);
+  const messagesRef = useRef(null);
 
   // Interruttore "Chat: richiedi Conserva esplicito" (26/8) — a
   // interruttore spento, niente bottone Conserva da mostrare: le
@@ -114,8 +114,14 @@ export default function ChatWindow({
     };
   }, [sharedSocket, conversationId, currentUserId, onMarkedRead]);
 
+  // Si scorre SOLO la lista dei messaggi, mai con scrollIntoView (bug
+  // B16, 2/10): quello scorre anche tutti i contenitori sopra. Se i
+  // messaggi arrivano mentre la scheda sta ancora entrando di lato
+  // (animazione translateX in populive-styles.css), spostava di lato
+  // l'intera app, lasciandola tagliata a metà fuori dallo schermo.
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const list = messagesRef.current;
+    list?.scrollTo({ top: list.scrollHeight, behavior: 'smooth' });
   }, [messages]);
 
   const handleSend = useCallback(async () => {
@@ -269,7 +275,7 @@ export default function ChatWindow({
         </div>
       )}
 
-      <div className="pl-chat-messages">
+      <div className="pl-chat-messages" ref={messagesRef}>
         {messages.map((m) => (
           <div
             key={m.id}
@@ -278,7 +284,6 @@ export default function ChatWindow({
             {m.body}
           </div>
         ))}
-        <div ref={bottomRef} />
       </div>
 
       {isClosed ? (

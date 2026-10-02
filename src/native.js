@@ -2,6 +2,7 @@ import { Capacitor } from '@capacitor/core';
 import { App as CapApp } from '@capacitor/app';
 import { Browser } from '@capacitor/browser';
 import { Geolocation } from '@capacitor/geolocation';
+import { Haptics } from '@capacitor/haptics';
 
 /**
  * ============================================================
@@ -88,6 +89,28 @@ export async function getLocationPermissionState() {
     /* plugin o API non disponibili: stato sconosciuto */
   }
   return 'unknown';
+}
+
+/**
+ * Vibrazione per un evento ricevuto (Like, match, messaggi… — v.
+ * App.jsx, decisione D2 del 2/10). 'strong' per gli eventi più
+ * importanti (Superlike, Pulse, match), 'normal' per gli altri.
+ * - app: plugin Haptics (su iOS navigator.vibrate non esiste; la
+ *   durata lì viene ignorata, il sistema usa la sua vibrazione)
+ * - web: navigator.vibrate, dove il browser lo supporta
+ * Mai un errore verso chi chiama: senza vibrazione l'app va avanti.
+ */
+export async function vibrate(intensity = 'normal') {
+  const duration = intensity === 'strong' ? 400 : 200;
+  try {
+    if (isNative()) {
+      await Haptics.vibrate({ duration });
+    } else {
+      navigator.vibrate?.(duration);
+    }
+  } catch {
+    /* vibrazione non disponibile: ignorata */
+  }
 }
 
 /**

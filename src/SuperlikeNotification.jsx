@@ -160,7 +160,7 @@ export default function SuperlikeNotification({
               onClick={() => respond('accept')}
               style={{ marginBottom: 8 }}
             >
-              Accetta — apri la chat
+              Accetta e apri la chat
             </button>
             <div style={{ display: 'flex', gap: 8 }}>
               <button

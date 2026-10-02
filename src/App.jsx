@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { io } from 'socket.io-client';
-import { openExternal, onAppUrlOpen, closeInAppBrowser } from './native';
+import { openExternal, onAppUrlOpen, closeInAppBrowser, vibrate } from './native';
 
 import Login from './Login';
 import ProfileCreation from './ProfileCreation';
@@ -51,6 +51,7 @@ import {
   clearLastVenue,
   refreshLocationIfConsented,
   checkStillAtVenue,
+  isRecentOwnDecision,
 } from './apiClient';
 
 import './populive-styles.css';
@@ -348,10 +349,17 @@ export default function App() {
   // ref tiene il valore sempre aggiornato senza quel problema,
   // invece di leggere lo stato "vecchio" catturato al momento della
   // connessione.
+  //
+  // Vale solo per la chat VISIBILE (bug B12, 2/10): l'id resta in
+  // memoria anche dopo essere passati a un'altra scheda dalla barra in
+  // basso, e prima bastava questo per considerare la chat "aperta" —
+  // niente vibrazione per i suoi messaggi e, peggio, niente banner né
+  // "Nuovo match" per ogni match successivo, dopo aver aperto una
+  // chat anche una volta sola.
   const activeChatConversationIdRef = useRef(null);
   useEffect(() => {
-    activeChatConversationIdRef.current = activeChatConversationId;
-  }, [activeChatConversationId]);
+    activeChatConversationIdRef.current = activeTab === 'chat' ? activeChatConversationId : null;
+  }, [activeChatConversationId, activeTab]);
   // Notifica discreta stile Tinder — mai un salto diretto e forzato
   // alla chat. La LISTA resta finché non si tocca davvero un match
   // (mai cancellata dal solo passare del tempo) — solo il BANNER in
@@ -512,7 +520,8 @@ export default function App() {
       const data = await res.json();
       if (data.success) {
         const count = data.pulses.filter(
-          (p) => p.status === 'pending' || p.status === 'accepted'
+          // 'ignored' = in sospeso, ancora da decidere (D9, 2/10)
+          (p) => p.status === 'pending' || p.status === 'ignored' || p.status === 'accepted'
         ).length;
         setPulseBadgeCount(count);
       }
@@ -521,6 +530,35 @@ export default function App() {
     }
   }, [userId]);
   const [showSettings, setShowSettings] = useState(false);
+
+  // --------------------------------------------------------
+  // Vibrazione agli eventi ricevuti (decisione D2, 2/10): Like,
+  // Superlike, Pulse, match e messaggi in chat. Solo con
+  // l'interruttore "Notifiche aptiche" acceso (Impostazioni,
+  // users.haptic_notifications_enabled): letto all'avvio e riletto
+  // alla chiusura delle Impostazioni. Un ref, non uno stato: lo
+  // leggono i gestori del socket, che vivono più a lungo di un render.
+  // Solo con l'app aperta: ad app chiusa il socket è spento (servono
+  // le notifiche push, decisione D3).
+  // --------------------------------------------------------
+  const hapticEnabledRef = useRef(true); // default del DB
+  const refreshHapticSetting = useCallback(async () => {
+    if (!userId) return;
+    try {
+      const res = await apiFetch(`/api/profile/${userId}/settings`);
+      const data = await res.json();
+      if (data.success)
+        hapticEnabledRef.current = data.settings?.hapticNotificationsEnabled !== false;
+    } catch {
+      /* ignorato — resta il valore di prima */
+    }
+  }, [userId]);
+  useEffect(() => {
+    if (authState === 'app' && userId) refreshHapticSetting();
+  }, [authState, userId, refreshHapticSetting]);
+  const buzz = useCallback((intensity) => {
+    if (hapticEnabledRef.current) vibrate(intensity);
+  }, []);
   const [venuesMapMode, setVenuesMapMode] = useState(null); // null | 'browse' | 'historical'
   const [showNearbyMissions, setShowNearbyMissions] = useState(false);
   // Interruttori decisi dagli Architetti in dashboard — letti una
@@ -748,14 +786,32 @@ export default function App() {
     // Anche la lista: il messaggio può arrivare da una conversazione
     // che la lista in memoria non conosce ancora (bug dal vivo: con
     // una chat aperta, la nuova persona compariva solo dopo refresh).
-    socket.on('chat_message', () => {
+    socket.on('chat_message', (payload) => {
       refreshUnreadChatCount();
       refreshActiveChats();
+      // Non per la chat che si sta già guardando
+      if (payload?.conversationId !== activeChatConversationIdRef.current) buzz('normal');
     });
 
     socket.on('pulse_received', (payload) => {
       setPendingPulseNotification(payload);
       refreshPulseBadge();
+      refreshNotificationBadge();
+      refreshLikeCenterBadge();
+      buzz('strong');
+    });
+
+    // Solo per vibrare: il banner del Like resta legato a points_update
+    // qui sotto. like_received arriva sempre, anche oltre il tetto dei
+    // Like che danno punti, quando points_update non parte.
+    // Anche i pallini del campanello (bug B17) e dell'icona Like (bug
+    // B18, 2/10): prima si leggevano solo all'avvio dell'app (quello
+    // Like anche col banner, ma mai per Superlike e Pulse), e nessun
+    // altro evento in arrivo li aggiornava.
+    socket.on('like_received', () => {
+      refreshNotificationBadge();
+      refreshLikeCenterBadge();
+      buzz('normal');
     });
 
     // Mancava del tutto — il backend gestiva già accetta/rifiuta/
@@ -763,6 +819,9 @@ export default function App() {
     // lo riceveva non lo scopriva mai (nessuna schermata compariva).
     socket.on('superlike_received', (payload) => {
       setPendingSuperlike(payload);
+      refreshNotificationBadge();
+      refreshLikeCenterBadge();
+      buzz('strong');
     });
 
     // Motore unico dei popup punti — v. pointsIconFor sopra. Il
@@ -809,6 +868,11 @@ export default function App() {
       // Sempre, anche con un'altra chat aperta: niente banner in quel
       // caso, ma la nuova conversazione deve comunque stare in lista.
       refreshActiveChats();
+      refreshNotificationBadge();
+      // Chi ha appena accettato lui stesso un Superlike o una Pulse (da
+      // qualunque schermata) non ha bisogno di sentire vibrare la
+      // propria scelta — v. isRecentOwnDecision in apiClient.js.
+      if (!isRecentOwnDecision()) buzz('strong');
       if (!activeChatConversationIdRef.current) {
         setPendingMatches((prev) =>
           prev.some((m) => m.conversationId === payload.conversationId)
@@ -837,6 +901,8 @@ export default function App() {
     refreshUnreadChatCount,
     refreshActiveChats,
     handleLeftVenue,
+    buzz,
+    refreshNotificationBadge,
   ]);
 
   // App riaperta dal background (o scheda tornata visibile): il
@@ -1362,7 +1428,10 @@ export default function App() {
             >
               <Settings
                 userId={userId}
-                onClose={() => setShowSettings(false)}
+                onClose={() => {
+                  setShowSettings(false);
+                  refreshHapticSetting();
+                }}
                 onAccountDeleted={() => {
                   clearSession();
                   setAuthState('login');

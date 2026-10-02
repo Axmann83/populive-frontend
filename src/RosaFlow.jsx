@@ -439,15 +439,20 @@ export function PulseNotification({ pulse, currentUserId, arenaSessionId, venueI
       </p>
 
       <div className="pl-redeem-actions">
-        <button disabled={loading} onClick={() => respond('ignore')}>
-          Lascia in sospeso
-        </button>
+        {/* Già in sospeso (aperta dalla scheda Pulse, D9): resta solo da decidere */}
+        {pulse.status !== 'ignored' && (
+          <button disabled={loading} onClick={() => respond('ignore')}>
+            Lascia in sospeso
+          </button>
+        )}
         <button disabled={loading} onClick={() => respond('reject')} className="pl-btn-reject">
           Rifiuta
         </button>
       </div>
       <button className="pl-send-btn" disabled={loading} onClick={() => respond('accept')}>
-        {pulse.tier === 'super' || pulse.tier === 'simple' ? 'Apri la chat' : 'Accetta il Pulse'}
+        {pulse.tier === 'super' || pulse.tier === 'simple'
+          ? 'Accetta e apri la chat'
+          : 'Accetta il Pulse'}
       </button>
     </div>
   );

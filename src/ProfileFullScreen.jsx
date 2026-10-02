@@ -426,25 +426,28 @@ export default function ProfileFullScreen({
                   onClick={decisionActions.onAccept}
                   style={{ marginBottom: 8 }}
                 >
-                  Accetta — apri la chat
+                  Accetta e apri la chat
                 </button>
                 <div style={{ display: 'flex', gap: 8 }}>
-                  <button
-                    onClick={decisionActions.onIgnore}
-                    style={{
-                      flex: 1,
-                      padding: '10px',
-                      borderRadius: 10,
-                      border: '1px solid rgba(228,212,200,0.2)',
-                      background: 'transparent',
-                      color: 'var(--text-muted)',
-                      fontSize: 11.5,
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    Lascia in sospeso
-                  </button>
+                  {/* Assente per ciò che è già in sospeso (D9): si può solo decidere */}
+                  {decisionActions.onIgnore && (
+                    <button
+                      onClick={decisionActions.onIgnore}
+                      style={{
+                        flex: 1,
+                        padding: '10px',
+                        borderRadius: 10,
+                        border: '1px solid rgba(228,212,200,0.2)',
+                        background: 'transparent',
+                        color: 'var(--text-muted)',
+                        fontSize: 11.5,
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Lascia in sospeso
+                    </button>
+                  )}
                   <button
                     onClick={decisionActions.onReject}
                     style={{

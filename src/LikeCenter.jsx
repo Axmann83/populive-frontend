@@ -138,8 +138,14 @@ export default function LikeCenter({ userId, arenaSessionId, venueId, onOpenChat
         );
       }
 
-      // Decisa: sparisce da qui, qualunque sia stata la scelta.
-      setPending((prev) => prev.filter((p) => !(p.kind === item.kind && p.id === item.id)));
+      // Decisa: sparisce da qui. "Sospendi" invece la lascia, segnata
+      // "In sospeso": si può ancora decidere dopo (D9, 2/10).
+      const same = (p) => p.kind === item.kind && p.id === item.id;
+      if (action === 'ignore') {
+        setPending((prev) => prev.map((p) => (same(p) ? { ...p, onHold: true } : p)));
+      } else {
+        setPending((prev) => prev.filter((p) => !same(p)));
+      }
       setViewingItem(null);
     } catch {
       window.alert(
@@ -231,6 +237,7 @@ export default function LikeCenter({ userId, arenaSessionId, venueId, onOpenChat
                         setViewingItem({
                           userId: item.sender.userId,
                           isPendingDecision: true,
+                          onHold: item.onHold,
                           kind: item.kind,
                           id: item.id,
                         })
@@ -265,6 +272,7 @@ export default function LikeCenter({ userId, arenaSessionId, venueId, onOpenChat
                   }}
                 >
                   {item.kind === 'like' ? 'Ammiratore misterioso' : meta.label}
+                  {item.onHold && ' · In sospeso'}
                 </div>
                 {!hasPhoto && (
                   <Heart
@@ -304,24 +312,26 @@ export default function LikeCenter({ userId, arenaSessionId, venueId, onOpenChat
                   >
                     Accetta
                   </button>
-                  <button
-                    onClick={() => handleRespond(item, 'ignore')}
-                    disabled={responding}
-                    style={{
-                      flex: 1,
-                      padding: 11,
-                      borderRadius: 12,
-                      border: '1.5px solid rgba(228,212,200,0.2)',
-                      background: 'transparent',
-                      color: 'var(--text-muted)',
-                      fontSize: 12,
-                      fontWeight: 600,
-                      cursor: responding ? 'default' : 'pointer',
-                      opacity: responding ? 0.6 : 1,
-                    }}
-                  >
-                    Sospendi
-                  </button>
+                  {!item.onHold && (
+                    <button
+                      onClick={() => handleRespond(item, 'ignore')}
+                      disabled={responding}
+                      style={{
+                        flex: 1,
+                        padding: 11,
+                        borderRadius: 12,
+                        border: '1.5px solid rgba(228,212,200,0.2)',
+                        background: 'transparent',
+                        color: 'var(--text-muted)',
+                        fontSize: 12,
+                        fontWeight: 600,
+                        cursor: responding ? 'default' : 'pointer',
+                        opacity: responding ? 0.6 : 1,
+                      }}
+                    >
+                      Sospendi
+                    </button>
+                  )}
                   <button
                     onClick={() => handleRespond(item, 'reject')}
                     disabled={responding}
@@ -434,7 +444,9 @@ export default function LikeCenter({ userId, arenaSessionId, venueId, onOpenChat
               ? {
                   onAccept: () => handleRespond(viewingItem, 'accept'),
                   onReject: () => handleRespond(viewingItem, 'reject'),
-                  onIgnore: () => handleRespond(viewingItem, 'ignore'),
+                  onIgnore: viewingItem.onHold
+                    ? undefined
+                    : () => handleRespond(viewingItem, 'ignore'),
                 }
               : null
           }

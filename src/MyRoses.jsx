@@ -167,12 +167,16 @@ export default function MyPulses({
 
   // Tre gruppi separati, per capire al volo la situazione reale: cosa
   // aspetta ancora una decisione, cosa è pronto per il bancone, e cosa
-  // è già stato riscattato. Il resto (rifiutate/in sospeso/scadute) in
-  // un quarto gruppo più defilato, meno urgente da vedere.
+  // è già stato riscattato. Le "in sospeso" hanno un gruppo loro (D9,
+  // 2/10: "decido dopo", si possono ancora accettare o rifiutare); il
+  // resto (rifiutate/scadute) in un gruppo più defilato.
   const pendingPulses = pulses.filter((p) => p.status === 'pending');
+  const onHoldPulses = pulses.filter((p) => p.status === 'ignored');
   const toRedeemPulses = pulses.filter((p) => p.status === 'accepted');
   const redeemedPulses = pulses.filter((p) => p.status === 'redeemed');
-  const otherPulses = pulses.filter((p) => !['pending', 'accepted', 'redeemed'].includes(p.status));
+  const otherPulses = pulses.filter(
+    (p) => !['pending', 'ignored', 'accepted', 'redeemed'].includes(p.status)
+  );
 
   // Stessa suddivisione lato INVIATE — ma qui "riscattare" non è
   // un'azione possibile (solo chi riceve può farlo al bancone), è
@@ -209,7 +213,7 @@ export default function MyPulses({
             marginBottom: 0,
           }}
           onClick={() => {
-            if (r.status === 'pending') onOpenPulse(r);
+            if (r.status === 'pending' || r.status === 'ignored') onOpenPulse(r);
           }}
         >
           {r.senderId && r.senderPhotoUrl ? (
@@ -219,7 +223,8 @@ export default function MyPulses({
                 setViewingProfile({
                   senderId: r.senderId,
                   pulseId: r.pulseId,
-                  isPending: r.status === 'pending',
+                  isPending: r.status === 'pending' || r.status === 'ignored',
+                  onHold: r.status === 'ignored',
                 });
               }}
               style={{
@@ -534,6 +539,15 @@ export default function MyPulses({
             </div>
           )}
 
+          {onHoldPulses.length > 0 && (
+            <div style={{ marginBottom: 14 }}>
+              <div className="pl-section-label" style={{ marginTop: 0, marginBottom: 8 }}>
+                In sospeso
+              </div>
+              {onHoldPulses.map(renderPulseRow)}
+            </div>
+          )}
+
           {toRedeemPulses.length > 0 && (
             <div style={{ marginBottom: 14 }}>
               <div className="pl-section-label" style={{ marginTop: 0, marginBottom: 8 }}>
@@ -629,7 +643,7 @@ export default function MyPulses({
               ? {
                   onAccept: () => respondFromProfile('accept'),
                   onReject: () => respondFromProfile('reject'),
-                  onIgnore: () => respondFromProfile('ignore'),
+                  onIgnore: viewingProfile.onHold ? undefined : () => respondFromProfile('ignore'),
                 }
               : null
           }

@@ -108,7 +108,20 @@ function clearLastVenue() {
  * invece di restare bloccata a ripetere richieste che falliranno
  * sempre.
  */
+// Ultima risposta (accetta/rifiuta/sospendi) a un Superlike o a una
+// Pulse partita da QUESTO telefono, da qualunque schermata: il match
+// che ne nasce arriva via socket a entrambi, ma chi ha appena toccato
+// "Accetta" non deve sentirlo vibrare (v. chat_unlocked in App.jsx).
+// Segnato PRIMA della richiesta: l'evento socket arriva di solito
+// prima della risposta HTTP.
+let lastOwnDecisionAt = 0;
+
+function isRecentOwnDecision(withinMs = 5000) {
+  return Date.now() - lastOwnDecisionAt < withinMs;
+}
+
 async function apiFetch(path, options = {}) {
+  if (/\/respond$/.test(path)) lastOwnDecisionAt = Date.now();
   const token = getToken();
   const headers = { ...(options.headers || {}) };
   if (token) headers['Authorization'] = `Bearer ${token}`;
@@ -129,6 +142,7 @@ export {
   setSession,
   clearSession,
   apiFetch,
+  isRecentOwnDecision,
   getLastVenue,
   setLastVenue,
   clearLastVenue,

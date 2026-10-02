@@ -1,4 +1,4 @@
-import { getLocationPermissionState } from './native';
+import { getLocationPermissionState, getCurrentPosition } from './native';
 
 const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:3000';
 
@@ -161,33 +161,26 @@ export {
  * finché non concede l'accesso.
  * ============================================================
  */
-function requestAndSendLocation(userId) {
-  if (!navigator.geolocation) return;
-
-  navigator.geolocation.getCurrentPosition(
-    async (position) => {
-      try {
-        await apiFetch(`/api/profile/${userId}/location`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-          }),
-        });
-      } catch {
-        // Silenzioso — un aggiornamento di posizione mancato non è
-        // mai un problema grave. Attenzione: oggi NON c'è nessun nuovo
-        // tentativo automatico (es. all'apertura dell'app); si
-        // richiama solo a consenso attivato e salvato (v. Settings.jsx
-        // e ProfileCreation.jsx).
-      }
-    },
-    () => {
-      /* permesso negato o errore — nessun blocco per la persona */
-    },
-    { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 }
-  );
+// La posizione arriva da native.js (plugin nell'app, niente secondo
+// avviso "localhost" su iPhone; navigator.geolocation sul web).
+async function requestAndSendLocation(userId) {
+  const position = await getCurrentPosition({
+    enableHighAccuracy: false,
+    timeout: 8000,
+    maximumAge: 300000,
+  });
+  if (!position) return; // permesso negato o errore — nessun blocco per la persona
+  try {
+    await apiFetch(`/api/profile/${userId}/location`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ latitude: position.latitude, longitude: position.longitude }),
+    });
+  } catch {
+    // Silenzioso — un aggiornamento di posizione mancato non è mai un
+    // problema grave: si riprova al prossimo ritorno in app (v.
+    // refreshLocationIfConsented qui sotto).
+  }
 }
 
 /**
@@ -209,7 +202,6 @@ const LOCATION_REFRESH_MIN_INTERVAL_MS = 10 * 60 * 1000;
 let lastLocationRefreshAt = 0;
 
 async function refreshLocationIfConsented(userId) {
-  if (!navigator.geolocation) return;
   if (Date.now() - lastLocationRefreshAt < LOCATION_REFRESH_MIN_INTERVAL_MS) return;
   try {
     const permission = await getLocationPermissionState();
@@ -239,24 +231,22 @@ async function refreshLocationIfConsented(userId) {
 const GEOFENCE_MAX_ACCURACY_METERS = 150;
 
 async function checkStillAtVenue(arenaSessionId) {
-  if (!navigator.geolocation || !arenaSessionId) return null;
+  if (!arenaSessionId) return null;
   if ((await getLocationPermissionState()) !== 'granted') return null;
-  const position = await new Promise((resolve) => {
-    navigator.geolocation.getCurrentPosition(resolve, () => resolve(null), {
-      enableHighAccuracy: true,
-      timeout: 10000,
-      maximumAge: 60000,
-    });
+  const position = await getCurrentPosition({
+    enableHighAccuracy: true,
+    timeout: 10000,
+    maximumAge: 60000,
   });
-  if (!position || position.coords.accuracy > GEOFENCE_MAX_ACCURACY_METERS) return null;
+  if (!position || position.accuracy > GEOFENCE_MAX_ACCURACY_METERS) return null;
   try {
     const res = await apiFetch('/api/checkin/location-ping', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         arenaSessionId,
-        latitude: position.coords.latitude,
-        longitude: position.coords.longitude,
+        latitude: position.latitude,
+        longitude: position.longitude,
       }),
     });
     return await res.json();

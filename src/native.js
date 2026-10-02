@@ -92,6 +92,49 @@ export async function getLocationPermissionState() {
 }
 
 /**
+ * Posizione attuale, una volta sola: { latitude, longitude, accuracy }
+ * oppure null (permesso negato, GPS spento, tempo scaduto).
+ * - app: plugin Geolocation (ottobre 2026). Su iPhone navigator.geolocation
+ *   passa dalla WebView, e WebKit mostra un SECONDO avviso oltre a quello
+ *   di sistema, intestato al "sito" — nell'app, "localhost" (visto sulla
+ *   build TestFlight 9, test 1d). Il plugin parla direttamente con il
+ *   sistema operativo: un solo avviso, quello vero dell'app. Se il
+ *   permesso non è ancora stato chiesto, lo chiede lui.
+ * - web: navigator.geolocation, con le stesse opzioni.
+ */
+export async function getCurrentPosition({
+  enableHighAccuracy = false,
+  timeout = 8000,
+  maximumAge = 300000,
+} = {}) {
+  try {
+    if (isNative()) {
+      const { coords } = await Geolocation.getCurrentPosition({
+        enableHighAccuracy,
+        timeout,
+        maximumAge,
+      });
+      return { latitude: coords.latitude, longitude: coords.longitude, accuracy: coords.accuracy };
+    }
+    if (!navigator.geolocation) return null;
+    return await new Promise((resolve) => {
+      navigator.geolocation.getCurrentPosition(
+        ({ coords }) =>
+          resolve({
+            latitude: coords.latitude,
+            longitude: coords.longitude,
+            accuracy: coords.accuracy,
+          }),
+        () => resolve(null),
+        { enableHighAccuracy, timeout, maximumAge }
+      );
+    });
+  } catch {
+    return null; // permesso negato o posizione non disponibile
+  }
+}
+
+/**
  * Vibrazione per un evento ricevuto (Like, match, messaggi… — v.
  * App.jsx, decisione D2 del 2/10). 'strong' per gli eventi più
  * importanti (Superlike, Pulse, match), 'normal' per gli altri.

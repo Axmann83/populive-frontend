@@ -1,0 +1,13 @@
+/*
+  Traduzione italiana delle stringhe di Info.plist (testi dei permessi).
+  Info.plist resta in inglese (lingua base, quella che vedono i revisori
+  Apple); iOS usa questo file quando il telefono è in italiano.
+  Ogni chiave nuova in Info.plist con un testo per l'utente va aggiunta
+  anche qui.
+*/
+
+"NSCameraUsageDescription" = "PopuLive usa la fotocamera per scansionare i codici QR dei locali e delle missioni.";
+
+"NSLocationWhenInUseUsageDescription" = "PopuLive usa la tua posizione per mostrarti i locali e le missioni vicino a te e, quando sei nel radar di un locale, per verificare che tu sia ancora lì.";
+
+"NSLocationAlwaysAndWhenInUseUsageDescription" = "PopuLive usa la tua posizione solo mentre l'app è aperta, per mostrarti i locali e le missioni vicino a te e, quando sei nel radar di un locale, per verificare che tu sia ancora lì. Non traccia mai la tua posizione in background.";

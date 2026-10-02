@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { apiFetch } from './apiClient';
+import { getCurrentPosition } from './native';
 import HistoricalBoard from './HistoricalBoard';
 import HistoricalStories from './HistoricalStories';
 import VenueSearchSelect from './VenueSearchSelect';
@@ -169,18 +170,15 @@ export default function VenuesMap({ currentUserId, onClose, mode = 'browse' }) {
     // nessun salvataggio sul server, nessun legame con il consenso
     // delle missioni sponsorizzate (quello è un meccanismo diverso,
     // pensato per restare attivo nel tempo).
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          if (destroyed) return;
-          map.setView([position.coords.latitude, position.coords.longitude], 15);
-        },
-        () => {
-          /* permesso negato o errore — restiamo sulla vista di Roma di default */
-        },
-        { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 }
-      );
-    }
+    // Da native.js: nell'app il plugin (niente secondo avviso
+    // "localhost" su iPhone), sul web navigator.geolocation.
+    getCurrentPosition({ enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 }).then(
+      (position) => {
+        // null = permesso negato o errore: restiamo sulla vista di Roma di default
+        if (destroyed || !position) return;
+        map.setView([position.latitude, position.longitude], 15);
+      }
+    );
 
     map.on('click', (e) => {
       if (placingPinRef.current) {

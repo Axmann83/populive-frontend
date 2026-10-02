@@ -63,31 +63,37 @@ function clearSession() {
  * quindi un semplice refresh lo cancellava sempre, costringendo a
  * riscansionare il QR anche restando fisicamente nello stesso
  * locale — un problema vero, trovato durante un test dal vivo.
- * Qui salviamo SOLO il venueId (mai l'arenaSessionId, che va
- * comunque richiesto di nuovo al server ad ogni avvio: se il
- * locale nel frattempo ha chiuso l'Arena, richiamare /api/checkin
- * lo scopre da solo, niente di forzato o finto).
+ * Salviamo il venueId E la serata (arenaSessionId) in cui si è
+ * entrati col QR. All'avvio l'app ritenta il check-in mandando
+ * anche la serata: il server lo accetta solo se è ancora quella di
+ * oggi e la persona ci era già entrata (bug B8, 2/10 — prima si
+ * salvava solo il locale, che non scadeva mai: riaprendo l'app
+ * giorni dopo, da casa, si veniva fatti entrare nella serata del
+ * giorno senza nessun QR).
  * ============================================================
  */
-const LAST_VENUE_KEY = 'pl_last_venue_id';
+const LAST_VENUE_KEY = 'pl_last_venue';
+const LEGACY_LAST_VENUE_KEY = 'pl_last_venue_id'; // solo il venueId, senza serata: non più valido
 
-function getLastVenueId() {
+function getLastVenue() {
   try {
-    return localStorage.getItem(LAST_VENUE_KEY);
+    localStorage.removeItem(LEGACY_LAST_VENUE_KEY);
+    const saved = JSON.parse(localStorage.getItem(LAST_VENUE_KEY));
+    return saved?.venueId && saved?.arenaSessionId ? saved : null;
   } catch {
     return null;
   }
 }
 
-function setLastVenueId(venueId) {
+function setLastVenue(venueId, arenaSessionId) {
   try {
-    localStorage.setItem(LAST_VENUE_KEY, venueId);
+    localStorage.setItem(LAST_VENUE_KEY, JSON.stringify({ venueId, arenaSessionId }));
   } catch {
     /* ignorato */
   }
 }
 
-function clearLastVenueId() {
+function clearLastVenue() {
   try {
     localStorage.removeItem(LAST_VENUE_KEY);
   } catch {
@@ -123,9 +129,9 @@ export {
   setSession,
   clearSession,
   apiFetch,
-  getLastVenueId,
-  setLastVenueId,
-  clearLastVenueId,
+  getLastVenue,
+  setLastVenue,
+  clearLastVenue,
 };
 
 /**

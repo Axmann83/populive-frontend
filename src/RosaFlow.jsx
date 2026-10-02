@@ -294,7 +294,13 @@ export function PulseNotification({ pulse, currentUserId, arenaSessionId, venueI
           // lista pronta da riscattare quando si vuole — un
           // passaggio in meno rispetto a un primo tentativo con una
           // conferma di mezzo, semplificato su richiesta esplicita.
-          onResolved({ action: 'accepted', chatUnlocked: true });
+          // Con conversationId App.jsx apre subito la chat, come
+          // promette il pulsante "Apri la chat" (bug B11, 2/10).
+          onResolved({
+            action: 'accepted',
+            chatUnlocked: true,
+            conversationId: data.conversationId,
+          });
         } else {
           setRedeemInfo({ redeemCode: data.redeemCode });
         }

@@ -47,8 +47,8 @@ import {
   getToken,
   getStoredUserId,
   clearSession,
-  getLastVenueId,
-  clearLastVenueId,
+  getLastVenue,
+  clearLastVenue,
   refreshLocationIfConsented,
   checkStillAtVenue,
 } from './apiClient';
@@ -136,6 +136,10 @@ export default function App() {
   // preferiti e ritrovarlo lì ogni volta, non un link usa-e-getta.
   const [isDashboardRoute] = useState(() => window.location.pathname.startsWith('/dashboard'));
   const [arrivedViaQr, setArrivedViaQr] = useState(false);
+  // Serata in cui eravamo entrati col QR, solo per la ripresa
+  // automatica all'avvio (v. getLastVenue in apiClient.js, bug B8):
+  // null per un QR vero.
+  const [resumeSessionId, setResumeSessionId] = useState(null);
   // QR di una missione sponsorizzata (populive-frontend.../mission/<missionId>)
   // — stesso identico principio del check-in, un link semplice
   // riconosciuto da qualunque fotocamera di sistema.
@@ -151,6 +155,7 @@ export default function App() {
     const match = pathname.match(/^\/checkin\/([a-zA-Z0-9-]+)/);
     if (match) {
       setVenueId(match[1]);
+      setResumeSessionId(null);
       setArrivedViaQr(true);
       handled = true;
     }
@@ -181,13 +186,13 @@ export default function App() {
       // eravamo già dentro un locale prima dell'aggiornamento
       // della pagina, ritentiamo da soli invece di costringere a
       // riscansionare il QR (l'utente potrebbe essere ancora
-      // fisicamente lì). Se nel frattempo il locale ha chiuso
-      // l'Arena, /api/checkin lo scoprirà comunque da solo — qui
-      // non forziamo né inventiamo nulla, solo ripetiamo lo stesso
-      // tentativo che avrebbe fatto un vero QR.
-      const lastVenueId = getLastVenueId();
-      if (lastVenueId) {
-        setVenueId(lastVenueId);
+      // fisicamente lì). Solo nella STESSA serata: il server rifiuta
+      // la ripresa (session_expired) se nel frattempo è iniziata
+      // un'altra serata, o se il geofence ci aveva messo fuori.
+      const lastVenue = getLastVenue();
+      if (lastVenue) {
+        setVenueId(lastVenue.venueId);
+        setResumeSessionId(lastVenue.arenaSessionId);
         setArrivedViaQr(true);
       }
     }
@@ -211,7 +216,7 @@ export default function App() {
   // per distanza (evento arena_access_denied). In entrambi i casi il
   // radar torna alla schermata del QR: il locale memorizzato si
   // cancella, altrimenti al prossimo avvio l'app rifarebbe da sola il
-  // check-in (v. getLastVenueId sopra) e lo riaprirebbe. Il key sul
+  // check-in (v. getLastVenue sopra) e lo riaprirebbe. Il key sul
   // radar lo fa ripartire da zero, dato che il suo stato è interno.
   const [radarResetKey, setRadarResetKey] = useState(0);
   const [leftVenueNotice, setLeftVenueNotice] = useState(false);
@@ -221,8 +226,9 @@ export default function App() {
   }, [arenaSessionId]);
 
   const handleLeftVenue = useCallback(() => {
-    clearLastVenueId();
+    clearLastVenue();
     setArrivedViaQr(false);
+    setResumeSessionId(null);
     setArenaSessionId(null);
     setLeftVenueNotice(true);
     setRadarResetKey((k) => k + 1);
@@ -230,7 +236,19 @@ export default function App() {
 
   const handleArenaSession = useCallback((id) => {
     setLeftVenueNotice(false);
+    setResumeSessionId(null);
     setArenaSessionId(id);
+  }, []);
+
+  // Ripresa automatica rifiutata dal server (serata finita o uscita
+  // per distanza): si resta sulla schermata del QR, in silenzio. Va
+  // spento anche arrivedViaQr, altrimenti il radar ritenterebbe
+  // subito un check-in normale, senza ripresa — proprio quello che
+  // il rifiuto deve impedire.
+  const handleResumeExpired = useCallback(() => {
+    clearLastVenue();
+    setArrivedViaQr(false);
+    setResumeSessionId(null);
   }, []);
 
   // Controllo subito dopo ogni check-in (anche quello automatico
@@ -338,7 +356,8 @@ export default function App() {
   // alla chat. La LISTA resta finché non si tocca davvero un match
   // (mai cancellata dal solo passare del tempo) — solo il BANNER in
   // alto sparisce da solo dopo un po', il match resta comunque
-  // raggiungibile dal pallino sul Profilo.
+  // nella sezione "Nuovo match" del Centro Chat, contato nel pallino
+  // della scheda Chat (v. chatTabBadgeCount più sotto).
   const [pendingMatches, setPendingMatches] = useState([]); // [{ conversationId }]
   // Le chat già aperte (con o senza "Conserva") — a livello app,
   // non più dentro al Profilo, perché ora serve sia al numeretto
@@ -408,6 +427,17 @@ export default function App() {
   useEffect(() => {
     if (authState === 'app' && userId) refreshUnreadChatCount();
   }, [authState, userId, refreshUnreadChatCount]);
+  // Il pallino della scheda Chat conta anche i nuovi match mai aperti
+  // (bug B10, 2/10): prima stavano sul pallino del Profilo, dove però
+  // non c'era più niente da trovare — la lista dei match è nel Centro
+  // Chat. Un match che ha già un messaggio non letto è contato una
+  // volta sola, dentro unreadChatCount.
+  const chatTabBadgeCount =
+    unreadChatCount +
+    pendingMatches.filter(
+      (m) => !(activeChats.find((c) => c.conversationId === m.conversationId)?.unreadCount > 0)
+    ).length;
+
   // Chat segnata come letta: si spengono sia il pallino totale sia
   // quello della singola riga nel Centro Chat.
   const handleChatMarkedRead = useCallback(() => {
@@ -695,7 +725,21 @@ export default function App() {
     const socket = io(API_BASE);
     socketRef.current = socket;
     setSharedSocket(socket);
-    socket.emit('join_private_room', { userId });
+
+    // A OGNI connessione, non una volta sola (bug B1, 2/10): dopo un
+    // blocco schermo, una rete persa o l'app in background, socket.io
+    // si riconnette da solo ma il server vede un socket nuovo, in
+    // nessuna stanza — niente più Pulse, Superlike, match e chat, e la
+    // chiusura del vecchio socket aveva già tolto la persona dal radar
+    // degli altri. Rientrare nella stanza dell'Arena la rimette nel
+    // radar (o, se il geofence l'aveva messa fuori, fa arrivare
+    // arena_access_denied qui sotto).
+    socket.on('connect', () => {
+      socket.emit('join_private_room', { userId });
+      if (arenaSessionIdRef.current) {
+        socket.emit('join_arena', { arenaSessionId: arenaSessionIdRef.current, userId });
+      }
+    });
 
     // Un nuovo messaggio in una chat che NON si sta guardando in
     // questo momento (ChatWindow ha il suo ascoltatore a sé per
@@ -991,6 +1035,8 @@ export default function App() {
                 onArenaSession={handleArenaSession}
                 exitNotice={leftVenueNotice}
                 autoCheckin={arrivedViaQr}
+                resumeSessionId={resumeSessionId}
+                onResumeExpired={handleResumeExpired}
                 onVenueIdDetected={setVenueId}
                 sharedSocket={sharedSocket}
               />
@@ -1180,7 +1226,7 @@ export default function App() {
             label="Chat"
             active={activeTab === 'chat_list'}
             onClick={() => navigateToTab('chat_list')}
-            badge={unreadChatCount}
+            badge={chatTabBadgeCount}
           />
           <NavItem
             icon={PulseWaveIcon}
@@ -1194,7 +1240,6 @@ export default function App() {
             label="Profilo"
             active={activeTab === 'profilo'}
             onClick={() => navigateToTab('profilo')}
-            badge={pendingMatches.length}
           />
         </div>
 
@@ -1356,9 +1401,10 @@ export default function App() {
                 currentUserId={userId}
                 arenaSessionId={arenaSessionId}
                 venueId={venueId}
-                onResolved={() => {
+                onResolved={(result) => {
                   setPendingPulseNotification(null);
                   refreshPulseBadge();
+                  if (result?.conversationId) openMatch(result.conversationId);
                 }}
               />
             </div>
@@ -1371,7 +1417,15 @@ export default function App() {
             currentUserId={userId}
             arenaSessionId={arenaSessionId}
             venueId={venueId}
-            onResolved={() => setPendingSuperlike(null)}
+            onResolved={(result) => {
+              setPendingSuperlike(null);
+              // "Accetta — apri la chat": la apriamo davvero (bug B11,
+              // 2/10). Prima si chiudeva solo la finestra e restava il
+              // banner del match da toccare.
+              if (result?.action === 'accept' && result.conversationId) {
+                openMatch(result.conversationId);
+              }
+            }}
           />
         )}
 

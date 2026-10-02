@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
-import { apiFetch, setLastVenueId, clearLastVenueId, getOptimizedPhotoUrl } from './apiClient';
+import { apiFetch, setLastVenue, clearLastVenue, getOptimizedPhotoUrl } from './apiClient';
 import { usePhotoPreview } from './PhotoPreview';
 import ProfileFullScreen from './ProfileFullScreen';
 import QrScannerModal from './QrScannerModal';
@@ -23,6 +23,8 @@ export default function CheckinRadar({
   venueId,
   onArenaSession,
   autoCheckin,
+  resumeSessionId, // ripresa automatica all'avvio, mai da un QR vero (v. App.jsx, bug B8)
+  onResumeExpired,
   onVenueIdDetected,
   sharedSocket,
   exitNotice, // true dopo un'uscita per distanza (geofence, v. App.jsx)
@@ -238,8 +240,16 @@ export default function CheckinRadar({
     // essere entrati in una stanza — senza questo, chi entra dopo
     // il primo vedrebbe sempre "0 persone connesse" finché non
     // arriva qualcun altro di nuovo.
+    //
+    // L'istantanea è la lista completa di chi è collegato ADESSO:
+    // arriva di nuovo dopo ogni riconnessione (v. App.jsx, bug B1), e
+    // chi è uscito mentre eravamo scollegati non ci ha mai mandato il
+    // suo "left" — va tolto qui. Restano solo i fantasmi rivelati, che
+    // l'istantanea per costruzione non contiene mai.
     function handleRadarSnapshot({ userIds }) {
-      setRadarPeople((prev) => {
+      setRadarPeople((prevAll) => {
+        const current = new Set(userIds);
+        const prev = prevAll.filter((p) => p.revealedGhost || current.has(p.userId));
         const existingIds = new Set(prev.map((p) => p.userId));
         const seenInThisBatch = new Set(); // il server ora è già corretto, ma non ci fidiamo di un solo livello — se lo stesso id comparisse più volte nello stesso messaggio, lo prendiamo una volta sola
         const newEntries = userIds
@@ -270,7 +280,7 @@ export default function CheckinRadar({
       if (ghostUserId === userId) return;
       setRadarPeople((prev) => {
         if (prev.some((p) => p.userId === ghostUserId)) return prev;
-        return [...prev, { userId: ghostUserId, joinedAt: Date.now() }];
+        return [...prev, { userId: ghostUserId, joinedAt: Date.now(), revealedGhost: true }];
       });
     }
 
@@ -315,6 +325,8 @@ export default function CheckinRadar({
   const handleScanQr = useCallback(
     async (venueIdOverride) => {
       const effectiveVenueId = venueIdOverride || venueId;
+      // Un QR inquadrato dentro l'app (venueIdOverride) non è mai una ripresa
+      const resume = venueIdOverride ? null : resumeSessionId;
       setStatus('checking_in');
       setErrorReason(null);
 
@@ -322,14 +334,26 @@ export default function CheckinRadar({
         const res = await apiFetch('/api/checkin', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ venueId: effectiveVenueId }),
+          body: JSON.stringify(
+            resume
+              ? { venueId: effectiveVenueId, resumeSessionId: resume }
+              : { venueId: effectiveVenueId }
+          ),
         });
         const data = await res.json();
+
+        if (!data.success && data.reason === 'session_expired') {
+          // Serata finita (o usciti per distanza) dall'ultima volta:
+          // nessun errore da mostrare, solo la schermata del QR.
+          setStatus('idle');
+          onResumeExpired?.();
+          return;
+        }
 
         if (!data.success) {
           setStatus('error');
           setErrorReason(data.reason); // es. 'venue_closed'
-          clearLastVenueId(); // niente da riprovare da solo la prossima volta, era una tappa già chiusa
+          clearLastVenue(); // niente da riprovare da solo la prossima volta, era una tappa già chiusa
           return;
         }
 
@@ -337,7 +361,7 @@ export default function CheckinRadar({
         setThreshold(data.threshold);
         setArenaActive(data.arenaActive);
         setStatus('checked_in');
-        setLastVenueId(effectiveVenueId); // sopravvive a un aggiornamento pagina, v. apiClient.js
+        setLastVenue(effectiveVenueId, data.arenaSessionId); // sopravvive a un aggiornamento pagina, v. apiClient.js
 
         // Ora che sappiamo in quale sessione siamo, entriamo
         // davvero nella stanza WebSocket giusta, e avvisiamo la shell
@@ -353,7 +377,7 @@ export default function CheckinRadar({
         setErrorReason('network_error');
       }
     },
-    [userId, venueId, sharedSocket, onArenaSession]
+    [userId, venueId, resumeSessionId, sharedSocket, onArenaSession, onResumeExpired]
   );
 
   // --------------------------------------------------------

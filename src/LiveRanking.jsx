@@ -129,7 +129,10 @@ export default function LiveRanking({
     if (isGlobal || !arenaSessionId) return;
 
     const socket = io(API_BASE);
-    socket.emit('join_arena', { arenaSessionId, userId: currentUserId });
+    // A ogni connessione, anche dopo una riconnessione: v. bug B1 in App.jsx
+    socket.on('connect', () => {
+      socket.emit('join_arena', { arenaSessionId, userId: currentUserId });
+    });
 
     socket.on('points_update', (payload) => {
       const { userId, points } = payload;

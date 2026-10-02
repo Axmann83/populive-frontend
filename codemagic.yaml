@@ -49,7 +49,11 @@ workflows:
         auth: integration
         # Il gruppo interno "Interni" ha la distribuzione automatica: riceve
         # ogni build da solo (e Apple non permette di assegnargliele via API).
-        submit_to_testflight: true
+        # false dal 2/10: "true" invia anche alla revisione beta per i tester
+        # ESTERNI, che fallisce finché in App Store Connect mancano le "Test
+        # Information" (email feedback, referente). Da riattivare, compilando
+        # quelle info, quando si passerà ai test esterni.
+        submit_to_testflight: false
 
   android-debug-apk:
     name: Android → APK di debug

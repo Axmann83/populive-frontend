@@ -219,16 +219,17 @@ async function refreshLocationIfConsented(userId) {
 /**
  * Geofence del radar (28/9) — "sei ancora nel locale?". Manda la
  * posizione attuale UNA volta a /api/checkin/location-ping (che non
- * la salva mai): oltre 200 m il server chiude il check-in e toglie la
+ * la salva mai): oltre 2 km il server chiude il check-in e toglie la
  * persona dal radar degli altri. Decisione D1 dell'utente: SOLO se il
  * permesso di posizione è già concesso, mai un prompt nuovo — chi
  * non l'ha dato semplicemente non viene controllato.
  * Non manda niente se la posizione è troppo imprecisa (es. posizione
- * "approssimativa" di Android, centinaia di metri): con un raggio di
- * 200 m rischierebbe di buttare fuori chi è dentro.
+ * "approssimativa" di Android, oltre 1 km): rischierebbe di buttare
+ * fuori chi è dentro. Con il raggio di 2 km (ottobre 2026) un errore
+ * fino a 1 km non basta a sbagliare di molto.
  * Ritorna la risposta del server, oppure null se non ha controllato.
  */
-const GEOFENCE_MAX_ACCURACY_METERS = 150;
+const GEOFENCE_MAX_ACCURACY_METERS = 1000;
 
 async function checkStillAtVenue(arenaSessionId) {
   if (!arenaSessionId) return null;

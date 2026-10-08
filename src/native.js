@@ -126,7 +126,17 @@ export async function getLocationPermissionState() {
  *   sistema operativo: un solo avviso, quello vero dell'app. Se il
  *   permesso non è ancora stato chiesto, lo chiede lui.
  * - web: navigator.geolocation, con le stesse opzioni.
+ *
+ * Nell'app le richieste partono UNA ALLA VOLTA (bug B23, ottobre 2026).
+ * Su iOS il plugin ha un solo gestore di posizione condiviso: tutte le
+ * richieste in attesa ricevono la stessa posizione, con la precisione
+ * dell'ultima chiesta. Al ritorno in primo piano partono insieme il
+ * geofence (alta precisione) e l'aggiornamento missioni (bassa): il
+ * geofence riceveva una posizione approssimativa, la scartava (margine
+ * oltre 150 m) e non metteva mai fuori chi era lontano.
  */
+let nativePositionQueue = Promise.resolve();
+
 export async function getCurrentPosition({
   enableHighAccuracy = false,
   timeout = 8000,
@@ -134,11 +144,18 @@ export async function getCurrentPosition({
 } = {}) {
   try {
     if (isNative()) {
-      const { coords } = await Geolocation.getCurrentPosition({
-        enableHighAccuracy,
-        timeout,
-        maximumAge,
-      });
+      // Rete di sicurezza: una richiesta che il plugin non chiude mai non
+      // deve bloccare per sempre quelle dopo.
+      const request = nativePositionQueue.then(() =>
+        Promise.race([
+          Geolocation.getCurrentPosition({ enableHighAccuracy, timeout, maximumAge }),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('timeout')), timeout + 2000)
+          ),
+        ])
+      );
+      nativePositionQueue = request.catch(() => {});
+      const { coords } = await request;
       return { latitude: coords.latitude, longitude: coords.longitude, accuracy: coords.accuracy };
     }
     if (!navigator.geolocation) return null;

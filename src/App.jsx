@@ -930,8 +930,9 @@ export default function App() {
     return onAppForeground(() => {
       refreshActiveChats();
       refreshUnreadChatCount();
-      refreshLocationIfConsented(userId);
+      // Prima il geofence: le richieste di posizione sono in fila (B23)
       verifyStillAtVenue();
+      refreshLocationIfConsented(userId);
     });
   }, [authState, userId, refreshActiveChats, refreshUnreadChatCount, verifyStillAtVenue]);
 

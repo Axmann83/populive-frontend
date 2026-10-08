@@ -810,7 +810,6 @@ export default function App() {
       setPendingPulseNotification(payload);
       refreshPulseBadge();
       refreshNotificationBadge();
-      refreshLikeCenterBadge();
       buzz('strong');
     });
 

@@ -66,6 +66,31 @@ export function onAppUrlOpen(handler) {
 }
 
 /**
+ * Registra un handler per il ritorno dell'app in primo piano.
+ * - app: evento nativo appStateChange di Capacitor. Su iPhone
+ *   visibilitychange nella WebView non arriva in modo affidabile al
+ *   ritorno dal background (test 1d, ottobre 2026: geofence mai
+ *   controllato finché l'app non veniva chiusa e riaperta).
+ * - web: visibilitychange della pagina.
+ * Ritorna una funzione di cleanup.
+ */
+export function onAppForeground(handler) {
+  if (isNative()) {
+    const listener = CapApp.addListener('appStateChange', ({ isActive }) => {
+      if (isActive) handler();
+    });
+    return () => {
+      listener.then((l) => l.remove());
+    };
+  }
+  function onVisible() {
+    if (document.visibilityState === 'visible') handler();
+  }
+  document.addEventListener('visibilitychange', onVisible);
+  return () => document.removeEventListener('visibilitychange', onVisible);
+}
+
+/**
  * Stato del permesso di posizione SENZA chiederlo (nessun prompt):
  * 'granted' | 'denied' | 'prompt' | 'unknown'.
  * - app: lo chiede al sistema operativo tramite il plugin. Nella

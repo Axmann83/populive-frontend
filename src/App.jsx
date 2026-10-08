@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { io } from 'socket.io-client';
-import { openExternal, onAppUrlOpen, closeInAppBrowser, vibrate } from './native';
+import { openExternal, onAppUrlOpen, onAppForeground, closeInAppBrowser, vibrate } from './native';
 
 import Login from './Login';
 import ProfileCreation from './ProfileCreation';
@@ -235,9 +235,18 @@ export default function App() {
     setRadarResetKey((k) => k + 1);
   }, []);
 
+  // Dopo un check-in riuscito la serata diventa "da riprendere" (bug
+  // B22, ottobre 2026): CheckinRadar sta dentro il contenitore con
+  // key={activeTab}, quindi ogni cambio di scheda lo ricrea da zero.
+  // Senza questo, dopo uno scan fatto dall'app (che non passa da
+  // arrivedViaQr) tornare sul Radar mostrava di nuovo il QR, mentre
+  // il resto dell'app risultava ancora dentro ("Arena attiva"). Con la
+  // ripresa il server riconferma lo stesso check-in, come all'avvio,
+  // e la rifiuta dopo un'uscita per distanza.
   const handleArenaSession = useCallback((id) => {
     setLeftVenueNotice(false);
-    setResumeSessionId(null);
+    setResumeSessionId(id);
+    setArrivedViaQr(true);
     setArenaSessionId(id);
   }, []);
 
@@ -246,10 +255,14 @@ export default function App() {
   // spento anche arrivedViaQr, altrimenti il radar ritenterebbe
   // subito un check-in normale, senza ripresa — proprio quello che
   // il rifiuto deve impedire.
+  // Con B22 la ripresa può partire anche a app aperta (cambio
+  // scheda): se viene rifiutata, anche l'Arena memorizzata qui va
+  // azzerata, altrimenti in alto resterebbe "Arena attiva".
   const handleResumeExpired = useCallback(() => {
     clearLastVenue();
     setArrivedViaQr(false);
     setResumeSessionId(null);
+    setArenaSessionId(null);
   }, []);
 
   // Controllo subito dopo ogni check-in (anche quello automatico
@@ -908,20 +921,19 @@ export default function App() {
   // App riaperta dal background (o scheda tornata visibile): il
   // socket si riconnette da solo ma gli eventi persi nel frattempo
   // non tornano — rileggiamo dal server lista chat e pallino.
+  // onAppForeground (native.js): nell'app l'evento nativo, perché su
+  // iPhone visibilitychange non arriva in modo affidabile.
   useEffect(() => {
     if (authState !== 'app' || !userId) return;
-    function onVisible() {
-      if (document.visibilityState !== 'visible') return;
+    // Anche all'apertura, non solo al ritorno dal background: la
+    // posizione per le missioni va tenuta aggiornata (v. apiClient.js).
+    refreshLocationIfConsented(userId);
+    return onAppForeground(() => {
       refreshActiveChats();
       refreshUnreadChatCount();
       refreshLocationIfConsented(userId);
       verifyStillAtVenue();
-    }
-    // Anche all'apertura, non solo al ritorno dal background: la
-    // posizione per le missioni va tenuta aggiornata (v. apiClient.js).
-    refreshLocationIfConsented(userId);
-    document.addEventListener('visibilitychange', onVisible);
-    return () => document.removeEventListener('visibilitychange', onVisible);
+    });
   }, [authState, userId, refreshActiveChats, refreshUnreadChatCount, verifyStillAtVenue]);
 
   // Appena conosciamo l'Arena in cui siamo (dopo il check-in),

@@ -176,13 +176,16 @@ riporta nell'app al termine del checkout Stripe. Perché funzioni il sito deve s
 ### Permessi nativi
 
 Già dichiarati: fotocamera (scanner QR) e posizione (mappa, missioni, geofence del radar) in
-`android/app/src/main/AndroidManifest.xml` e `ios/App/App/Info.plist`. Le API web (`getUserMedia`,
-`navigator.geolocation`) funzionano nella WebView senza plugin aggiuntivi.
+`android/app/src/main/AndroidManifest.xml` e `ios/App/App/Info.plist` (testi in inglese, traduzione italiana in
+`ios/App/App/it.lproj/InfoPlist.strings`). La fotocamera usa l'API web (`getUserMedia`) nella WebView.
 
-Eccezione: lo **stato** del permesso di posizione (sapere se è già concesso senza mostrare un prompt). Nella WebView
-di Capacitor `navigator.permissions` risponde sempre "da chiedere", quindi `src/native.js`
-(`getLocationPermissionState`) lo chiede al sistema operativo con `@capacitor/geolocation`. Serve all'aggiornamento
-della posizione per le missioni e al geofence del radar, che partono solo a permesso già concesso.
+La **posizione** nell'app passa dal plugin `@capacitor/geolocation`, sempre tramite `src/native.js`
+(`getCurrentPosition`, `getLocationPermissionState`): con `navigator.geolocation` su iPhone comparirebbe un secondo
+avviso intestato a "localhost", e nella WebView `navigator.permissions` risponde sempre "da chiedere". Sul web le
+stesse funzioni usano le API del browser. Mai usare `navigator.geolocation` fuori da `src/native.js`.
+
+La **vibrazione** passa da `vibrate()` in `src/native.js` (`@capacitor/haptics`: su iPhone `navigator.vibrate` non
+esiste).
 
 Dopo aver aggiunto o aggiornato un plugin: `npm run cap:sync` (aggiorna anche `ios/App/CapApp-SPM/Package.swift`, da
 committare per Codemagic) e reinstallare l'app, perché il codice nativo non arriva con l'hot reload.

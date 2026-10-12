@@ -34,6 +34,7 @@ import {
   Map,
   History,
   Wallet,
+  LogOut,
 } from './PopuLiveIcons';
 import WelcomeBack from './WelcomeBack';
 import MissionClaim from './MissionClaim';
@@ -209,6 +210,30 @@ export default function App() {
 
   const [arenaSessionId, setArenaSessionId] = useState(null);
 
+  // Ripresa dal server (D14, 12/10): la serata memorizzata qui sopra
+  // vive solo in questo dispositivo. Con lo stesso account su un altro
+  // dispositivo, dati dell'app cancellati o un telefono nuovo, si
+  // risultava fuori anche se per il server si era dentro. Se dopo il
+  // login non c'è nessuna serata in corso né un QR appena aperto, si
+  // chiede al server e si riprende la sua (la ripresa la riconferma).
+  const serverResumeCheckedRef = useRef(false);
+  useEffect(() => {
+    if (authState !== 'app' || !userId || serverResumeCheckedRef.current) return;
+    serverResumeCheckedRef.current = true;
+    // arrivedViaQr è già vero se all'avvio è arrivato un QR o se c'era
+    // una serata memorizzata (v. effetto qui sopra).
+    if (arrivedViaQr || getLastVenue()) return;
+    apiFetch('/api/checkin/current')
+      .then((res) => res.json())
+      .then((data) => {
+        if (!data?.current) return;
+        setVenueId(data.current.venueId);
+        setResumeSessionId(data.current.arenaSessionId);
+        setArrivedViaQr(true);
+      })
+      .catch(() => {});
+  }, [authState, userId, arrivedViaQr]);
+
   // --------------------------------------------------------
   // Geofence del radar (28/9): uscito dal locale → fuori dal radar
   // --------------------------------------------------------
@@ -220,20 +245,52 @@ export default function App() {
   // check-in (v. getLastVenue sopra) e lo riaprirebbe. Il key sul
   // radar lo fa ripartire da zero, dato che il suo stato è interno.
   const [radarResetKey, setRadarResetKey] = useState(0);
-  const [leftVenueNotice, setLeftVenueNotice] = useState(false);
+  // Motivo dell'ultima uscita dalla serata (null = nessun avviso):
+  // 'distance', 'manual', 'expired', 'session_end'… — v. "Quando si
+  // esce da una serata" in populive-checkin-logic.js (backend, D14).
+  const [leftVenueNotice, setLeftVenueNotice] = useState(null);
   const arenaSessionIdRef = useRef(null);
   useEffect(() => {
     arenaSessionIdRef.current = arenaSessionId;
   }, [arenaSessionId]);
 
-  const handleLeftVenue = useCallback(() => {
+  const handleLeftVenue = useCallback((reason = 'distance') => {
     clearLastVenue();
     setArrivedViaQr(false);
     setResumeSessionId(null);
     setArenaSessionId(null);
-    setLeftVenueNotice(true);
+    setLeftVenueNotice(reason);
     setRadarResetKey((k) => k + 1);
   }, []);
+
+  // "Esci dal locale" (D14): il server chiude il check-in (motivo
+  // 'manual') e avvisa gli altri; da qui si rientra solo col QR.
+  const [leavingVenue, setLeavingVenue] = useState(false);
+  const handleLeaveVenue = useCallback(async () => {
+    const id = arenaSessionIdRef.current;
+    if (!id) return;
+    if (
+      !window.confirm(
+        'Vuoi uscire dal locale? Non sarai più nel radar di stasera. Se torni, inquadra di nuovo il QR.'
+      )
+    )
+      return;
+    setLeavingVenue(true);
+    try {
+      const res = await apiFetch('/api/checkin/leave', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ arenaSessionId: id }),
+      });
+      const data = await res.json();
+      if (data.success) handleLeftVenue('manual');
+      else window.alert('Non siamo riusciti a farti uscire dal locale — riprova.');
+    } catch {
+      window.alert('Non siamo riusciti a raggiungere il server — riprova.');
+    } finally {
+      setLeavingVenue(false);
+    }
+  }, [handleLeftVenue]);
 
   // Dopo un check-in riuscito la serata diventa "da riprendere" (bug
   // B22, ottobre 2026): CheckinRadar sta dentro il contenitore con
@@ -244,7 +301,7 @@ export default function App() {
   // ripresa il server riconferma lo stesso check-in, come all'avvio,
   // e la rifiuta dopo un'uscita per distanza.
   const handleArenaSession = useCallback((id) => {
-    setLeftVenueNotice(false);
+    setLeftVenueNotice(null);
     setResumeSessionId(id);
     setArrivedViaQr(true);
     setArenaSessionId(id);
@@ -273,7 +330,7 @@ export default function App() {
     const id = arenaSessionIdRef.current;
     if (!id) return;
     const result = await checkStillAtVenue(id);
-    if (result?.checkedOut && arenaSessionIdRef.current === id) handleLeftVenue();
+    if (result?.checkedOut && arenaSessionIdRef.current === id) handleLeftVenue('distance');
   }, [handleLeftVenue]);
 
   useEffect(() => {
@@ -870,11 +927,27 @@ export default function App() {
       offerLikeCreditsPurchase();
     });
 
-    // Rientro nel radar rifiutato: il check-in era stato chiuso per
-    // distanza (geofence) e serve una nuova scansione del QR.
-    socket.on('arena_access_denied', () => {
-      handleLeftVenue();
+    // Rientro nel radar rifiutato: il check-in era stato chiuso
+    // (distanza, "Esci dal locale", 24 ore, serata finita…) e serve
+    // una nuova scansione del QR. Un rifiuto per una serata diversa
+    // da quella in cui siamo adesso è vecchio e non conta.
+    socket.on('arena_access_denied', ({ arenaSessionId: deniedId, reason } = {}) => {
+      const current = arenaSessionIdRef.current;
+      if (deniedId && current && deniedId !== current) return;
+      handleLeftVenue(reason);
     });
+
+    // Uscita decisa dal server con l'app aperta (D14): pulsante "Esci"
+    // da un altro dispositivo, 24 ore dal check-in, fine della serata
+    // (arena_closed, mandato a tutta la stanza). Solo se riguarda la
+    // serata in cui siamo.
+    const leaveIfCurrent = (reason) => (payload) => {
+      if (payload?.arenaSessionId && payload.arenaSessionId === arenaSessionIdRef.current) {
+        handleLeftVenue(payload.reason || reason);
+      }
+    };
+    socket.on('arena_left', leaveIfCurrent('manual'));
+    socket.on('arena_closed', leaveIfCurrent('session_end'));
 
     socket.on('chat_unlocked', (payload) => {
       // Sempre, anche con un'altra chat aperta: niente banner in quel
@@ -1185,6 +1258,33 @@ export default function App() {
                   }}
                 >
                   <Target size={14} /> Missioni vicino a te
+                </button>
+              )}
+              {/* "Esci dal locale" (D14) — chiudere l'app non fa più
+                  uscire dalla serata: chi se ne va lo dice da qui.
+                  Ultimo della fila e in rosso, su richiesta dell'utente. */}
+              {arenaSessionId && (
+                <button
+                  onClick={handleLeaveVenue}
+                  disabled={leavingVenue}
+                  style={{
+                    marginTop: 8,
+                    width: '100%',
+                    padding: 12,
+                    borderRadius: 14,
+                    border: '1px solid var(--red)',
+                    background: 'var(--surface)',
+                    color: 'var(--red)',
+                    fontSize: 11.5,
+                    fontWeight: 600,
+                    cursor: leavingVenue ? 'default' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 7,
+                  }}
+                >
+                  <LogOut size={14} /> {leavingVenue ? 'Un attimo…' : 'Esci dal locale'}
                 </button>
               )}
             </>

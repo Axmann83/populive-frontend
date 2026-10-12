@@ -18,6 +18,17 @@ import { Armchair, Radar as RadarIcon } from './PopuLiveIcons';
  * ============================================================
  */
 
+// Avviso sulla schermata del QR dopo un'uscita dalla serata, per
+// motivo (v. "Quando si esce da una serata" nel backend, D14).
+const EXIT_NOTICES = {
+  distance:
+    'Sei uscito dal locale, quindi non sei più nel radar. Se sei tornato, inquadra di nuovo il QR.',
+  manual: 'Sei uscito dal locale. Se torni, inquadra di nuovo il QR.',
+  expired:
+    'Sono passate 24 ore dal check-in, quindi non sei più nel radar. Se sei ancora nel locale, inquadra di nuovo il QR.',
+  session_end: 'La serata in questo locale è finita. Alla prossima!',
+};
+
 export default function CheckinRadar({
   userId,
   venueId,
@@ -27,7 +38,7 @@ export default function CheckinRadar({
   onResumeExpired,
   onVenueIdDetected,
   sharedSocket,
-  exitNotice, // true dopo un'uscita per distanza (geofence, v. App.jsx)
+  exitNotice, // motivo dell'ultima uscita dalla serata, o null (v. App.jsx)
 }) {
   const [arenaActive, setArenaActive] = useState(false);
   const [checkinCount, setCheckinCount] = useState(0);
@@ -507,8 +518,7 @@ export default function CheckinRadar({
           >
             {exitNotice && (
               <p className="pl-hint" style={{ textAlign: 'center' }}>
-                Sei uscito dal locale, quindi non sei più nel radar. Se sei tornato, inquadra di
-                nuovo il QR.
+                {EXIT_NOTICES[exitNotice] || EXIT_NOTICES.distance}
               </p>
             )}
             {/* Momento editoriale — stesso linguaggio delle strisce
@@ -789,7 +799,9 @@ export default function CheckinRadar({
                   </div>
                 </div>
 
-                <p>{othersOnly.length} persone connesse ora</p>
+                {/* Non "connesse ora": dal D14 nel radar c'è anche chi
+                    ha l'app chiusa, finché non esce dalla serata. */}
+                <p>{othersOnly.length} persone nel locale stasera</p>
                 <div className="pl-radar-list">
                   {sortedOthers.map((p) => (
                     <RadarCard

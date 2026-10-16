@@ -6,7 +6,8 @@ Web app React (Create React App), pensata per browser mobile, impacchettata come
 
 - React 18 + `react-scripts` 5 (Create React App)
 - `leaflet` (mappe), `socket.io-client` (chat realtime), `html5-qrcode` / `qrcode`, `lucide-react` (icone)
-- Capacitor 8 (`@capacitor/app`, `@capacitor/browser`, `@capacitor/geolocation`) per le app iOS/Android
+- Capacitor 8 (`@capacitor/app`, `@capacitor/browser`, `@capacitor/geolocation`, `@capacitor/haptics`,
+  `@capacitor-firebase/messaging`) per le app iOS/Android
 - ESLint + Prettier per la qualità del codice, Husky + lint-staged per il pre-commit
 
 ## Requisiti
@@ -159,6 +160,12 @@ Setup una tantum (le istruzioni dettagliate sono nei commenti di `codemagic.yaml
 4. Codemagic → Teams → Integrations → App Store Connect → aggiungi la key col nome `populive_asc`
 5. Codemagic → aggiungi il repo GitHub; il workflow `ios-testflight` parte a ogni push su `main`
 
+**Firma:** Codemagic usa il profilo di provisioning App Store **caricato a mano** in Teams → codemagic.yaml settings →
+Code signing identities (`populive_app_store`). Ogni volta che si aggiunge una capability all'App ID (es. Push
+Notifications, ottobre 2026) Apple invalida il profilo: va rigenerato nel portale Apple (Profiles → Edit → Save →
+Download) e ricaricato in Codemagic con lo stesso nome, togliendo il vecchio. Altrimenti "Build IPA" fallisce con
+"Failed to archive". Il log completo di `xcodebuild` è tra gli artifact della build (`/tmp/xcodebuild_logs/*.log`).
+
 
 ### Deep link (QR) e ritorno da Stripe
 
@@ -187,6 +194,24 @@ stesse funzioni usano le API del browser. Mai usare `navigator.geolocation` fuor
 La **vibrazione** passa da `vibrate()` in `src/native.js` (`@capacitor/haptics`: su iPhone `navigator.vibrate` non
 esiste).
 
+Le **notifiche push** (ottobre 2026) passano da Firebase Cloud Messaging su Android e iOS
+(`@capacitor-firebase/messaging`, progetto Firebase `populive-2eaa9`):
+- configurazione: `android/app/google-services.json` e `ios/App/App/GoogleService-Info.plist` (registrato in
+  `project.pbxproj`), `aps-environment` in `ios/App/App/App.entitlements`, metodi push in `AppDelegate.swift`; la
+  chiave APNs è caricata nella console Firebase;
+- `src/native.js`: `getPushPermissionState`, `requestPushPermission`, `getPushToken` (crea anche i canali Android
+  `interactions` e `interactions_silent`), `onPushTokenChange`, `onPushTapped`; `registerPushDevice()` in
+  `src/apiClient.js` manda il token al backend (`POST /api/push/token`);
+- in `src/App.jsx`: il permesso si chiede alla prima serata (con una domanda dell'app prima dell'avviso di sistema),
+  il token si registra dopo il login solo a permesso concesso, il tocco su una notifica apre chat, scheda Pulse o
+  scheda Like. Con l'app aperta la push non si vede (`presentationOptions: []` in `capacitor.config.ts`): bastano
+  gli eventi socket;
+- l'invio e i testi sono nel backend (`populive-push.js`). Sul web niente push.
+
+Su Windows `npx cap sync ios` / `cap update ios` non riesce a creare il collegamento simbolico che il plugin Firebase
+chiede con SPM (`symlink: true` in `capacitor.config.ts`, errore EPERM): `ios/App/CapApp-SPM/Package.swift` va
+aggiornato a mano (`symlinks/CapacitorFirebaseMessaging`); Codemagic, su Mac, lo rigenera da solo.
+
 Dopo aver aggiunto o aggiornato un plugin: `npm run cap:sync` (aggiorna anche `ios/App/CapApp-SPM/Package.swift`, da
 committare per Codemagic) e reinstallare l'app, perché il codice nativo non arriva con l'hot reload.
 
@@ -203,7 +228,7 @@ src/index.js            entry point
 src/App.jsx             root dell'app e navigazione tra le schermate
 src/apiClient.js        client HTTP centralizzato (token, sessione, apiFetch)
 src/*.jsx               schermate e componenti (Login, Dashboard, ExploreMap, ChatCenter, ...)
-src/native.js           ponte verso Capacitor (unico file che lo importa): browser in-app, deep link, back, permesso posizione
+src/native.js           ponte verso Capacitor (unico file che lo importa): browser in-app, deep link, back, posizione, vibrazione, push
 src/populive-styles.css stili globali
 capacitor.config.ts     configurazione Capacitor
 android/, ios/          progetti nativi generati da Capacitor

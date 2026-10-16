@@ -44,6 +44,9 @@ workflows:
     artifacts:
       - build/ios/ipa/*.ipa
       - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
+      # Log completo di xcodebuild: in caso di errore la pagina della build
+      # mostra solo "Failed to archive", la causa vera è qui dentro.
+      - /tmp/xcodebuild_logs/*.log
     publishing:
       app_store_connect:
         auth: integration

@@ -1,4 +1,4 @@
-import { getLocationPermissionState, getCurrentPosition } from './native';
+import { getLocationPermissionState, getCurrentPosition, getPushToken } from './native';
 
 const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:3000';
 
@@ -135,8 +135,33 @@ async function apiFetch(path, options = {}) {
   return res;
 }
 
+/**
+ * Notifiche push (D3, ottobre 2026): manda al backend il token Firebase
+ * di questo dispositivo, che da lì in poi riceve le push dell'account
+ * collegato (se il telefono passa a un altro account, il token passa
+ * con lui). `device` = { token, platform } già noto (rinnovo del token);
+ * senza, lo si chiede al plugin — solo a permesso già concesso.
+ * Mai un errore verso chi chiama: senza push l'app funziona lo stesso.
+ */
+async function registerPushDevice(device = null) {
+  const info = device || (await getPushToken());
+  if (!info) return false;
+  try {
+    const res = await apiFetch('/api/push/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(info),
+    });
+    const data = await res.json();
+    return data.success === true;
+  } catch {
+    return false;
+  }
+}
+
 export {
   API_BASE,
+  registerPushDevice,
   getToken,
   getStoredUserId,
   setSession,

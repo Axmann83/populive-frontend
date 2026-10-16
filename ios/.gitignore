@@ -11,3 +11,7 @@ capacitor-cordova-ios-plugins
 # Generated Config files
 App/App/capacitor.config.json
 App/App/config.xml
+
+# Collegamenti simbolici creati da 'cap sync ios' per i plugin con symlink: true
+# (capacitor.config.ts): puntano dentro node_modules, si rigenerano a ogni sync
+App/CapApp-SPM/symlinks

@@ -3,6 +3,7 @@ import { App as CapApp } from '@capacitor/app';
 import { Browser } from '@capacitor/browser';
 import { Geolocation } from '@capacitor/geolocation';
 import { Haptics } from '@capacitor/haptics';
+import { FirebaseMessaging, Importance } from '@capacitor-firebase/messaging';
 
 /**
  * ============================================================
@@ -196,6 +197,126 @@ export async function vibrate(intensity = 'normal') {
   } catch {
     /* vibrazione non disponibile: ignorata */
   }
+}
+
+/**
+ * ============================================================
+ * NOTIFICHE PUSH (D3, ottobre 2026)
+ * ============================================================
+ * Firebase Cloud Messaging su Android e iOS (plugin
+ * @capacitor-firebase/messaging): il backend manda la push a ogni
+ * Like, Superlike, Pulse, match e messaggio (populive-push.js), così
+ * chi resta nel radar con l'app chiusa lo sa. Con l'app aperta la push
+ * non si vede (iOS: presentationOptions vuoto in capacitor.config.ts;
+ * Android: FCM non mostra le notifiche in primo piano): bastano gli
+ * eventi socket. Sul web niente push: tutte le funzioni non fanno nulla.
+ * ============================================================
+ */
+
+/**
+ * Stato del permesso delle notifiche SENZA chiederlo:
+ * 'granted' | 'denied' | 'prompt' | 'unsupported' (web).
+ * Su Android prima della 13 il permesso non esiste: risulta 'granted'.
+ */
+export async function getPushPermissionState() {
+  if (!isNative()) return 'unsupported';
+  try {
+    const { receive } = await FirebaseMessaging.checkPermissions();
+    return receive === 'granted' ? 'granted' : receive === 'denied' ? 'denied' : 'prompt';
+  } catch {
+    return 'unsupported';
+  }
+}
+
+/** Mostra l'avviso di sistema del permesso; restituisce lo stato finale. */
+export async function requestPushPermission() {
+  if (!isNative()) return 'unsupported';
+  try {
+    const { receive } = await FirebaseMessaging.requestPermissions();
+    return receive === 'granted' ? 'granted' : 'denied';
+  } catch {
+    return 'denied';
+  }
+}
+
+// Canali Android: suono e vibrazione di una notifica dipendono dal
+// canale, non dal messaggio. Il backend sceglie 'interactions_silent'
+// quando l'interruttore "Notifiche aptiche" è spento (D3). Creati una
+// volta per avvio; ricrearli non cambia le scelte fatte dall'utente
+// nelle impostazioni di Android.
+let pushChannelsReady = null;
+function ensurePushChannels() {
+  if (Capacitor.getPlatform() !== 'android') return Promise.resolve();
+  if (!pushChannelsReady) {
+    pushChannelsReady = Promise.all([
+      FirebaseMessaging.createChannel({
+        id: 'interactions',
+        name: 'Like, Pulse e messaggi',
+        description: 'Like, Superlike, Pulse, match e messaggi in chat',
+        importance: Importance.High,
+        vibration: true,
+      }),
+      FirebaseMessaging.createChannel({
+        id: 'interactions_silent',
+        name: 'Like, Pulse e messaggi (senza vibrazione)',
+        description: 'Le stesse notifiche, senza suono né vibrazione',
+        importance: Importance.Low,
+        vibration: false,
+      }),
+    ]).catch(() => {
+      pushChannelsReady = null; // si riprova al prossimo avvio
+    });
+  }
+  return pushChannelsReady;
+}
+
+/**
+ * Token Firebase di questo dispositivo, da mandare al backend:
+ * { token, platform: 'android' | 'ios' } oppure null (web, permesso
+ * mancante, Firebase non raggiungibile). Non chiede il permesso: va
+ * chiamata solo a permesso concesso.
+ */
+export async function getPushToken() {
+  if (!isNative()) return null;
+  try {
+    await ensurePushChannels();
+    const { token } = await FirebaseMessaging.getToken();
+    return token ? { token, platform: Capacitor.getPlatform() } : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Firebase può rinnovare il token in qualunque momento: l'handler
+ * riceve { token, platform } da rimandare al backend. Ritorna una
+ * funzione di cleanup.
+ */
+export function onPushTokenChange(handler) {
+  if (!isNative()) return () => {};
+  const listener = FirebaseMessaging.addListener('tokenReceived', ({ token }) => {
+    if (token) handler({ token, platform: Capacitor.getPlatform() });
+  });
+  return () => {
+    listener.then((l) => l.remove());
+  };
+}
+
+/**
+ * Tocco su una notifica: l'handler riceve i suoi dati ({ type,
+ * conversationId, pulseId, interactionId… }, v. populive-push.js nel
+ * backend). Arriva anche se il tocco ha aperto l'app da chiusa: il
+ * plugin conserva l'evento finché qualcuno non si mette in ascolto.
+ * Ritorna una funzione di cleanup.
+ */
+export function onPushTapped(handler) {
+  if (!isNative()) return () => {};
+  const listener = FirebaseMessaging.addListener('notificationActionPerformed', (event) => {
+    handler(event?.notification?.data || {});
+  });
+  return () => {
+    listener.then((l) => l.remove());
+  };
 }
 
 /**

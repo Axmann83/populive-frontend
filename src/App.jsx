@@ -1,6 +1,16 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { io } from 'socket.io-client';
-import { openExternal, onAppUrlOpen, onAppForeground, closeInAppBrowser, vibrate } from './native';
+import {
+  openExternal,
+  onAppUrlOpen,
+  onAppForeground,
+  closeInAppBrowser,
+  vibrate,
+  getPushPermissionState,
+  requestPushPermission,
+  onPushTokenChange,
+  onPushTapped,
+} from './native';
 
 import Login from './Login';
 import ProfileCreation from './ProfileCreation';
@@ -53,6 +63,7 @@ import {
   refreshLocationIfConsented,
   checkStillAtVenue,
   isRecentOwnDecision,
+  registerPushDevice,
 } from './apiClient';
 
 import './populive-styles.css';
@@ -575,6 +586,68 @@ export default function App() {
     setShowMatchBanner(false);
     refreshActiveChats();
   }
+
+  // --------------------------------------------------------
+  // Notifiche push (D3, ottobre 2026)
+  // --------------------------------------------------------
+  // Token del dispositivo al backend a ogni avvio dopo il login, solo
+  // se il permesso c'è già (su Android prima della 13 c'è sempre), e a
+  // ogni rinnovo del token da parte di Firebase.
+  useEffect(() => {
+    if (authState !== 'app' || !userId) return;
+    getPushPermissionState().then((state) => {
+      if (state === 'granted') registerPushDevice();
+    });
+    // Firebase emette un token anche senza permesso (al primo avvio, da
+    // solo): lo si registra solo a permesso concesso, come sopra. Quando
+    // il permesso arriva, ci pensa la richiesta alla prima serata.
+    return onPushTokenChange(async (device) => {
+      if ((await getPushPermissionState()) === 'granted') registerPushDevice(device);
+    });
+  }, [authState, userId]);
+
+  // Il permesso si chiede alla prima serata, non all'avvio: è lì che
+  // serve (chi è nel radar riceve Like e Pulse anche con l'app chiusa)
+  // e se ne capisce il motivo. Prima una domanda nostra con il perché:
+  // su iOS l'avviso di sistema compare una volta sola, e un "no" lì
+  // non si può più ribaltare dall'app. Una domanda per serata al massimo.
+  useEffect(() => {
+    if (!arenaSessionId) return;
+    let cancelled = false;
+    (async () => {
+      if ((await getPushPermissionState()) !== 'prompt' || cancelled) return;
+      try {
+        if (localStorage.getItem('pl_push_asked_session') === arenaSessionId) return;
+        localStorage.setItem('pl_push_asked_session', arenaSessionId);
+      } catch {
+        /* senza localStorage si chiede comunque, una volta per avvio */
+      }
+      const wants = window.confirm(
+        'Vuoi attivare le notifiche? Finché sei nel locale ti avvisiamo di Like, Superlike, Pulse e messaggi anche con l’app chiusa.'
+      );
+      if (wants && (await requestPushPermission()) === 'granted') registerPushDevice();
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [arenaSessionId]);
+
+  // Tocco su una notifica: si apre la schermata giusta. Il tocco può
+  // arrivare prima che il login sia verificato (app aperta da chiusa):
+  // si tiene da parte finché non si è dentro l'app.
+  const [pendingPushTap, setPendingPushTap] = useState(null);
+  useEffect(() => onPushTapped((data) => setPendingPushTap(data)), []);
+  useEffect(() => {
+    if (!pendingPushTap || authState !== 'app') return;
+    const { type, conversationId } = pendingPushTap;
+    setPendingPushTap(null);
+    if ((type === 'match' || type === 'message') && conversationId) openMatch(conversationId);
+    else if (type === 'pulse') navigateToTab('pulse');
+    else if (type === 'like' || type === 'superlike') navigateToTab('like_center');
+    // openMatch e navigateToTab sono funzioni normali, ricreate a ogni
+    // render: servono solo nel momento del tocco.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingPushTap, authState]);
   const [pulseBadgeCount, setPulseBadgeCount] = useState(0);
 
   // Il numero sulla Pulse conta insieme due cose diverse — quante

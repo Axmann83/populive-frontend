@@ -309,7 +309,7 @@ export default function Settings({ userId, onClose, onAccountDeleted }) {
       </div>
       <ToggleRow
         label="Notifiche aptiche (vibrazione)"
-        sub="Se disattivata, non sentirai il telefono vibrare per Like/Superlike/Pulse ricevuti — vedrai comunque il resoconto quando riapri l'app da solo"
+        sub="Se disattivata, il telefono non vibra per Like, Superlike, Pulse, match e messaggi — le notifiche arrivano lo stesso, ma in silenzio"
         checked={settings.hapticNotificationsEnabled}
         onChange={(v) => setSettings({ ...settings, hapticNotificationsEnabled: v })}
       />

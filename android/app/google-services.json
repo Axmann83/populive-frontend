@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "5548994778",
+    "project_id": "populive-2eaa9",
+    "storage_bucket": "populive-2eaa9.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:5548994778:android:ea7ece4bce0aacdebcf5e3",
+        "android_client_info": {
+          "package_name": "com.populive.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDFDHq_mbG9urp3aSjLdc7c9ZCfPPSlW5I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

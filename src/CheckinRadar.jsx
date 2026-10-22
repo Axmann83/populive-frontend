@@ -41,6 +41,8 @@ export default function CheckinRadar({
   sharedSocket,
   exitNotice, // motivo dell'ultima uscita dalla serata, o null (v. App.jsx)
   onRadarLive, // chiamata con l'id della serata quando il radar è live (Bluetooth, D4)
+  bluetoothOff, // permesso dato ma Bluetooth del telefono spento (v. App.jsx)
+  onEnableBluetooth, // riapre l'avviso di sistema per accenderlo
 }) {
   const [arenaActive, setArenaActive] = useState(false);
   // Codici Bluetooth di chi è vicino adesso (D4, v. proximity.js): le
@@ -837,6 +839,32 @@ export default function CheckinRadar({
                 {/* Non "connesse ora": dal D14 nel radar c'è anche chi
                     ha l'app chiusa, finché non esce dalla serata. */}
                 <p>{othersOnly.length} persone nel locale stasera</p>
+                {/* Bluetooth spento (D4): una riga discreta, toccabile,
+                    finché non si accende — decisione dell'utente del 22/10. */}
+                {bluetoothOff && (
+                  <button
+                    type="button"
+                    onClick={onEnableBluetooth}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      margin: '-4px 0 12px',
+                      padding: 0,
+                      border: 'none',
+                      background: 'none',
+                      color: 'var(--text-muted)',
+                      fontSize: 12,
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                    }}
+                  >
+                    <Signal size={13} color="var(--cyan)" strokeWidth={2.4} />
+                    <span style={{ textDecoration: 'underline' }}>
+                      Accendi il Bluetooth per vedere chi hai vicino
+                    </span>
+                  </button>
+                )}
                 <div className="pl-radar-list">
                   {sortedOthers.map((p) => (
                     <RadarCard

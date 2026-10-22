@@ -384,6 +384,49 @@ export async function stopProximity() {
   }
 }
 
+/**
+ * Bluetooth del telefono: 'on' | 'off' | 'unsupported' | 'unknown'. Su
+ * iPhone, prima del permesso, 'unknown' (leggerlo farebbe comparire
+ * l'avviso del permesso).
+ */
+export async function getBluetoothState() {
+  if (!isNative()) return 'unsupported';
+  try {
+    const { state } = await BlePresence.getState();
+    return state || 'unknown';
+  } catch {
+    return 'unknown';
+  }
+}
+
+/**
+ * Chiede di accendere il Bluetooth. Nessuna app può accenderlo da sola:
+ * Android mostra l'avviso di sistema "PopuLive vuole attivare il
+ * Bluetooth", iPhone quello di Apple con il pulsante Impostazioni.
+ * Restituisce lo stato subito dopo; un'accensione successiva arriva con
+ * onBluetoothStateChange (e il plugin riparte da solo).
+ */
+export async function requestBluetoothEnable() {
+  if (!isNative()) return 'unsupported';
+  try {
+    const { state } = await BlePresence.requestEnable();
+    return state || 'unknown';
+  } catch {
+    return 'unknown';
+  }
+}
+
+/** L'handler riceve 'on' o 'off' quando l'utente cambia il Bluetooth. */
+export function onBluetoothStateChange(handler) {
+  if (!isNative()) return () => {};
+  const listener = BlePresence.addListener('stateChange', (event) => {
+    if (event?.state) handler(event.state);
+  });
+  return () => {
+    listener.then((l) => l.remove());
+  };
+}
+
 /** L'handler riceve { code, rssi } a ogni avvistamento. Ritorna il cleanup. */
 export function onProximity(handler) {
   if (!isNative()) return () => {};

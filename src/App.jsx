@@ -12,6 +12,9 @@ import {
   onPushTapped,
   getProximityPermissionState,
   requestProximityPermission,
+  getBluetoothState,
+  requestBluetoothEnable,
+  onBluetoothStateChange,
 } from './native';
 import { startNearby, stopNearby } from './proximity';
 
@@ -1104,17 +1107,36 @@ export default function App() {
   // chat; il plugin si spegne da solo in background. Il permesso si
   // chiede al primo radar live, con una domanda nostra prima dell'avviso
   // di sistema (come per le push), al massimo una volta per serata. Senza
-  // permesso o con il Bluetooth spento il radar funziona come prima.
+  // permesso il radar funziona come prima.
+  //
+  // Bluetooth del telefono spento (la maggior parte delle persone, 22/10):
+  // l'app non può accenderlo da sola, ma può far comparire l'avviso di
+  // sistema. Una volta per serata (decisione dell'utente): la prima volta
+  // subito dopo il permesso, nelle serate dopo con una riga nostra prima.
+  // Finché resta spento il radar mostra una riga toccabile per riaprire
+  // l'avviso. Il plugin aspetta acceso e riparte da solo quando il
+  // Bluetooth si accende, anche dalla tendina o dal Centro di Controllo.
   const [ownProximity, setOwnProximity] = useState(null); // { arenaSessionId, code }
   const [radarLiveSessionId, setRadarLiveSessionId] = useState(null);
+  const [bluetoothOff, setBluetoothOff] = useState(false);
   const proximityCode =
     arenaSessionId && ownProximity?.arenaSessionId === arenaSessionId ? ownProximity.code : null;
   const radarLive = !!arenaSessionId && radarLiveSessionId === arenaSessionId;
+  const handleEnableBluetooth = useCallback(async () => {
+    if ((await requestBluetoothEnable()) === 'on') setBluetoothOff(false);
+  }, []);
   useEffect(() => {
     if (!proximityCode || !radarLive) return;
     let cancelled = false;
+    const updateBluetoothState = async () => {
+      const bluetooth = await getBluetoothState();
+      if (!cancelled && (bluetooth === 'on' || bluetooth === 'off'))
+        setBluetoothOff(bluetooth === 'off');
+      return bluetooth;
+    };
     (async () => {
       let state = await getProximityPermissionState();
+      let justGranted = false;
       if (state === 'prompt' && !cancelled) {
         let alreadyAsked = false;
         try {
@@ -1129,17 +1151,43 @@ export default function App() {
         );
         if (!wants || cancelled) return;
         state = await requestProximityPermission();
+        justGranted = state === 'granted';
       }
-      if (state === 'granted' && !cancelled) startNearby(proximityCode);
+      if (state !== 'granted' || cancelled) return;
+      startNearby(proximityCode);
+
+      if ((await updateBluetoothState()) !== 'off' || cancelled) return;
+      try {
+        if (localStorage.getItem('pl_ble_enable_asked_session') === arenaSessionId) return;
+        localStorage.setItem('pl_ble_enable_asked_session', arenaSessionId);
+      } catch {
+        /* senza localStorage si chiede comunque, una volta per avvio */
+      }
+      const wants =
+        justGranted ||
+        window.confirm(
+          'Il Bluetooth è spento. Vuoi accenderlo per vedere chi hai vicino nel locale?'
+        );
+      if (wants && !cancelled && (await requestBluetoothEnable()) === 'on' && !cancelled) {
+        setBluetoothOff(false);
+      }
     })();
-    // Al ritorno in primo piano si riaccende: il Bluetooth può essere
-    // stato riacceso, o il permesso concesso dalle impostazioni.
+    const removeBluetoothListener = onBluetoothStateChange((bluetooth) =>
+      setBluetoothOff(bluetooth === 'off')
+    );
+    // Al ritorno in primo piano si riaccende e si rilegge lo stato: il
+    // Bluetooth può essere stato acceso, o il permesso concesso dalle
+    // impostazioni.
     const removeForeground = onAppForeground(async () => {
-      if ((await getProximityPermissionState()) === 'granted') startNearby(proximityCode);
+      if ((await getProximityPermissionState()) !== 'granted') return;
+      startNearby(proximityCode);
+      updateBluetoothState();
     });
     return () => {
       cancelled = true;
+      removeBluetoothListener();
       removeForeground();
+      setBluetoothOff(false);
       stopNearby();
     };
   }, [proximityCode, radarLive, arenaSessionId]);
@@ -1326,6 +1374,8 @@ export default function App() {
                 onVenueIdDetected={setVenueId}
                 sharedSocket={sharedSocket}
                 onRadarLive={setRadarLiveSessionId}
+                bluetoothOff={radarLive && !!proximityCode && bluetoothOff}
+                onEnableBluetooth={handleEnableBluetooth}
               />
               {featureFlags.historical_board && (
                 <button

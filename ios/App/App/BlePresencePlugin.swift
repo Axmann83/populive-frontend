@@ -16,7 +16,10 @@ class MainViewController: CAPBridgeViewController {
 /// iOS lascia trasmettere solo UUID di servizio e nome locale: il codice (8 caratteri) va nel nome.
 /// Android lo trasmette nei "service data" (6 byte): in ascolto si leggono entrambi i formati.
 /// Solo con l'app in primo piano (in background iOS toglie il nome dalla trasmissione): si spegne
-/// all'uscita e si riaccende al ritorno da solo, se il JS non l'ha spento nel frattempo. Gli
+/// all'uscita e si riaccende al ritorno da solo, se il JS non l'ha spento nel frattempo. Con il
+/// Bluetooth spento resta in attesa e riparte quando l'utente lo accende; il JS riceve "stateChange"
+/// { state }. Nessuna app può accendere il Bluetooth su iOS: requestEnable fa comparire l'avviso di
+/// sistema di Apple ("Attiva il Bluetooth…", con il pulsante Impostazioni). Gli
 /// avvistamenti arrivano al JS come evento "proximity" { code, rssi }, al massimo uno al secondo
 /// per codice. Al server non va niente.
 @objc(BlePresencePlugin)
@@ -28,6 +31,8 @@ public class BlePresencePlugin: CAPPlugin, CAPBridgedPlugin, CBCentralManagerDel
         CAPPluginMethod(name: "requestPermissions", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "start", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "stop", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "getState", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "requestEnable", returnType: CAPPluginReturnPromise),
     ]
 
     // Stesso UUID in BlePresencePlugin.java.
@@ -42,6 +47,11 @@ public class BlePresencePlugin: CAPPlugin, CAPBridgedPlugin, CBCentralManagerDel
     private var inForeground = true
     private var lastEmit: [String: Date] = [:]
     private var pendingPermissionCalls: [CAPPluginCall] = []
+    private var pendingStateCalls: [CAPPluginCall] = []
+    // Gestore usato solo per far comparire l'avviso "Attiva il Bluetooth": lo mostra iOS quando
+    // nasce un gestore con l'opzione accesa e il Bluetooth spento.
+    private var powerAlertManager: CBCentralManager?
+    private var lastNotifiedState: String?
 
     @objc override public func load() {
         let center = NotificationCenter.default
@@ -85,6 +95,46 @@ public class BlePresencePlugin: CAPPlugin, CAPBridgedPlugin, CBCentralManagerDel
             }
             self.pendingPermissionCalls.append(call)
             self.ensureCentral()
+        }
+    }
+
+    // MARK: - Bluetooth acceso o spento
+
+    /// "on" | "off" | "unsupported" | "unknown" (iOS non l'ha ancora comunicato).
+    private func bluetoothState() -> String {
+        switch central?.state {
+        case .poweredOn?: return "on"
+        case .poweredOff?: return "off"
+        case .unsupported?: return "unsupported"
+        default: return "unknown"
+        }
+    }
+
+    /// Lo stato si conosce solo da un gestore Bluetooth, che a permesso non ancora chiesto farebbe
+    /// comparire l'avviso del permesso: fino ad allora "unknown".
+    @objc func getState(_ call: CAPPluginCall) {
+        DispatchQueue.main.async {
+            guard CBManager.authorization == .allowedAlways else {
+                call.resolve(["state": "unknown"])
+                return
+            }
+            self.ensureCentral()
+            if self.central?.state == .unknown || self.central?.state == .resetting {
+                self.pendingStateCalls.append(call) // risponde centralManagerDidUpdateState
+            } else {
+                call.resolve(["state": self.bluetoothState()])
+            }
+        }
+    }
+
+    @objc func requestEnable(_ call: CAPPluginCall) {
+        DispatchQueue.main.async {
+            if self.central?.state == .poweredOff {
+                self.powerAlertManager = CBCentralManager(delegate: nil, queue: nil,
+                                                          options: [CBCentralManagerOptionShowPowerAlertKey: true])
+            }
+            // Si risponde subito: l'eventuale accensione arriva dopo, come "stateChange".
+            call.resolve(["state": self.bluetoothState()])
         }
     }
 
@@ -168,6 +218,17 @@ public class BlePresencePlugin: CAPPlugin, CAPBridgedPlugin, CBCentralManagerDel
             pendingPermissionCalls = []
             calls.forEach { $0.resolve(["bluetooth": permissionState()]) }
         }
+        let state = bluetoothState()
+        if state != "unknown" {
+            let calls = pendingStateCalls
+            pendingStateCalls = []
+            calls.forEach { $0.resolve(["state": state]) }
+            if state != lastNotifiedState {
+                lastNotifiedState = state
+                notifyListeners("stateChange", data: ["state": state])
+            }
+        }
+        if state == "on" { powerAlertManager = nil }
         refresh()
     }
 

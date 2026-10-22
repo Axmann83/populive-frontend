@@ -14,17 +14,23 @@ import android.bluetooth.le.ScanFilter;
 import android.bluetooth.le.ScanRecord;
 import android.bluetooth.le.ScanResult;
 import android.bluetooth.le.ScanSettings;
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Build;
 import android.os.ParcelUuid;
 import android.os.SystemClock;
 import android.util.Base64;
+import androidx.activity.result.ActivityResult;
+import androidx.core.content.ContextCompat;
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Logger;
 import com.getcapacitor.PermissionState;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
+import com.getcapacitor.annotation.ActivityCallback;
 import com.getcapacitor.annotation.CapacitorPlugin;
 import com.getcapacitor.annotation.Permission;
 import com.getcapacitor.annotation.PermissionCallback;
@@ -43,7 +49,10 @@ import java.util.Map;
  * nome locale. In ascolto si leggono entrambi i formati.
  *
  * Solo con l'app in primo piano: in pausa si spegne e alla ripresa si riaccende da solo, se il JS
- * non l'ha spento nel frattempo. Gli avvistamenti arrivano al JS come evento "proximity" { code,
+ * non l'ha spento nel frattempo. Con il Bluetooth del telefono spento resta in attesa: quando
+ * l'utente lo accende (anche dalla tendina) riparte da solo, e il JS riceve "stateChange" { state }.
+ * L'app non può accenderlo da sola: requestEnable mostra l'avviso di sistema "PopuLive vuole
+ * attivare il Bluetooth". Gli avvistamenti arrivano al JS come evento "proximity" { code,
  * rssi }, al massimo uno al secondo per codice. Al server non va niente.
  *
  * I controlli di permesso sono fatti a mano prima di ogni chiamata (Capacitor), da qui il
@@ -54,8 +63,14 @@ import java.util.Map;
     name = "BlePresence",
     permissions = {
         // Android 12 e successivi: permessi Bluetooth veri (BLUETOOTH_SCAN dichiarato
-        // "neverForLocation" nel manifest).
-        @Permission(alias = "bluetooth", strings = { Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_ADVERTISE }),
+        // "neverForLocation" nel manifest). BLUETOOTH_CONNECT serve solo a chiedere di accendere il
+        // Bluetooth; stesso gruppo "dispositivi nelle vicinanze", quindi un solo avviso.
+        @Permission(
+            alias = "bluetooth",
+            strings = {
+                Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_ADVERTISE, Manifest.permission.BLUETOOTH_CONNECT
+            }
+        ),
         // Fino ad Android 11 la scansione Bluetooth richiede la posizione.
         @Permission(alias = "bluetoothLegacy", strings = { Manifest.permission.ACCESS_FINE_LOCATION })
     }
@@ -75,6 +90,80 @@ public class BlePresencePlugin extends Plugin {
     private AdvertiseCallback advertiseCallback;
     private ScanCallback scanCallback;
     private final Map<String, Long> lastEmit = new HashMap<>();
+
+    // Bluetooth acceso o spento dall'utente: si riparte (o ci si ferma) da soli e si avvisa il JS.
+    private final BroadcastReceiver stateReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR);
+            if (state == BluetoothAdapter.STATE_ON) {
+                if (activeCode != null && hasPermission()) startRadio();
+                notifyState("on");
+            } else if (state == BluetoothAdapter.STATE_OFF) {
+                stopRadio();
+                notifyState("off");
+            }
+        }
+    };
+
+    @Override
+    public void load() {
+        // Broadcast di sistema protetto (lo può mandare solo il sistema): "exported" non apre niente.
+        ContextCompat.registerReceiver(
+            getContext(),
+            stateReceiver,
+            new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED),
+            ContextCompat.RECEIVER_EXPORTED
+        );
+    }
+
+    private BluetoothAdapter adapter() {
+        BluetoothManager manager = (BluetoothManager) getContext().getSystemService(Context.BLUETOOTH_SERVICE);
+        return manager == null ? null : manager.getAdapter();
+    }
+
+    /** "on" | "off" | "unsupported" (telefono senza Bluetooth LE). */
+    private String bluetoothState() {
+        BluetoothAdapter adapter = adapter();
+        if (adapter == null) return "unsupported";
+        return adapter.isEnabled() ? "on" : "off";
+    }
+
+    private void notifyState(String state) {
+        JSObject event = new JSObject();
+        event.put("state", state);
+        notifyListeners("stateChange", event);
+    }
+
+    private void resolveState(PluginCall call) {
+        JSObject result = new JSObject();
+        result.put("state", bluetoothState());
+        call.resolve(result);
+    }
+
+    @PluginMethod
+    public void getState(PluginCall call) {
+        resolveState(call);
+    }
+
+    @PluginMethod
+    public void requestEnable(PluginCall call) {
+        if (!"off".equals(bluetoothState())) {
+            resolveState(call);
+            return;
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !hasPermission()) {
+            call.reject("permission_denied");
+            return;
+        }
+        startActivityForResult(call, new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE), "enableResult");
+    }
+
+    @ActivityCallback
+    private void enableResult(PluginCall call, ActivityResult result) {
+        // L'accensione può richiedere un attimo: se non è ancora "on", arriverà "stateChange".
+        resolveState(call);
+    }
 
     private String permissionAlias() {
         return Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ? "bluetooth" : "bluetoothLegacy";
@@ -154,6 +243,11 @@ public class BlePresencePlugin extends Plugin {
     protected void handleOnDestroy() {
         activeCode = null;
         stopRadio();
+        try {
+            getContext().unregisterReceiver(stateReceiver);
+        } catch (IllegalArgumentException e) {
+            // mai registrato
+        }
     }
 
     private static byte[] decodeCode(String code) {
@@ -170,10 +264,9 @@ public class BlePresencePlugin extends Plugin {
     private synchronized String startRadio() {
         stopRadio();
         if (paused) return null; // si accende alla ripresa (handleOnResume)
-        BluetoothManager manager = (BluetoothManager) getContext().getSystemService(Context.BLUETOOTH_SERVICE);
-        BluetoothAdapter adapter = manager == null ? null : manager.getAdapter();
+        BluetoothAdapter adapter = adapter();
         if (adapter == null) return "unsupported";
-        if (!adapter.isEnabled()) return "bluetooth_off";
+        if (!adapter.isEnabled()) return "bluetooth_off"; // riparte da solo all'accensione (stateReceiver)
 
         // Trasmissione. Alcuni telefoni sanno solo ascoltare: in quel caso vedono gli altri ma non
         // si fanno vedere.

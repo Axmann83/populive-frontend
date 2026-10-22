@@ -4,7 +4,8 @@ import { apiFetch, setLastVenue, clearLastVenue, getOptimizedPhotoUrl } from './
 import { usePhotoPreview } from './PhotoPreview';
 import ProfileFullScreen from './ProfileFullScreen';
 import QrScannerModal from './QrScannerModal';
-import { Armchair, Radar as RadarIcon } from './PopuLiveIcons';
+import { Armchair, Radar as RadarIcon, Signal } from './PopuLiveIcons';
+import { subscribeNearby } from './proximity';
 
 /**
  * ============================================================
@@ -39,8 +40,14 @@ export default function CheckinRadar({
   onVenueIdDetected,
   sharedSocket,
   exitNotice, // motivo dell'ultima uscita dalla serata, o null (v. App.jsx)
+  onRadarLive, // chiamata con l'id della serata quando il radar è live (Bluetooth, D4)
 }) {
   const [arenaActive, setArenaActive] = useState(false);
+  // Codici Bluetooth di chi è vicino adesso (D4, v. proximity.js): le
+  // persone del radar portano il loro codice della serata, dato dal
+  // server con radar_snapshot e presence_update.
+  const [nearCodes, setNearCodes] = useState(() => new Set());
+  useEffect(() => subscribeNearby(setNearCodes), []);
   const [checkinCount, setCheckinCount] = useState(0);
   const [threshold, setThreshold] = useState(20);
   const [radarPeople, setRadarPeople] = useState([]);
@@ -204,6 +211,13 @@ export default function CheckinRadar({
     };
   }, [userId]);
 
+  // Radar live in questa serata: App.jsx accende il Bluetooth (e la
+  // prima volta ne chiede il permesso). Si passa l'id da qui, non dal
+  // ref di App.jsx, che in questo stesso momento può essere ancora vecchio.
+  useEffect(() => {
+    if (arenaActive && status === 'checked_in' && arenaSessionId) onRadarLive?.(arenaSessionId);
+  }, [arenaActive, status, arenaSessionId, onRadarLive]);
+
   // --------------------------------------------------------
   // Connessione WebSocket CONDIVISA (31/8, prima ne apriva una
   // tutta sua) — App.jsx possiede la connessione vera, qui ci
@@ -237,8 +251,13 @@ export default function CheckinRadar({
 
       setRadarPeople((prev) => {
         if (payload.type === 'joined') {
-          if (prev.some((p) => p.userId === payload.userId)) return prev;
-          return [...prev, { userId: payload.userId, joinedAt: Date.now() }];
+          const proximityCode = payload.proximityCode || null;
+          if (prev.some((p) => p.userId === payload.userId)) {
+            return proximityCode
+              ? prev.map((p) => (p.userId === payload.userId ? { ...p, proximityCode } : p))
+              : prev;
+          }
+          return [...prev, { userId: payload.userId, joinedAt: Date.now(), proximityCode }];
         }
         if (payload.type === 'left') {
           return prev.filter((p) => p.userId !== payload.userId);
@@ -257,10 +276,14 @@ export default function CheckinRadar({
     // chi è uscito mentre eravamo scollegati non ci ha mai mandato il
     // suo "left" — va tolto qui. Restano solo i fantasmi rivelati, che
     // l'istantanea per costruzione non contiene mai.
-    function handleRadarSnapshot({ userIds }) {
+    function handleRadarSnapshot({ userIds, proximityCodes = {} }) {
       setRadarPeople((prevAll) => {
         const current = new Set(userIds);
-        const prev = prevAll.filter((p) => p.revealedGhost || current.has(p.userId));
+        const prev = prevAll
+          .filter((p) => p.revealedGhost || current.has(p.userId))
+          .map((p) =>
+            proximityCodes[p.userId] ? { ...p, proximityCode: proximityCodes[p.userId] } : p
+          );
         const existingIds = new Set(prev.map((p) => p.userId));
         const seenInThisBatch = new Set(); // il server ora è già corretto, ma non ci fidiamo di un solo livello — se lo stesso id comparisse più volte nello stesso messaggio, lo prendiamo una volta sola
         const newEntries = userIds
@@ -275,7 +298,11 @@ export default function CheckinRadar({
             seenInThisBatch.add(id);
             return true;
           })
-          .map((id) => ({ userId: id, joinedAt: Date.now() }));
+          .map((id) => ({
+            userId: id,
+            joinedAt: Date.now(),
+            proximityCode: proximityCodes[id] || null,
+          }));
         return [...prev, ...newEntries];
       });
     }
@@ -703,10 +730,18 @@ export default function CheckinRadar({
             // segue quello del boost più recente; tutti gli altri
             // restano nel loro ordine originale, semplicemente
             // spostati dopo.
+            //
+            // Ancora prima, chi è vicino adesso via Bluetooth (D4,
+            // decisione dell'utente del 22/10): in testa alla griglia,
+            // con l'icona del segnale sulla scheda. Tra i vicini, e tra
+            // tutti gli altri, vale l'ordine del boost qui sopra.
+            const isNear = (p) => !!p.proximityCode && nearCodes.has(p.proximityCode);
             const sortedOthers =
-              boostedUserIds.length === 0
+              boostedUserIds.length === 0 && nearCodes.size === 0
                 ? othersOnly
                 : [...othersOnly].sort((a, b) => {
+                    const nearDiff = Number(isNear(b)) - Number(isNear(a));
+                    if (nearDiff !== 0) return nearDiff;
                     const aBoost = boostedUserIds.indexOf(a.userId);
                     const bBoost = boostedUserIds.indexOf(b.userId);
                     if (aBoost === -1 && bBoost === -1) return 0; // nessuno dei due è boostato — ordine invariato
@@ -809,6 +844,7 @@ export default function CheckinRadar({
                       personId={p.userId}
                       arenaSessionId={arenaSessionId}
                       viewerId={userId}
+                      isNear={isNear(p)}
                       onClick={() => setSelectedProfileUserId(p.userId)}
                     />
                   ))}
@@ -1017,7 +1053,7 @@ export default function CheckinRadar({
  * foto/nome veri con lo stesso endpoint pubblico usato altrove,
  * invece di mostrare l'id grezzo del database.
  */
-function RadarCard({ personId, arenaSessionId, onClick }) {
+function RadarCard({ personId, arenaSessionId, isNear, onClick }) {
   // La foto in grande si apre da sola, senza passare dal profilo
   // intero: nel radar il cerchietto è da 32px e il senso di tutto
   // è riconoscere chi hai davanti (v. PhotoPreview.jsx).
@@ -1057,6 +1093,16 @@ function RadarCard({ personId, arenaSessionId, onClick }) {
         )}
       </span>
       <span className="pl-radar-card-id">{preview?.displayName || 'Caricamento…'}</span>
+      {/* Vicino adesso via Bluetooth (D4): solo l'icona, senza testo. */}
+      {isNear && (
+        <Signal
+          size={14}
+          color="var(--cyan)"
+          strokeWidth={2.4}
+          style={{ marginLeft: 'auto', flexShrink: 0 }}
+          aria-label="Vicino a te"
+        />
+      )}
       {photoPreview}
     </div>
   );

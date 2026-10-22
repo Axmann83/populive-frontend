@@ -26,6 +26,8 @@
 	<false/>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>While you are on a venue's radar and the app is open, PopuLive uses Bluetooth to show first the people who are physically near you. It shares only an anonymous code that changes every night.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>PopuLive uses the camera to scan the QR codes of venues and missions.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>

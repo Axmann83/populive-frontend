@@ -10,7 +10,10 @@ import {
   requestPushPermission,
   onPushTokenChange,
   onPushTapped,
+  getProximityPermissionState,
+  requestProximityPermission,
 } from './native';
+import { startNearby, stopNearby } from './proximity';
 
 import Login from './Login';
 import ProfileCreation from './ProfileCreation';
@@ -1022,6 +1025,15 @@ export default function App() {
     socket.on('arena_left', leaveIfCurrent('manual'));
     socket.on('arena_closed', leaveIfCurrent('session_end'));
 
+    // Conferma dell'ingresso nel radar, con il codice Bluetooth della
+    // serata da trasmettere (D4; null in Ghost Mode). Solo se riguarda la
+    // serata in cui siamo.
+    socket.on('joined_arena_ack', ({ arenaSessionId: ackId, proximityCode } = {}) => {
+      if (ackId && ackId === arenaSessionIdRef.current) {
+        setOwnProximity({ arenaSessionId: ackId, code: proximityCode || null });
+      }
+    });
+
     socket.on('chat_unlocked', (payload) => {
       // Sempre, anche con un'altra chat aperta: niente banner in quel
       // caso, ma la nuova conversazione deve comunque stare in lista.
@@ -1081,6 +1093,56 @@ export default function App() {
       refreshLocationIfConsented(userId);
     });
   }, [authState, userId, refreshActiveChats, refreshUnreadChatCount, verifyStillAtVenue]);
+
+  // --------------------------------------------------------
+  // Bluetooth: chi hai vicino nel radar (D4 strada B, ottobre 2026)
+  // --------------------------------------------------------
+  // Con il radar live il telefono trasmette il codice anonimo della
+  // serata (arriva con joined_arena_ack) e ascolta quelli degli altri;
+  // CheckinRadar mette in testa chi è vicino (proximity.js). Resta acceso
+  // su tutte le schede, perché gli altri ci vedano anche mentre siamo in
+  // chat; il plugin si spegne da solo in background. Il permesso si
+  // chiede al primo radar live, con una domanda nostra prima dell'avviso
+  // di sistema (come per le push), al massimo una volta per serata. Senza
+  // permesso o con il Bluetooth spento il radar funziona come prima.
+  const [ownProximity, setOwnProximity] = useState(null); // { arenaSessionId, code }
+  const [radarLiveSessionId, setRadarLiveSessionId] = useState(null);
+  const proximityCode =
+    arenaSessionId && ownProximity?.arenaSessionId === arenaSessionId ? ownProximity.code : null;
+  const radarLive = !!arenaSessionId && radarLiveSessionId === arenaSessionId;
+  useEffect(() => {
+    if (!proximityCode || !radarLive) return;
+    let cancelled = false;
+    (async () => {
+      let state = await getProximityPermissionState();
+      if (state === 'prompt' && !cancelled) {
+        let alreadyAsked = false;
+        try {
+          alreadyAsked = localStorage.getItem('pl_ble_asked_session') === arenaSessionId;
+          if (!alreadyAsked) localStorage.setItem('pl_ble_asked_session', arenaSessionId);
+        } catch {
+          /* senza localStorage si chiede comunque, una volta per avvio */
+        }
+        if (alreadyAsked) return;
+        const wants = window.confirm(
+          'Vuoi vedere chi hai vicino? Con il Bluetooth mettiamo in cima al radar le persone a pochi metri da te, solo mentre l’app è aperta.'
+        );
+        if (!wants || cancelled) return;
+        state = await requestProximityPermission();
+      }
+      if (state === 'granted' && !cancelled) startNearby(proximityCode);
+    })();
+    // Al ritorno in primo piano si riaccende: il Bluetooth può essere
+    // stato riacceso, o il permesso concesso dalle impostazioni.
+    const removeForeground = onAppForeground(async () => {
+      if ((await getProximityPermissionState()) === 'granted') startNearby(proximityCode);
+    });
+    return () => {
+      cancelled = true;
+      removeForeground();
+      stopNearby();
+    };
+  }, [proximityCode, radarLive, arenaSessionId]);
 
   // Appena conosciamo l'Arena in cui siamo (dopo il check-in),
   // colleghiamo QUESTA STESSA connessione anche alla sua stanza —
@@ -1263,6 +1325,7 @@ export default function App() {
                 onResumeExpired={handleResumeExpired}
                 onVenueIdDetected={setVenueId}
                 sharedSocket={sharedSocket}
+                onRadarLive={setRadarLiveSessionId}
               />
               {featureFlags.historical_board && (
                 <button

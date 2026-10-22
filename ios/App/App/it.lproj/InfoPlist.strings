@@ -6,6 +6,8 @@
   anche qui.
 */
 
+"NSBluetoothAlwaysUsageDescription" = "Quando sei nel radar di un locale e l'app è aperta, PopuLive usa il Bluetooth per mostrarti per prime le persone fisicamente vicino a te. Condivide solo un codice anonimo che cambia ogni sera.";
+
 "NSCameraUsageDescription" = "PopuLive usa la fotocamera per scansionare i codici QR dei locali e delle missioni.";
 
 "NSLocationWhenInUseUsageDescription" = "PopuLive usa la tua posizione per mostrarti i locali e le missioni vicino a te e, quando sei nel radar di un locale, per verificare che tu sia ancora lì.";

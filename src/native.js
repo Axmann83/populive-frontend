@@ -1,4 +1,4 @@
-import { Capacitor } from '@capacitor/core';
+import { Capacitor, registerPlugin } from '@capacitor/core';
 import { App as CapApp } from '@capacitor/app';
 import { Browser } from '@capacitor/browser';
 import { Geolocation } from '@capacitor/geolocation';
@@ -313,6 +313,82 @@ export function onPushTapped(handler) {
   if (!isNative()) return () => {};
   const listener = FirebaseMessaging.addListener('notificationActionPerformed', (event) => {
     handler(event?.notification?.data || {});
+  });
+  return () => {
+    listener.then((l) => l.remove());
+  };
+}
+
+/**
+ * ============================================================
+ * BLUETOOTH: CHI HAI VICINO NEL RADAR (D4 strada B, ottobre 2026)
+ * ============================================================
+ * Plugin nostro, dentro l'app (nessuna libreria esterna trasmette via
+ * Bluetooth LE): Android BlePresencePlugin.java accanto a MainActivity,
+ * iOS BlePresencePlugin.swift. Ogni telefono nel radar trasmette il
+ * codice della serata che gli dà il server (8 caratteri, anonimo) e
+ * ascolta quelli degli altri; a ogni avvistamento arriva { code, rssi }
+ * (al massimo uno al secondo per codice). Funziona solo con l'app
+ * aperta: in background il plugin si spegne da solo e si riaccende al
+ * ritorno. La vicinanza si calcola in proximity.js. Sul web niente.
+ * ============================================================
+ */
+const BlePresence = registerPlugin('BlePresence');
+
+/** 'granted' | 'denied' | 'prompt' | 'unsupported' (web), senza chiederlo. */
+export async function getProximityPermissionState() {
+  if (!isNative()) return 'unsupported';
+  try {
+    const { bluetooth } = await BlePresence.checkPermissions();
+    return bluetooth === 'granted' ? 'granted' : bluetooth === 'denied' ? 'denied' : 'prompt';
+  } catch {
+    return 'unsupported';
+  }
+}
+
+/** Mostra l'avviso di sistema del Bluetooth; restituisce lo stato finale. */
+export async function requestProximityPermission() {
+  if (!isNative()) return 'unsupported';
+  try {
+    const { bluetooth } = await BlePresence.requestPermissions();
+    return bluetooth === 'granted' ? 'granted' : 'denied';
+  } catch {
+    return 'denied';
+  }
+}
+
+/**
+ * Accende trasmissione e ascolto con il proprio codice. Richiamarla con
+ * lo stesso codice non fa danni (riparte da capo: serve anche dopo aver
+ * riacceso il Bluetooth). Mai un errore verso chi chiama: Bluetooth
+ * spento, permesso mancante o telefono senza Bluetooth LE = il radar
+ * funziona come prima, senza vicinanza.
+ */
+export async function startProximity(code) {
+  if (!isNative() || !code) return false;
+  try {
+    await BlePresence.start({ code });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Spegne trasmissione e ascolto. */
+export async function stopProximity() {
+  if (!isNative()) return;
+  try {
+    await BlePresence.stop();
+  } catch {
+    /* già spento */
+  }
+}
+
+/** L'handler riceve { code, rssi } a ogni avvistamento. Ritorna il cleanup. */
+export function onProximity(handler) {
+  if (!isNative()) return () => {};
+  const listener = BlePresence.addListener('proximity', (event) => {
+    if (event?.code && Number.isFinite(event.rssi)) handler({ code: event.code, rssi: event.rssi });
   });
   return () => {
     listener.then((l) => l.remove());

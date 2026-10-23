@@ -245,9 +245,11 @@ public class BlePresencePlugin: CAPPlugin, CAPBridgedPlugin, CBCentralManagerDel
     public func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral,
                                advertisementData: [String: Any], rssi RSSI: NSNumber) {
         var code: String?
+        var source = "ios" // chi trasmette, dal formato: serve al JS per compensare la potenza
         if let serviceData = advertisementData[CBAdvertisementDataServiceDataKey] as? [CBUUID: Data],
            let data = serviceData[Self.serviceUUID], data.count == 6 {
             code = Self.base64url(data) // un Android
+            source = "android"
         } else if let name = advertisementData[CBAdvertisementDataLocalNameKey] as? String,
                   name.count == Self.codeLength {
             code = name // un altro iPhone
@@ -259,7 +261,7 @@ public class BlePresencePlugin: CAPPlugin, CAPBridgedPlugin, CBCentralManagerDel
         let now = Date()
         if let last = lastEmit[code], now.timeIntervalSince(last) < Self.emitInterval { return }
         lastEmit[code] = now
-        notifyListeners("proximity", data: ["code": code, "rssi": rssi])
+        notifyListeners("proximity", data: ["code": code, "rssi": rssi, "source": source])
     }
 
     private static func base64url(_ data: Data) -> String {

@@ -342,12 +342,17 @@ public class BlePresencePlugin extends Plugin {
         ScanRecord record = result.getScanRecord();
         if (record == null) return;
         String code = null;
+        String source = null; // chi trasmette, dal formato: serve al JS per compensare la potenza
         byte[] serviceData = record.getServiceData(SERVICE_UUID);
         if (serviceData != null && serviceData.length == CODE_BYTES) {
             code = Base64.encodeToString(serviceData, CODE_FLAGS); // un altro Android
+            source = "android";
         } else {
             String name = record.getDeviceName(); // un iPhone
-            if (decodeCode(name) != null) code = name;
+            if (decodeCode(name) != null) {
+                code = name;
+                source = "ios";
+            }
         }
         if (code == null || code.equals(activeCode)) return;
 
@@ -359,6 +364,7 @@ public class BlePresencePlugin extends Plugin {
         JSObject event = new JSObject();
         event.put("code", code);
         event.put("rssi", result.getRssi());
+        event.put("source", source);
         notifyListeners("proximity", event);
     }
 }

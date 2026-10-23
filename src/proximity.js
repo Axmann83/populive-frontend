@@ -28,6 +28,13 @@ import { onProximity, startProximity, stopProximity } from './native';
  *   salterebbe di continuo da un'icona all'altra.
  * - Chi non si sente da 20 secondi è dimenticato (lontano).
  *
+ * - Un Android trasmette più piano di un iPhone (al massimo +1 dBm
+ *   concesso alle app, verificato sul Samsung il 23/10; l'iPhone di più
+ *   e non si regola): a parità di distanza arriva più debole. Al segnale
+ *   ricevuto da un Android si aggiungono ANDROID_SENDER_BOOST_DB, su
+ *   qualunque telefono lo riceva (stima, decisione dell'utente del 23/10
+ *   "il Samsung deve trasmettere un po' di più").
+ *
  * Tutto resta sul telefono: al server non arriva niente.
  * ============================================================
  */
@@ -35,6 +42,7 @@ import { onProximity, startProximity, stopProximity } from './native';
 const NEAR_RSSI = -58;
 const MEDIUM_RSSI = -73;
 const HYSTERESIS_DB = 4;
+const ANDROID_SENDER_BOOST_DB = 6;
 const AVERAGE_WINDOW_MS = 10000;
 const FORGET_MS = 20000;
 const SWEEP_INTERVAL_MS = 2000;
@@ -79,9 +87,10 @@ function recompute() {
   }
 }
 
-function handleSighting({ code, rssi }) {
+function handleSighting({ code, rssi, source }) {
   const entry = sightings.get(code) || { samples: [], level: null };
-  entry.samples.push({ at: Date.now(), rssi });
+  const boost = source === 'android' ? ANDROID_SENDER_BOOST_DB : 0;
+  entry.samples.push({ at: Date.now(), rssi: rssi + boost });
   sightings.set(code, entry);
   recompute();
 }

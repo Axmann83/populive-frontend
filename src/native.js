@@ -427,11 +427,17 @@ export function onBluetoothStateChange(handler) {
   };
 }
 
-/** L'handler riceve { code, rssi } a ogni avvistamento. Ritorna il cleanup. */
+/**
+ * L'handler riceve { code, rssi, source } a ogni avvistamento: source è
+ * 'android' o 'ios', chi trasmette (dal formato del segnale). Ritorna il
+ * cleanup.
+ */
 export function onProximity(handler) {
   if (!isNative()) return () => {};
   const listener = BlePresence.addListener('proximity', (event) => {
-    if (event?.code && Number.isFinite(event.rssi)) handler({ code: event.code, rssi: event.rssi });
+    if (event?.code && Number.isFinite(event.rssi)) {
+      handler({ code: event.code, rssi: event.rssi, source: event.source || null });
+    }
   });
   return () => {
     listener.then((l) => l.remove());

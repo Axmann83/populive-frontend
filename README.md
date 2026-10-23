@@ -7,7 +7,7 @@ Web app React (Create React App), pensata per browser mobile, impacchettata come
 - React 18 + `react-scripts` 5 (Create React App)
 - `leaflet` (mappe), `socket.io-client` (chat realtime), `html5-qrcode` / `qrcode`, `lucide-react` (icone)
 - Capacitor 8 (`@capacitor/app`, `@capacitor/browser`, `@capacitor/geolocation`, `@capacitor/haptics`,
-  `@capacitor-firebase/messaging`) per le app iOS/Android
+  `@capacitor-firebase/messaging`, più il plugin nostro `BlePresence` per il Bluetooth) per le app iOS/Android
 - ESLint + Prettier per la qualità del codice, Husky + lint-staged per il pre-commit
 
 ## Requisiti
@@ -208,6 +208,20 @@ Le **notifiche push** (ottobre 2026) passano da Firebase Cloud Messaging su Andr
   gli eventi socket;
 - l'invio e i testi sono nel backend (`populive-push.js`). Sul web niente push.
 
+Il **Bluetooth del radar** (ottobre 2026) mostra chi è fisicamente vicino adesso, solo con l'app aperta. Usa un
+plugin nostro dentro l'app, `BlePresence` (nessuna libreria esterna sa trasmettere):
+- Android `android/app/src/main/java/com/populive/app/BlePresencePlugin.java`, registrato in `MainActivity.java`;
+  iOS `ios/App/App/BlePresencePlugin.swift`, con `MainViewController` che lo registra (creato da `SceneDelegate.swift`;
+  file aggiunto a mano in `project.pbxproj`). Permessi nel manifest e in `Info.plist`
+  (`NSBluetoothAlwaysUsageDescription`, tradotto in `it.lproj/InfoPlist.strings`);
+- ogni telefono trasmette il codice anonimo della serata che gli dà il backend (`joined_arena_ack`) e ascolta quelli
+  degli altri; `src/proximity.js` decide la fascia (vicino, media distanza, lontano) dal segnale, `src/App.jsx`
+  accende e spegne il Bluetooth e chiede permesso e accensione, `src/CheckinRadar.jsx` mette in testa i vicini con
+  l'icona del segnale. Al server non arriva niente;
+- funzioni in `src/native.js`: `getProximityPermissionState`, `requestProximityPermission`, `startProximity`,
+  `stopProximity`, `onProximity`, `getBluetoothState`, `requestBluetoothEnable`, `onBluetoothStateChange`. Sul web
+  non fanno niente.
+
 Su Windows `npx cap sync ios` / `cap update ios` non riesce a creare il collegamento simbolico che il plugin Firebase
 chiede con SPM (`symlink: true` in `capacitor.config.ts`, errore EPERM): `ios/App/CapApp-SPM/Package.swift` va
 aggiornato a mano (`symlinks/CapacitorFirebaseMessaging`); Codemagic, su Mac, lo rigenera da solo.
@@ -228,7 +242,8 @@ src/index.js            entry point
 src/App.jsx             root dell'app e navigazione tra le schermate
 src/apiClient.js        client HTTP centralizzato (token, sessione, apiFetch)
 src/*.jsx               schermate e componenti (Login, Dashboard, ExploreMap, ChatCenter, ...)
-src/native.js           ponte verso Capacitor (unico file che lo importa): browser in-app, deep link, back, posizione, vibrazione, push
+src/native.js           ponte verso Capacitor (unico file che lo importa): browser in-app, deep link, back, posizione, vibrazione, push, Bluetooth
+src/proximity.js        vicinanza via Bluetooth nel radar (fasce dal segnale)
 src/populive-styles.css stili globali
 capacitor.config.ts     configurazione Capacitor
 android/, ios/          progetti nativi generati da Capacitor

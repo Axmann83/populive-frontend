@@ -274,7 +274,10 @@ public class BlePresencePlugin extends Plugin {
         if (advertiser != null) {
             AdvertiseSettings settings = new AdvertiseSettings.Builder()
                 .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_LOW_LATENCY)
-                .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_MEDIUM)
+                // Potenza alta (23/10, prova 3c): con la media (−7 dBm) un iPhone, che trasmette più forte
+                // e non si può regolare, riceveva il Samsung molto più debole di quanto il Samsung ricevesse
+                // lui, e i due telefoni non si vedevano vicini alla stessa distanza.
+                .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_HIGH)
                 .setConnectable(false)
                 .build();
             AdvertiseData data = new AdvertiseData.Builder().setIncludeDeviceName(false).addServiceUuid(SERVICE_UUID).build();

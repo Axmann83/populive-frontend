@@ -16,15 +16,21 @@ import { onProximity, startProximity, stopProximity } from './native';
  *   esserlo solo sotto FAR_RSSI (isteresi): senza margine chi sta sul
  *   confine salirebbe e scenderebbe nella griglia di continuo.
  * - Chi non si sente da 20 secondi non è più vicino.
- * Le soglie sono un punto di partenza, da tarare nelle prove sui
- * telefoni veri (cambiano da modello a modello).
+ *
+ * "Vicino" = a pochi metri, circa 3: la stessa zona del locale
+ * (decisione dell'utente, 23/10). Soglie dalla prova tra iPhone e
+ * Samsung del 23/10 (segnale dell'iPhone sul Samsung): −30 a contatto,
+ * da −58 a −73 a media distanza, circa −81 nell'altra stanza. Con le
+ * prime soglie (−75/−82) l'altra stanza restava "vicina" per ~20 s.
+ * Il segnale cambia da modello a modello: da ritoccare se nei locali
+ * veri risulta troppo largo o troppo stretto.
  *
  * Tutto resta sul telefono: al server non arriva niente.
  * ============================================================
  */
 
-const NEAR_RSSI = -75;
-const FAR_RSSI = -82;
+const NEAR_RSSI = -65;
+const FAR_RSSI = -71;
 const AVERAGE_WINDOW_MS = 10000;
 const FORGET_MS = 20000;
 const SWEEP_INTERVAL_MS = 2000;

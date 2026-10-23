@@ -27,6 +27,7 @@ import {
   Bell,
   LogOut,
   Signal,
+  SignalMedium,
 } from 'lucide-react';
 
 /**
@@ -75,6 +76,7 @@ export {
   Bell,
   LogOut,
   Signal,
+  SignalMedium,
 };
 
 export function PulseWaveIcon({ size = 20, color = 'currentColor', strokeWidth = 2, ...props }) {

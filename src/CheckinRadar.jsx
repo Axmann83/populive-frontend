@@ -4,7 +4,7 @@ import { apiFetch, setLastVenue, clearLastVenue, getOptimizedPhotoUrl } from './
 import { usePhotoPreview } from './PhotoPreview';
 import ProfileFullScreen from './ProfileFullScreen';
 import QrScannerModal from './QrScannerModal';
-import { Armchair, Radar as RadarIcon, Signal } from './PopuLiveIcons';
+import { Armchair, Radar as RadarIcon, Signal, SignalMedium } from './PopuLiveIcons';
 import { subscribeNearby } from './proximity';
 
 /**
@@ -48,8 +48,9 @@ export default function CheckinRadar({
   // Codici Bluetooth di chi è vicino adesso (D4, v. proximity.js): le
   // persone del radar portano il loro codice della serata, dato dal
   // server con radar_snapshot e presence_update.
-  const [nearCodes, setNearCodes] = useState(() => new Set());
-  useEffect(() => subscribeNearby(setNearCodes), []);
+  // Mappa codice → fascia ('near' | 'medium'); chi è lontano non c'è.
+  const [proximityLevels, setProximityLevels] = useState(() => new Map());
+  useEffect(() => subscribeNearby(setProximityLevels), []);
   const [checkinCount, setCheckinCount] = useState(0);
   const [threshold, setThreshold] = useState(20);
   const [radarPeople, setRadarPeople] = useState([]);
@@ -734,16 +735,19 @@ export default function CheckinRadar({
             // spostati dopo.
             //
             // Ancora prima, chi è vicino adesso via Bluetooth (D4,
-            // decisione dell'utente del 22/10): in testa alla griglia,
-            // con l'icona del segnale sulla scheda. Tra i vicini, e tra
-            // tutti gli altri, vale l'ordine del boost qui sopra.
-            const isNear = (p) => !!p.proximityCode && nearCodes.has(p.proximityCode);
+            // decisioni dell'utente del 22 e 23/10): in testa i vicini
+            // (icona con il segnale pieno), poi la media distanza (metà
+            // segnale), poi tutti gli altri. Dentro ogni fascia vale
+            // l'ordine del boost qui sopra.
+            const levelOf = (p) =>
+              (p.proximityCode && proximityLevels.get(p.proximityCode)) || null;
+            const rank = (p) => ({ near: 2, medium: 1 })[levelOf(p)] || 0;
             const sortedOthers =
-              boostedUserIds.length === 0 && nearCodes.size === 0
+              boostedUserIds.length === 0 && proximityLevels.size === 0
                 ? othersOnly
                 : [...othersOnly].sort((a, b) => {
-                    const nearDiff = Number(isNear(b)) - Number(isNear(a));
-                    if (nearDiff !== 0) return nearDiff;
+                    const levelDiff = rank(b) - rank(a);
+                    if (levelDiff !== 0) return levelDiff;
                     const aBoost = boostedUserIds.indexOf(a.userId);
                     const bBoost = boostedUserIds.indexOf(b.userId);
                     if (aBoost === -1 && bBoost === -1) return 0; // nessuno dei due è boostato — ordine invariato
@@ -872,7 +876,7 @@ export default function CheckinRadar({
                       personId={p.userId}
                       arenaSessionId={arenaSessionId}
                       viewerId={userId}
-                      isNear={isNear(p)}
+                      proximityLevel={levelOf(p)}
                       onClick={() => setSelectedProfileUserId(p.userId)}
                     />
                   ))}
@@ -1081,7 +1085,7 @@ export default function CheckinRadar({
  * foto/nome veri con lo stesso endpoint pubblico usato altrove,
  * invece di mostrare l'id grezzo del database.
  */
-function RadarCard({ personId, arenaSessionId, isNear, onClick }) {
+function RadarCard({ personId, arenaSessionId, proximityLevel, onClick }) {
   // La foto in grande si apre da sola, senza passare dal profilo
   // intero: nel radar il cerchietto è da 32px e il senso di tutto
   // è riconoscere chi hai davanti (v. PhotoPreview.jsx).
@@ -1121,14 +1125,24 @@ function RadarCard({ personId, arenaSessionId, isNear, onClick }) {
         )}
       </span>
       <span className="pl-radar-card-id">{preview?.displayName || 'Caricamento…'}</span>
-      {/* Vicino adesso via Bluetooth (D4): solo l'icona, senza testo. */}
-      {isNear && (
+      {/* Vicinanza via Bluetooth (D4): solo l'icona, senza testo —
+          segnale pieno = vicino, metà segnale = media distanza. */}
+      {proximityLevel === 'near' && (
         <Signal
           size={14}
           color="var(--cyan)"
           strokeWidth={2.4}
           style={{ marginLeft: 'auto', flexShrink: 0 }}
           aria-label="Vicino a te"
+        />
+      )}
+      {proximityLevel === 'medium' && (
+        <SignalMedium
+          size={14}
+          color="var(--cyan)"
+          strokeWidth={2.4}
+          style={{ marginLeft: 'auto', flexShrink: 0 }}
+          aria-label="A media distanza"
         />
       )}
       {photoPreview}

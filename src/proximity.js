@@ -5,46 +5,60 @@ import { onProximity, startProximity, stopProximity } from './native';
  * POPULIVE — CHI HAI VICINO ADESSO (D4 strada B, ottobre 2026)
  * ============================================================
  * Raccoglie gli avvistamenti Bluetooth del plugin (v. native.js) e
- * decide quali codici sono "vicini". Un solo livello (decisione
- * dell'utente, 22/10): il segnale Bluetooth è impreciso, e due livelli
- * salterebbero di continuo dall'uno all'altro.
+ * mette ogni codice in una fascia di vicinanza.
+ *
+ * Tre fasce (decisione dell'utente, 23/10, dopo le prove tra iPhone e
+ * Samsung; prima era un solo livello "vicino"):
+ * - 'near'   — vicino, segnale da NEAR_RSSI in su: in testa al radar,
+ *              icona con il segnale pieno;
+ * - 'medium' — media distanza, da MEDIUM_RSSI a NEAR_RSSI: subito dopo,
+ *              icona con metà segnale;
+ * - lontano  — sotto MEDIUM_RSSI o non rilevato: nessuna icona (il
+ *              codice semplicemente non compare tra i livelli).
+ * Le soglie vengono dalla prova del 23/10 (segnale dell'iPhone sul
+ * Samsung): −30 a contatto, da −58 a −73 a media distanza, circa −81
+ * nell'altra stanza. Il segnale cambia da modello a modello: da
+ * ritoccare se nei locali veri le fasce risultano troppo larghe o strette.
  *
  * - Il segnale (RSSI, in dBm: più è vicino a 0, più il telefono è
  *   vicino) si media sugli avvistamenti degli ultimi 10 secondi: un
  *   corpo in mezzo o il telefono in tasca lo fanno oscillare molto.
- * - Si diventa vicini con una media da NEAR_RSSI in su, e si smette di
- *   esserlo solo sotto FAR_RSSI (isteresi): senza margine chi sta sul
- *   confine salirebbe e scenderebbe nella griglia di continuo.
- * - Chi non si sente da 20 secondi non è più vicino.
- *
- * "Vicino" = a pochi metri, circa 3: la stessa zona del locale
- * (decisione dell'utente, 23/10). Soglie dalla prova tra iPhone e
- * Samsung del 23/10 (segnale dell'iPhone sul Samsung): −30 a contatto,
- * da −58 a −73 a media distanza, circa −81 nell'altra stanza. Con le
- * prime soglie (−75/−82) l'altra stanza restava "vicina" per ~20 s.
- * Il segnale cambia da modello a modello: da ritoccare se nei locali
- * veri risulta troppo largo o troppo stretto.
+ * - Si sale di fascia appena la media supera la soglia, si scende solo
+ *   HYSTERESIS_DB sotto (isteresi): senza margine chi sta sul confine
+ *   salterebbe di continuo da un'icona all'altra.
+ * - Chi non si sente da 20 secondi è dimenticato (lontano).
  *
  * Tutto resta sul telefono: al server non arriva niente.
  * ============================================================
  */
 
-const NEAR_RSSI = -65;
-const FAR_RSSI = -71;
+const NEAR_RSSI = -58;
+const MEDIUM_RSSI = -73;
+const HYSTERESIS_DB = 4;
 const AVERAGE_WINDOW_MS = 10000;
 const FORGET_MS = 20000;
 const SWEEP_INTERVAL_MS = 2000;
 
-const sightings = new Map(); // codice → { samples: [{ at, rssi }], near }
+const sightings = new Map(); // codice → { samples: [{ at, rssi }], level: 'near' | 'medium' | null }
 const listeners = new Set();
-let nearCodes = new Set();
+let levels = new Map(); // codice → 'near' | 'medium' (i lontani non ci sono)
 let removeNativeListener = null;
 let sweepTimer = null;
 let activeCode = null;
 
+// Fascia per la media del segnale, tenendo conto di quella attuale:
+// per restare in una fascia basta stare HYSTERESIS_DB sotto la sua soglia.
+function levelFor(average, current) {
+  const margin = (level) =>
+    current === level || (current === 'near' && level === 'medium') ? HYSTERESIS_DB : 0;
+  if (average >= NEAR_RSSI - margin('near')) return 'near';
+  if (average >= MEDIUM_RSSI - margin('medium')) return 'medium';
+  return null;
+}
+
 function recompute() {
   const now = Date.now();
-  const next = new Set();
+  const next = new Map();
   for (const [code, entry] of sightings) {
     entry.samples = entry.samples.filter((s) => now - s.at <= FORGET_MS);
     if (entry.samples.length === 0) {
@@ -54,18 +68,19 @@ function recompute() {
     const recent = entry.samples.filter((s) => now - s.at <= AVERAGE_WINDOW_MS);
     const samples = recent.length > 0 ? recent : entry.samples.slice(-1);
     const average = samples.reduce((sum, s) => sum + s.rssi, 0) / samples.length;
-    entry.near = entry.near ? average >= FAR_RSSI : average >= NEAR_RSSI;
-    if (entry.near) next.add(code);
+    entry.level = levelFor(average, entry.level);
+    if (entry.level) next.set(code, entry.level);
   }
-  const changed = next.size !== nearCodes.size || [...next].some((code) => !nearCodes.has(code));
+  const changed =
+    next.size !== levels.size || [...next].some(([code, level]) => levels.get(code) !== level);
   if (changed) {
-    nearCodes = next;
-    listeners.forEach((listener) => listener(nearCodes));
+    levels = next;
+    listeners.forEach((listener) => listener(levels));
   }
 }
 
 function handleSighting({ code, rssi }) {
-  const entry = sightings.get(code) || { samples: [], near: false };
+  const entry = sightings.get(code) || { samples: [], level: null };
   entry.samples.push({ at: Date.now(), rssi });
   sightings.set(code, entry);
   recompute();
@@ -97,18 +112,19 @@ export async function stopNearby() {
 
 function clearSightings() {
   sightings.clear();
-  if (nearCodes.size > 0) {
-    nearCodes = new Set();
-    listeners.forEach((listener) => listener(nearCodes));
+  if (levels.size > 0) {
+    levels = new Map();
+    listeners.forEach((listener) => listener(levels));
   }
 }
 
 /**
- * Il listener riceve subito, e poi a ogni cambiamento, l'insieme dei
- * codici vicini. Ritorna la funzione per smettere di ascoltare.
+ * Il listener riceve subito, e poi a ogni cambiamento, la mappa
+ * codice → fascia ('near' | 'medium') dei telefoni rilevati; chi è
+ * lontano non c'è. Ritorna la funzione per smettere di ascoltare.
  */
 export function subscribeNearby(listener) {
   listeners.add(listener);
-  listener(nearCodes);
+  listener(levels);
   return () => listeners.delete(listener);
 }

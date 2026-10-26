@@ -31,7 +31,8 @@ L'app è su http://localhost:3000 con hot reload. Il backend deve girare a parte
 | `.env`     | `npm start`, `npm run build`   | `https://populive-backend-production.up.railway.app` |
 | `.env.dev` | solo `npm run start:dev`       | `http://localhost:3001`                              |
 
-- `.env` è la configurazione di produzione, usata da Railway (`npm start`) e dalla build.
+- `.env` è la configurazione di produzione, usata dalla build (anche quella di Railway, vedi *Deploy su Railway*) e da
+  `npm start`.
 - `.env.dev` viene caricato esplicitamente da `dotenv-cli` nello script `start:dev`. CRA non lo legge
   mai da solo (a differenza di `.env.development` / `.env.local`), quindi non può influenzare la produzione.
   Oltre all'URL del backend imposta:
@@ -229,6 +230,25 @@ aggiornato a mano (`symlinks/CapacitorFirebaseMessaging`); Codemagic, su Mac, lo
 Dopo aver aggiunto o aggiornato un plugin: `npm run cap:sync` (aggiorna anche `ios/App/CapApp-SPM/Package.swift`, da
 committare per Codemagic) e reinstallare l'app, perché il codice nativo non arriva con l'hot reload.
 
+### Testi legali
+
+Privacy Policy e Termini di servizio sono due pagine statiche, `public/privacy-policy.html` e
+`public/termini-di-servizio.html`, fuori da React: si aprono da qualunque link (App Store Connect, una mail, il browser
+in-app). I loro indirizzi pubblici sono in `src/legalLinks.js`, che li apre nel browser in-app quando si è nell'app.
+Le parti segnate `[DA COMPLETARE]` le decide il proprietario.
+
+### Deploy su Railway
+
+Il sito (progetto Railway `dazzling-spirit`) si aggiorna da solo a ogni push sul branch `development`. Railway usa
+Railpack, che riconosce un'app Create React App e la pubblica come **sito statico**: `npm install`, `npm run build`
+(con `.env`), poi Caddy serve la cartella `build/`. Non gira nessun server Node e `npm start` non viene usato.
+
+- I file di `public/` vengono serviti così come sono (`.well-known/`, testi legali).
+- Un percorso che non corrisponde a un file restituisce `index.html`, così `/checkin/<id>` e `/mission/<id>` aprono
+  l'app.
+- Oggi `apple-app-site-association` viene servito senza `Content-Type`; se Apple non lo accettasse, va aggiunto
+  con una configurazione di Caddy.
+
 ### Cosa serve lato backend
 
 - CORS (HTTP e Socket.io): aggiungere le origini `capacitor://localhost` (iOS) e `https://localhost` (Android)
@@ -244,9 +264,11 @@ src/apiClient.js        client HTTP centralizzato (token, sessione, apiFetch)
 src/*.jsx               schermate e componenti (Login, Dashboard, ExploreMap, ChatCenter, ...)
 src/native.js           ponte verso Capacitor (unico file che lo importa): browser in-app, deep link, back, posizione, vibrazione, push, Bluetooth
 src/proximity.js        vicinanza via Bluetooth nel radar (fasce dal segnale)
+src/legalLinks.js       indirizzi di Privacy Policy e Termini, aperti nel browser in-app nell'app
 src/populive-styles.css stili globali
 capacitor.config.ts     configurazione Capacitor
 android/, ios/          progetti nativi generati da Capacitor
 codemagic.yaml          build iOS (TestFlight) e APK Android in cloud
 public/.well-known/     verifica dominio per App Links / Universal Links
+public/*.html           testi legali (privacy-policy.html, termini-di-servizio.html)
 ```

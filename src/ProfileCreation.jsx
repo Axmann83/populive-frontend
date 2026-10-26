@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import { apiFetch, requestAndSendLocation, uploadPhotoToStorage } from './apiClient';
+import { PRIVACY_POLICY_URL, TERMS_URL, openLegalLink } from './legalLinks';
 
 /**
  * ============================================================
@@ -482,17 +483,26 @@ export default function ProfileCreation({ onComplete }) {
           {/* Consenso legale OBBLIGATORIO — separato dai toggle sopra
               (quelli sono bonus opzionali, questo no). Non saltabile:
               il bottone finale resta disabilitato finché non è spuntato.
-              TODO: sostituire i link placeholder con quelli veri non
-              appena lo studio legale consegna i testi definitivi. */}
+              I testi sono le pagine statiche di public/ (legalLinks.js). */}
           <div className="pl-consent-row" style={{ marginTop: 12 }}>
             <div>
               <div className="pl-consent-label">
                 Ho letto e accetto la{' '}
-                <a href="/privacy-policy" target="_blank" rel="noopener noreferrer">
+                <a
+                  href={PRIVACY_POLICY_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={openLegalLink}
+                >
                   Privacy Policy
                 </a>{' '}
                 e i{' '}
-                <a href="/termini-di-servizio" target="_blank" rel="noopener noreferrer">
+                <a
+                  href={TERMS_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={openLegalLink}
+                >
                   Termini di Servizio
                 </a>
               </div>

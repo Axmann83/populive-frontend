@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<!--
+  Termini di servizio di PopuLive. Pagina statica (fuori da React) perché deve
+  aprirsi da un link qualunque: App Store Connect, il browser in-app dell'app,
+  una mail. Le parti tra [DA COMPLETARE] le decide il proprietario.
+  Struttura: licenza = contratto standard di Apple (scelta dell'utente del
+  26/10/2026), più le condizioni nostre che il contratto di Apple non copre
+  (abbonamento, Pulse, regole della community richieste dalla regola 1.2).
+  Italiano per gli utenti, inglese per i revisori degli store.
+-->
+<html lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#14100f" />
+    <title>Termini di servizio — PopuLive</title>
+    <style>
+      :root {
+        --bg: #14100f;
+        --text: #f7eee6;
+        --muted: #a79c93;
+        --accent: #ff3d6e;
+        --line: #291f1d;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font: 16px/1.6 Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      }
+      main {
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 32px 16px calc(48px + env(safe-area-inset-bottom));
+      }
+      h1 {
+        font-size: 28px;
+        line-height: 1.2;
+        margin: 0 0 4px;
+      }
+      h2 {
+        font-size: 19px;
+        margin: 32px 0 8px;
+      }
+      p,
+      li {
+        color: var(--text);
+      }
+      .muted {
+        color: var(--muted);
+        font-size: 14px;
+      }
+      a {
+        color: var(--accent);
+      }
+      hr {
+        border: 0;
+        border-top: 1px solid var(--line);
+        margin: 48px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Termini di servizio</h1>
+      <p class="muted">PopuLive · ultimo aggiornamento: 26 ottobre 2026 · <a href="#english">English version</a></p>
+
+      <h2>1. Licenza d'uso</h2>
+      <p>
+        L'uso dell'app PopuLive è regolato dal
+        <a href="https://www.apple.com/legal/internet-services/itunes/dev/stdeula/">Contratto di licenza standard di Apple
+        per le app (EULA)</a>, integrato dalle condizioni di questa pagina. In caso di contrasto prevalgono queste
+        condizioni, nei limiti consentiti dal contratto di Apple e dalla legge.
+      </p>
+
+      <h2>2. Chi può usare PopuLive</h2>
+      <p>PopuLive è riservata a chi ha almeno [DA COMPLETARE: età minima] anni. Ogni account è personale.</p>
+
+      <h2>3. Regole della community</h2>
+      <p>
+        Non sono tollerati contenuti o comportamenti offensivi, molesti, violenti, discriminatori, sessualmente
+        espliciti o illegali, né profili falsi. Chiunque può bloccare un'altra persona e segnalare un contenuto o un
+        profilo. Le segnalazioni vengono esaminate entro [DA COMPLETARE: es. 24 ore]; i contenuti che violano queste
+        regole vengono rimossi e gli account responsabili sospesi o eliminati.
+      </p>
+
+      <h2>4. Acquisti nell'app</h2>
+      <ul>
+        <li>
+          <strong>Like extra e Superlike</strong> si acquistano con il sistema di pagamento dello store (App Store o
+          Google Play). Sono consumabili e non rimborsabili da PopuLive; per i rimborsi valgono le regole dello store.
+        </li>
+        <li>
+          <strong>Premium</strong> è un abbonamento mensile a rinnovo automatico. Il prezzo è indicato nell'app prima
+          dell'acquisto. Il pagamento è addebitato sull'account dello store alla conferma; l'abbonamento si rinnova
+          automaticamente allo stesso prezzo, salvo disdetta almeno 24 ore prima della fine del periodo in corso. Si
+          gestisce e si disdice dalle impostazioni dell'account dello store.
+        </li>
+        <li>
+          <strong>Pulse</strong> sono consumazioni offerte ad altre persone e ritirate al bancone del locale. Si pagano
+          con carta tramite Stripe al prezzo indicato dal locale. [DA COMPLETARE: cosa succede alle Pulse non usate a
+          fine serata e a quelle rifiutate.]
+        </li>
+      </ul>
+
+      <h2>5. Privacy</h2>
+      <p>Come trattiamo i dati personali è spiegato nella <a href="/privacy-policy.html">Privacy Policy</a>.</p>
+
+      <h2>6. Contatti</h2>
+      <p>[DA COMPLETARE: titolare del servizio, indirizzo e email di contatto.]</p>
+
+      <hr />
+
+      <h1 id="english">Terms of Service</h1>
+      <p class="muted">PopuLive · last updated: October 26, 2026</p>
+
+      <h2>1. License</h2>
+      <p>
+        Use of the PopuLive app is governed by
+        <a href="https://www.apple.com/legal/internet-services/itunes/dev/stdeula/">Apple's Standard Licensed Application
+        End User License Agreement (EULA)</a>, supplemented by the terms on this page. Where they conflict, these terms
+        prevail to the extent permitted by Apple's agreement and applicable law.
+      </p>
+
+      <h2>2. Who can use PopuLive</h2>
+      <p>PopuLive is for people aged [TO BE COMPLETED] or older. Each account is personal.</p>
+
+      <h2>3. Community rules</h2>
+      <p>
+        There is zero tolerance for offensive, harassing, violent, discriminatory, sexually explicit or illegal content
+        or behavior, and for fake profiles. Anyone can block another person and report content or a profile. Reports
+        are reviewed within [TO BE COMPLETED]; violating content is removed and the responsible accounts are suspended
+        or deleted.
+      </p>
+
+      <h2>4. In-app purchases</h2>
+      <ul>
+        <li>
+          <strong>Extra Likes and Superlikes</strong> are purchased through the store's payment system (App Store or
+          Google Play). They are consumable; refunds follow the store's policies.
+        </li>
+        <li>
+          <strong>Premium</strong> is an auto-renewing monthly subscription. The price is shown in the app before
+          purchase. Payment is charged to the store account at confirmation; the subscription renews automatically at
+          the same price unless canceled at least 24 hours before the end of the current period. It can be managed and
+          canceled in the store account settings.
+        </li>
+        <li>
+          <strong>Pulses</strong> are drinks offered to other people and collected at the venue's bar. They are paid by
+          card through Stripe at the price set by the venue.
+        </li>
+      </ul>
+
+      <h2>5. Privacy</h2>
+      <p>How we handle personal data is explained in our <a href="/privacy-policy.html">Privacy Policy</a>.</p>
+
+      <h2>6. Contact</h2>
+      <p>[TO BE COMPLETED: service provider, address and contact email.]</p>
+    </main>
+  </body>
+</html>

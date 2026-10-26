@@ -6,6 +6,7 @@ import {
   uploadPhotoToStorage,
   getOptimizedPhotoUrl,
 } from './apiClient';
+import { PRIVACY_POLICY_URL, TERMS_URL, openLegalLink } from './legalLinks';
 
 const MAX_PHOTOS = 6; // stessa galleria di ProfileCreation.jsx
 
@@ -362,25 +363,27 @@ export default function Settings({ userId, onClose, onAccountDeleted }) {
         {saving ? 'Salvataggio…' : 'Salva impostazioni'}
       </button>
 
-      {/* Sezione legale — link ai testi veri (placeholder finché non
-          arrivano dallo studio) + richiesta di cancellazione account,
-          un diritto GDPR a sé che non passa dai toggle sopra. */}
+      {/* Sezione legale — link ai testi (pagine statiche di public/,
+          legalLinks.js) + richiesta di cancellazione account, un
+          diritto GDPR a sé che non passa dai toggle sopra. */}
       <div className="pl-section-label" style={{ marginTop: 20 }}>
         Legale
       </div>
       <a
-        href="/privacy-policy"
+        href={PRIVACY_POLICY_URL}
         target="_blank"
         rel="noopener noreferrer"
+        onClick={openLegalLink}
         className="pl-hint"
         style={{ display: 'block', marginBottom: 4 }}
       >
         Privacy Policy →
       </a>
       <a
-        href="/termini-di-servizio"
+        href={TERMS_URL}
         target="_blank"
         rel="noopener noreferrer"
+        onClick={openLegalLink}
         className="pl-hint"
         style={{ display: 'block', marginBottom: 12 }}
       >

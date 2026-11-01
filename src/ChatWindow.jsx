@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { BookmarkCheck, Sparkles } from './PopuLiveIcons';
+import { BookmarkCheck, Sparkles, ChevronLeft } from './PopuLiveIcons';
 
 import { apiFetch } from './apiClient';
+import { onBackButton } from './native';
 
 /**
  * ============================================================
@@ -20,7 +21,16 @@ export default function ChatWindow({
   otherUserName,
   onMarkedRead,
   sharedSocket,
+  onBack,
 }) {
+  // Uscita dalla chat (B8, 1/11): prima si usciva solo cambiando
+  // scheda. Freccia nell'intestazione e, su Android, il tasto
+  // indietro del telefono — registrato solo finché la chat è aperta,
+  // poi Android torna al comportamento normale.
+  const onBackRef = useRef(onBack);
+  onBackRef.current = onBack;
+  useEffect(() => onBackButton(() => onBackRef.current?.()), []);
+
   const [messages, setMessages] = useState([]);
   const [isClosed, setIsClosed] = useState(false);
   const [myWantsKeep, setMyWantsKeep] = useState(false);
@@ -210,7 +220,15 @@ export default function ChatWindow({
   return (
     <div className="pl-chat-window">
       <div className="pl-chat-header">
-        <span>{otherUserName}</span>
+        <button
+          type="button"
+          className="pl-chat-back"
+          onClick={() => onBack?.()}
+          aria-label="Torna alle chat"
+        >
+          <ChevronLeft size={20} />
+          <span>{otherUserName}</span>
+        </button>
         {/* Il toggle "conserva" è sempre visibile e sempre cambiabile,
             non solo a fine serata — così l'utente può decidere fin
             da subito se vuole provare a "giocarsela" per i giorni

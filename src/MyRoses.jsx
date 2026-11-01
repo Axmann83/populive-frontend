@@ -28,6 +28,7 @@ export default function MyPulses({
   arenaSessionId,
   onOpenPulse,
   onPulseListChanged,
+  refreshKey,
 }) {
   const [pulses, setPulses] = useState([]);
   const [sentPulses, setSentPulses] = useState([]); // visione complessiva richiesta dall'utente — anche le inviate, non solo ricevute
@@ -38,30 +39,42 @@ export default function MyPulses({
   const [redeemingPulse, setRedeemingPulse] = useState(null); // { pulseId, redeemCode } | null — riscatto rimandato, attivato da qui quando si è pronti
   const [viewingProfile, setViewingProfile] = useState(null); // { senderId, pulseId, isPending } | null — profilo aperto per decidere in modo ragionato, solo dove l'identità è già svelata
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const [pulsesRes, sentRes, balanceRes] = await Promise.all([
-        apiFetch(`/api/users/${userId}/pulses`),
-        apiFetch(`/api/users/${userId}/sent-pulses`),
-        apiFetch(`/api/users/${userId}/pulse-balance`),
-      ]);
-      const pulsesData = await pulsesRes.json();
-      const sentData = await sentRes.json();
-      const balanceData = await balanceRes.json();
-      if (pulsesData.success) setPulses(pulsesData.pulses);
-      if (sentData.success) setSentPulses(sentData.pulses);
-      if (balanceData.success) setBalance(balanceData);
-    } catch (err) {
-      console.error('Errore nel caricamento dei Pulse:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [userId]);
+  // silent: ricarica senza la schermata "Caricamento…" (che farebbe
+  // sparire l'elenco e perdere il punto in cui si era scorsi).
+  const load = useCallback(
+    async ({ silent = false } = {}) => {
+      if (!silent) setLoading(true);
+      try {
+        const [pulsesRes, sentRes, balanceRes] = await Promise.all([
+          apiFetch(`/api/users/${userId}/pulses`),
+          apiFetch(`/api/users/${userId}/sent-pulses`),
+          apiFetch(`/api/users/${userId}/pulse-balance`),
+        ]);
+        const pulsesData = await pulsesRes.json();
+        const sentData = await sentRes.json();
+        const balanceData = await balanceRes.json();
+        if (pulsesData.success) setPulses(pulsesData.pulses);
+        if (sentData.success) setSentPulses(sentData.pulses);
+        if (balanceData.success) setBalance(balanceData);
+      } catch (err) {
+        console.error('Errore nel caricamento dei Pulse:', err);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [userId]
+  );
 
   useEffect(() => {
     load();
   }, [load]);
+
+  // Una Pulse decisa nella finestra di App.jsx (aperta da qui o
+  // arrivata in tempo reale) cambia questo elenco: senza ricaricarlo
+  // restava "Da decidere" e riaprirla non faceva più nulla (B9, 1/11).
+  useEffect(() => {
+    if (refreshKey) load({ silent: true });
+  }, [refreshKey, load]);
 
   // Prezzi specifici DI QUESTO LOCALE — non più un catalogo globale.
   // Se il locale non ha ancora concordato un prezzo con gli
@@ -627,6 +640,7 @@ export default function MyPulses({
               load();
               onPulseListChanged?.();
             }}
+            onCancel={() => setRedeemingPulse(null)}
           />
         </div>
       )}

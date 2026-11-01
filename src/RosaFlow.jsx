@@ -269,9 +269,11 @@ export function PulseNotification({ pulse, currentUserId, arenaSessionId, venueI
   const [redeemInfo, setRedeemInfo] = useState(null);
   const [pendingRedeemCode, setPendingRedeemCode] = useState(null);
   const [showFullProfile, setShowFullProfile] = useState(false);
+  const [error, setError] = useState(null);
 
   async function respond(action) {
     setLoading(true);
+    setError(null);
     try {
       const res = await apiFetch(`/api/pulses/${pulse.pulseId}/respond`, {
         method: 'POST',
@@ -279,7 +281,17 @@ export function PulseNotification({ pulse, currentUserId, arenaSessionId, venueI
         body: JSON.stringify({ action }),
       });
       const data = await res.json();
-      if (!data.success) return;
+      if (!data.success) {
+        // Già decisa (elenco vecchio, altro telefono): prima la
+        // finestra restava aperta e i bottoni non facevano nulla (B9,
+        // 1/11). Si chiude e l'elenco delle Pulse si ricarica.
+        if (data.reason === 'already_decided' || data.reason === 'not_found_or_not_yours') {
+          onResolved({ action: 'stale' });
+        } else {
+          setError('Non è andata a buon fine, riprova.');
+        }
+        return;
+      }
 
       if (action === 'accept') {
         if (pulse.tier === 'like' && data.canStillPlayGuessGame) {
@@ -307,6 +319,8 @@ export function PulseNotification({ pulse, currentUserId, arenaSessionId, venueI
       } else {
         onResolved({ action });
       }
+    } catch {
+      setError('Connessione assente, riprova.');
     } finally {
       setLoading(false);
     }
@@ -364,6 +378,10 @@ export function PulseNotification({ pulse, currentUserId, arenaSessionId, venueI
 
   return (
     <div className="pl-sheet">
+      {/* Chiudere senza decidere (B9, 1/11): la Pulse resta com'era */}
+      <div className="pl-sheet-close" onClick={() => onResolved({ action: 'closed' })}>
+        Chiudi ✕
+      </div>
       {/* Per Pulse+Superlike e Pulse semplice: anteprima vera del
           profilo, stessa esperienza già costruita per il Superlike
           puro — entrambe le varianti svelano subito l'identità. */}
@@ -454,6 +472,7 @@ export function PulseNotification({ pulse, currentUserId, arenaSessionId, venueI
           ? 'Accetta e apri la chat'
           : 'Accetta il Pulse'}
       </button>
+      {error && <p className="pl-error">{error}</p>}
     </div>
   );
 }
@@ -528,7 +547,9 @@ export function PulseGuessGame({ pulseId, candidates, onFinished }) {
 // ------------------------------------------------------------
 // 4) RISCATTO AL BANCONE — sigillo con timer, mostrato al bartender
 // ------------------------------------------------------------
-export function PulseRedeemSeal({ pulseId, redeemCode, venueId, onDone }) {
+// onCancel (facoltativo): "Non ora" — dalla scheda Pulse prima non
+// c'era modo di uscire senza riscattare (B10, 1/11).
+export function PulseRedeemSeal({ pulseId, redeemCode, venueId, onDone, onCancel }) {
   const [state, setState] = useState('idle'); // idle | live | expired | confirmed
   const [secondsLeft, setSecondsLeft] = useState(30);
   const [flash, setFlash] = useState(false);
@@ -591,11 +612,26 @@ export function PulseRedeemSeal({ pulseId, redeemCode, venueId, onDone }) {
 
   return (
     <div className="pl-sheet pl-redeem-card">
+      {onCancel && state !== 'confirmed' && (
+        <div
+          className="pl-sheet-close"
+          onClick={onCancel}
+          style={{ alignSelf: 'flex-end', margin: '14px 16px 0 0' }}
+        >
+          Non ora ✕
+        </div>
+      )}
       <h3>Riscatta il tuo Pulse</h3>
       {state === 'idle' && (
-        <button className="pl-seal" onClick={activate}>
-          Tieni premuto per attivare
-        </button>
+        <>
+          <p className="pl-hint">
+            Attivalo quando sei al bancone: avrai 30 secondi per mostrarlo al bartender, che lo
+            conferma con un tocco.
+          </p>
+          <button className="pl-seal" onClick={activate}>
+            Tieni premuto per attivare
+          </button>
+        </>
       )}
       {state === 'live' && (
         <>

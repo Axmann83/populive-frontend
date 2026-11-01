@@ -975,6 +975,16 @@ export default function CheckinRadar({
           </button>
         ) : (
           <div className="pl-sheet" style={{ marginTop: 14 }}>
+            {/* Una volta aperto non si poteva più richiudere (B12, 1/11) */}
+            <div
+              className="pl-sheet-close"
+              onClick={() => {
+                setShowTableJoin(false);
+                setTableCode('');
+              }}
+            >
+              Annulla ✕
+            </div>
             <div style={{ display: 'flex', gap: 8 }}>
               <input
                 value={tableCode}

@@ -378,6 +378,7 @@ export default function App() {
     'globale',
     'like_center',
     'chat_list',
+    'chat', // la chat aperta sta "dopo" l'elenco: tornarci scorre indietro (B8)
     'pulse',
     'profilo',
   ];
@@ -429,6 +430,9 @@ export default function App() {
     }
   }
   const [pendingPulseNotification, setPendingPulseNotification] = useState(null);
+  // Cresce a ogni Pulse arrivata o decisa: la scheda Pulse ricarica il
+  // suo elenco (B9, 1/11).
+  const [pulseListVersion, setPulseListVersion] = useState(0);
   const [pendingSuperlike, setPendingSuperlike] = useState(null);
   const [activeChatConversationId, setActiveChatConversationId] = useState(null);
   // Il listener socket qui sotto è registrato una volta sola quando
@@ -945,6 +949,7 @@ export default function App() {
     socket.on('pulse_received', (payload) => {
       setPendingPulseNotification(payload);
       refreshPulseBadge();
+      setPulseListVersion((v) => v + 1);
       refreshNotificationBadge();
       buzz('strong');
     });
@@ -1535,6 +1540,7 @@ export default function App() {
               arenaSessionId={arenaSessionId}
               onOpenPulse={(pulse) => setPendingPulseNotification(pulse)}
               onPulseListChanged={refreshPulseBadge}
+              refreshKey={pulseListVersion}
             />
           )}
 
@@ -1556,6 +1562,7 @@ export default function App() {
               otherUserName={activeChatOtherUserName || 'questa persona'}
               onMarkedRead={handleChatMarkedRead}
               sharedSocket={sharedSocket}
+              onBack={() => navigateToTab('chat_list')}
             />
           )}
         </div>
@@ -1588,7 +1595,7 @@ export default function App() {
           <NavItem
             icon={MessageCircle}
             label="Chat"
-            active={activeTab === 'chat_list'}
+            active={activeTab === 'chat_list' || activeTab === 'chat'} // anche dentro una chat (B7)
             onClick={() => navigateToTab('chat_list')}
             badge={chatTabBadgeCount}
           />
@@ -1771,6 +1778,7 @@ export default function App() {
                 onResolved={(result) => {
                   setPendingPulseNotification(null);
                   refreshPulseBadge();
+                  setPulseListVersion((v) => v + 1);
                   if (result?.conversationId) openMatch(result.conversationId);
                 }}
               />

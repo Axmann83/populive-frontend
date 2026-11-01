@@ -293,11 +293,17 @@ body.pl-day-mode .pl-brand-live {
     transform: translateX(0);
   }
 }
+/* "backwards", non "both" (B10, 1/11): con "both" a fine animazione
+   restava transform: translateX(0) sulla scheda, e un transform rende
+   la scheda il riferimento dei figli position: fixed — il sigillo
+   "Riscatta" e le altre finestre a tutto schermo si aprivano in cima
+   alla scheda, fuori vista se si era scorsi in basso. L'ultimo
+   fotogramma coincide con lo stile normale: nessuno scatto. */
 .pl-tab-panel-forward {
-  animation: pl-tab-slide-from-right 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: pl-tab-slide-from-right 0.32s cubic-bezier(0.22, 1, 0.36, 1) backwards;
 }
 .pl-tab-panel-back {
-  animation: pl-tab-slide-from-left 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: pl-tab-slide-from-left 0.32s cubic-bezier(0.22, 1, 0.36, 1) backwards;
 }
 
 /* --- Bottom nav --- */
@@ -921,6 +927,25 @@ button {
   font-family: 'Unbounded', sans-serif;
   font-weight: 700;
   font-size: 14px;
+}
+/* Freccia + nome: torna all'elenco delle chat (B8, 1/11) */
+.pl-chat-back {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  margin-left: -6px;
+  padding: 4px 6px 4px 0;
+  background: none;
+  border: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.pl-chat-back span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .pl-keep-toggle {
   padding: 7px 12px;

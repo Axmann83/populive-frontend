@@ -53,7 +53,7 @@ export default function HistoricalStories({ people, currentUserId, onClose }) {
       <div
         style={{
           position: 'absolute',
-          top: 10,
+          top: 'calc(10px + env(safe-area-inset-top, 0px))', // B5: absolute ignora il padding di pl-safe-top
           left: 12,
           right: 12,
           display: 'flex',
@@ -78,7 +78,7 @@ export default function HistoricalStories({ people, currentUserId, onClose }) {
         onClick={onClose}
         style={{
           position: 'absolute',
-          top: 22,
+          top: 'calc(22px + env(safe-area-inset-top, 0px))',
           right: 14,
           zIndex: 3,
           width: 34,

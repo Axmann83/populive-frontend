@@ -1256,7 +1256,7 @@ export default function App() {
         <div
           className="pl-content"
           style={{
-            paddingTop: 20,
+            paddingTop: 'calc(20px + env(safe-area-inset-top, 0px))',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'center',
@@ -1284,7 +1284,10 @@ export default function App() {
   } else if (authState === 'login') {
     mainContent = (
       <div className="pl-app-shell">
-        <div className="pl-content" style={{ paddingTop: 20 }}>
+        <div
+          className="pl-content"
+          style={{ paddingTop: 'calc(20px + env(safe-area-inset-top, 0px))' }}
+        >
           <div className="pl-brand" style={{ justifyContent: 'center', marginBottom: 20 }}>
             Popu<span className="pl-brand-live">Live</span>
           </div>
@@ -1295,7 +1298,10 @@ export default function App() {
   } else if (authState === 'onboarding') {
     mainContent = (
       <div className="pl-app-shell">
-        <div className="pl-content" style={{ paddingTop: 20 }}>
+        <div
+          className="pl-content"
+          style={{ paddingTop: 'calc(20px + env(safe-area-inset-top, 0px))' }}
+        >
           <div className="pl-brand" style={{ justifyContent: 'center', marginBottom: 20 }}>
             Popu<span className="pl-brand-live">Live</span>
           </div>
@@ -1682,6 +1688,7 @@ export default function App() {
                 background: 'var(--surface)',
                 borderRadius: '24px 24px 0 0',
                 padding: 20,
+                paddingBottom: 'calc(20px + env(safe-area-inset-bottom, 0px))', // sopra i tasti del telefono (B6)
                 maxHeight: '85vh',
                 overflowY: 'auto',
                 boxShadow: 'var(--shadow-lg)',
@@ -1715,6 +1722,7 @@ export default function App() {
                 background: 'var(--surface)',
                 borderRadius: '24px 24px 0 0',
                 padding: 20,
+                paddingBottom: 'calc(20px + env(safe-area-inset-bottom, 0px))', // sopra i tasti del telefono (B6)
                 maxHeight: '85vh',
                 overflowY: 'auto',
                 boxShadow: 'var(--shadow-lg)',
@@ -1744,6 +1752,7 @@ export default function App() {
                 background: 'var(--surface)',
                 borderRadius: '24px 24px 0 0',
                 padding: 20,
+                paddingBottom: 'calc(20px + env(safe-area-inset-bottom, 0px))', // sopra i tasti del telefono (B6)
                 maxHeight: '85vh',
                 overflowY: 'auto',
                 boxShadow: 'var(--shadow-lg)',
@@ -1783,6 +1792,7 @@ export default function App() {
                 background: 'var(--surface)',
                 borderRadius: '24px 24px 0 0',
                 padding: 20,
+                paddingBottom: 'calc(20px + env(safe-area-inset-bottom, 0px))', // sopra i tasti del telefono (B6)
                 maxHeight: '85vh',
                 overflowY: 'auto',
                 boxShadow: 'var(--shadow-lg)',

@@ -201,6 +201,7 @@ export default function ProfileFullScreen({
             background: 'var(--surface)',
             borderRadius: '24px 24px 0 0',
             padding: 20,
+            paddingBottom: 'calc(20px + env(safe-area-inset-bottom, 0px))', // sopra i tasti del telefono (B6)
             boxSizing: 'border-box',
             maxHeight: '85vh',
             overflowY: 'auto',
@@ -592,7 +593,9 @@ const overlayStyle = {
 
 const closeButtonStyle = {
   position: 'absolute',
-  top: 18,
+  // absolute non tiene conto del padding della safe area del
+  // contenitore: senza, la X finiva sotto la barra di stato (B5)
+  top: 'calc(18px + env(safe-area-inset-top, 0px))',
   right: 18,
   zIndex: 5,
   width: 38,

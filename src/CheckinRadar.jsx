@@ -665,7 +665,7 @@ export default function CheckinRadar({
             <div
               style={{
                 position: 'absolute',
-                top: 20,
+                top: 'calc(20px + env(safe-area-inset-top, 0px))', // B14: sotto il notch dell'iPhone
                 left: 0,
                 right: 0,
                 textAlign: 'center',
@@ -680,7 +680,7 @@ export default function CheckinRadar({
               onClick={closeScanner}
               style={{
                 position: 'absolute',
-                top: 16,
+                top: 'calc(16px + env(safe-area-inset-top, 0px))',
                 right: 16,
                 width: 38,
                 height: 38,

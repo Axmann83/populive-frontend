@@ -72,7 +72,7 @@ export default function QrScannerModal({ onScan, onClose }) {
         onClick={onClose}
         style={{
           position: 'absolute',
-          top: 22,
+          top: 'calc(22px + env(safe-area-inset-top, 0px))', // B5: sotto la barra di stato
           right: 18,
           width: 34,
           height: 34,

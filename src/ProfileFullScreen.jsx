@@ -161,7 +161,13 @@ export default function ProfileFullScreen({
       const catalogRes = await apiFetch('/api/products');
       const catalogData = await catalogRes.json();
       const product = catalogData.products?.find((p) => p.product_type === 'superlike_credits');
-      if (!product) return;
+      if (!product) {
+        // Prima tornava indietro in silenzio dopo "Acquista" (B11)
+        showToast('Acquisto non disponibile in questo momento — riprova più tardi.', {
+          tone: 'error',
+        });
+        return;
+      }
 
       const purchaseRes = await apiFetch('/api/purchases/initiate', {
         method: 'POST',
@@ -172,13 +178,25 @@ export default function ProfileFullScreen({
 
       if (purchaseData.requiresPayment) {
         openExternal(purchaseData.checkoutUrl);
+      } else {
+        // freeOrTest (account di prova): il saldo è già ricaricato sul
+        // server, lo rileggiamo perché il bottone si riaccenda (B11).
+        const res = await apiFetch(
+          `/api/users/${userId}/public-profile?arenaSessionId=${arenaSessionId || ''}`
+        );
+        const data = await res.json();
+        if (data.success) setProfile(data.profile);
       }
-      // Se freeOrTest (account di prova), il saldo è già ricaricato
-      // lato server — nessun'altra azione necessaria qui.
     } catch (err) {
       console.error('Errore nella proposta di acquisto Superlike:', err);
+      showToast('Acquisto non riuscito — controlla la connessione e riprova.', { tone: 'error' });
     }
   }
+
+  // Profilo di un server vecchio o aperto su sé stessi: nessun vincolo.
+  const relation = profile?.relation || {};
+  const superlikesExhausted =
+    typeof relation.viewerSuperlikeBalance === 'number' && relation.viewerSuperlikeBalance <= 0;
 
   // Galleria vera se c'è, altrimenti ricadiamo sulla singola
   // photoUrl di sempre (profilo non ancora migrato) — mai un array
@@ -476,21 +494,52 @@ export default function ProfileFullScreen({
                     (l'anonimato non protegge nessuno, non è più in
                     tempo reale) né Pulse (non sei fisicamente lì, non
                     potresti mai riscattarlo). */}
+                {/* Stato vero tra voi due (B3, B11 — novembre 2026), dal
+                    server: con un match (chat aperta) Like e Superlike non
+                    servono più; già mandati stasera restano spenti; a zero
+                    Superlike il bottone sembra spento ma propone l'acquisto. */}
                 <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
                   {!viaHistoricalBoard && (
                     <ActionButton
                       icon={Heart}
-                      label={actionState === 'liked' ? 'Inviato' : 'Like'}
+                      label={
+                        actionState === 'liked'
+                          ? 'Inviato'
+                          : relation.matched
+                            ? 'Match'
+                            : relation.likeSentTonight
+                              ? 'Già inviato'
+                              : 'Like'
+                      }
                       onClick={() => sendQuickInteraction('like')}
-                      disabled={actionState !== null}
+                      disabled={
+                        actionState !== null || relation.matched || relation.likeSentTonight
+                      }
                       active={actionState === 'liked'}
                     />
                   )}
                   <ActionButton
                     icon={Star}
-                    label={actionState === 'superliked' ? 'Inviato' : 'Superlike'}
-                    onClick={() => sendQuickInteraction('superlike')}
-                    disabled={actionState !== null}
+                    label={
+                      actionState === 'superliked'
+                        ? 'Inviato'
+                        : relation.matched
+                          ? 'Match'
+                          : relation.superlikeSentTonight
+                            ? 'Già inviato'
+                            : superlikesExhausted
+                              ? '0 Superlike'
+                              : 'Superlike'
+                    }
+                    onClick={() =>
+                      superlikesExhausted
+                        ? offerSuperlikePurchase()
+                        : sendQuickInteraction('superlike')
+                    }
+                    disabled={
+                      actionState !== null || relation.matched || relation.superlikeSentTonight
+                    }
+                    dimmed={superlikesExhausted}
                     active={actionState === 'superliked'}
                   />
                   {!viaHistoricalBoard && (
@@ -530,7 +579,8 @@ export default function ProfileFullScreen({
   );
 }
 
-function ActionButton({ icon: Icon, label, onClick, disabled, active }) {
+// dimmed: aspetto da spento ma ancora toccabile (Superlike a zero, B11)
+function ActionButton({ icon: Icon, label, onClick, disabled, active, dimmed }) {
   return (
     <button
       onClick={onClick}
@@ -548,7 +598,7 @@ function ActionButton({ icon: Icon, label, onClick, disabled, active }) {
         background: active ? 'rgba(255,61,110,0.15)' : 'rgba(23,23,23,0.7)',
         color: active ? 'var(--cyan)' : '#F7EEE6',
         cursor: disabled ? 'default' : 'pointer',
-        opacity: disabled && !active ? 0.5 : 1,
+        opacity: (disabled || dimmed) && !active ? 0.5 : 1,
         backdropFilter: 'blur(4px)',
         boxShadow: active ? 'var(--shadow-glow-cyan)' : 'var(--shadow-sm)',
         animation: active ? 'pl-pop 0.4s ease' : 'none',

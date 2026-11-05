@@ -95,7 +95,12 @@ export default function ProfileDetail({ userId, arenaSessionId, onClose, onBack 
           Caricamento…
         </div>
       ) : (
-        <div style={{ padding: '10px 20px 40px' }}>
+        <div
+          style={{
+            padding: '10px 20px',
+            paddingBottom: 'calc(40px + env(safe-area-inset-bottom, 0px))',
+          }}
+        >
           <div
             style={{
               display: 'flex',

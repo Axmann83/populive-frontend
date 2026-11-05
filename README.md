@@ -7,7 +7,7 @@ Web app React (Create React App), pensata per browser mobile, impacchettata come
 - React 18 + `react-scripts` 5 (Create React App)
 - `leaflet` (mappe), `socket.io-client` (chat realtime), `html5-qrcode` / `qrcode`, `lucide-react` (icone)
 - Capacitor 8 (`@capacitor/app`, `@capacitor/browser`, `@capacitor/geolocation`, `@capacitor/haptics`,
-  `@capacitor-firebase/messaging`, più il plugin nostro `BlePresence` per il Bluetooth) per le app iOS/Android
+  `@capacitor/status-bar`, `@capacitor-firebase/messaging`, più il plugin nostro `BlePresence` per il Bluetooth) per le app iOS/Android
 - ESLint + Prettier per la qualità del codice, Husky + lint-staged per il pre-commit
 
 ## Requisiti
@@ -194,6 +194,11 @@ stesse funzioni usano le API del browser. Mai usare `navigator.geolocation` fuor
 
 La **vibrazione** passa da `vibrate()` in `src/native.js` (`@capacitor/haptics`: su iPhone `navigator.vibrate` non
 esiste).
+
+Le **barre del telefono** restano visibili (niente tutto schermo, scelta dell'utente del 5/11/2026); l'app ci disegna
+sotto e lascia spazio con `env(safe-area-inset-top/bottom)` (anche sui pannelli e sulle schermate a tutto schermo).
+Il colore di orario e icone in alto segue il tema dell'app (giorno/notte, deciso dall'ora): `setStatusBarForTheme()`
+in `src/native.js` (`@capacitor/status-bar`), chiamata da `App.jsx` a ogni cambio di tema.
 
 Le **notifiche push** (ottobre 2026) passano da Firebase Cloud Messaging su Android e iOS
 (`@capacitor-firebase/messaging`, progetto Firebase `populive-2eaa9`):

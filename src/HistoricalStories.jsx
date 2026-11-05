@@ -132,7 +132,14 @@ export default function HistoricalStories({ people, currentUserId, onClose }) {
       </div>
 
       <div
-        style={{ position: 'absolute', left: 20, right: 20, bottom: 30, zIndex: 3, color: '#fff' }}
+        style={{
+          position: 'absolute',
+          left: 20,
+          right: 20,
+          bottom: 'calc(30px + env(safe-area-inset-bottom, 0px))', // sopra i tasti del telefono
+          zIndex: 3,
+          color: '#fff',
+        }}
       >
         <div
           style={{

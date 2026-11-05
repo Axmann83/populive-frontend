@@ -15,6 +15,7 @@ import {
   getBluetoothState,
   requestBluetoothEnable,
   onBluetoothStateChange,
+  setStatusBarForTheme,
 } from './native';
 import { startNearby, stopNearby } from './proximity';
 
@@ -126,6 +127,7 @@ export default function App() {
       const hour = new Date().getHours();
       const isDaytime = hour >= 6 && hour < 18;
       document.body.classList.toggle('pl-day-mode', isDaytime);
+      setStatusBarForTheme(isDaytime); // icone del telefono leggibili sul tema dell'app
     }
     applyTimeBasedMode();
     const interval = setInterval(applyTimeBasedMode, 5 * 60 * 1000);

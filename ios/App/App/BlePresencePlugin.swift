@@ -8,13 +8,6 @@ class MainViewController: CAPBridgeViewController {
     override open func capacitorDidLoad() {
         bridge?.registerPluginInstance(BlePresencePlugin())
     }
-
-    // App a tutto schermo (B4, novembre 2026): la barra di stato la nasconde Capacitor
-    // (UIStatusBarHidden in Info.plist); qui la barretta in basso sbiadisce finché non si
-    // tocca lo schermo. Notch e Dynamic Island restano: la safe area serve comunque.
-    override var prefersHomeIndicatorAutoHidden: Bool {
-        return true
-    }
 }
 
 /// Bluetooth del radar (D4 strada B, ottobre 2026): trasmette il codice anonimo della serata e

@@ -772,13 +772,16 @@ const infoOverlayStyle = {
   right: 0,
   bottom: 0,
   padding: '0 20px 32px',
+  // Sopra i tasti del telefono: prima Like/Superlike/Pulse finivano sotto
+  // la barra di navigazione di Android (lotto 3 bis, 05/11)
+  paddingBottom: 'calc(32px + env(safe-area-inset-bottom, 0px))',
   color: '#fff',
 };
 
 const toastStyle = {
   position: 'absolute',
   left: '50%',
-  bottom: 100,
+  bottom: 'calc(100px + env(safe-area-inset-bottom, 0px))',
   transform: 'translateX(-50%)',
   background: 'var(--surface-2)',
   border: '1px solid rgba(255,61,110,0.4)',

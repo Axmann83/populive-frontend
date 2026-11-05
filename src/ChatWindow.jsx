@@ -3,6 +3,7 @@ import { BookmarkCheck, Sparkles, ChevronLeft } from './PopuLiveIcons';
 
 import { apiFetch } from './apiClient';
 import { onBackButton } from './native';
+import { askConfirm, isConfirmOpen, showToast } from './Dialogs';
 
 /**
  * ============================================================
@@ -29,7 +30,14 @@ export default function ChatWindow({
   // poi Android torna al comportamento normale.
   const onBackRef = useRef(onBack);
   onBackRef.current = onBack;
-  useEffect(() => onBackButton(() => onBackRef.current?.()), []);
+  useEffect(
+    () =>
+      onBackButton(() => {
+        // Con una conferma aperta (es. "Blocca") il tasto chiude solo quella
+        if (!isConfirmOpen()) onBackRef.current?.();
+      }),
+    []
+  );
 
   const [messages, setMessages] = useState([]);
   const [isClosed, setIsClosed] = useState(false);
@@ -165,12 +173,14 @@ export default function ChatWindow({
       if (!data.success) {
         setMessages((prev) => prev.filter((m) => m.id !== localId));
         setDraft(body);
-        window.alert('Il messaggio non è stato inviato. Riprova.');
+        showToast('Il messaggio non è stato inviato. Riprova.', { tone: 'error' });
       }
     } catch {
       setMessages((prev) => prev.filter((m) => m.id !== localId));
       setDraft(body);
-      window.alert('Il messaggio non è stato inviato — controlla la connessione e riprova.');
+      showToast('Il messaggio non è stato inviato — controlla la connessione e riprova.', {
+        tone: 'error',
+      });
     }
   }, [draft, isClosed, conversationId, currentUserId]);
 
@@ -184,9 +194,13 @@ export default function ChatWindow({
     // Scegliere di conservare per la prima volta resta invece un
     // solo tocco, mai rischioso di suo.
     if (myWantsKeep && !newValue) {
-      const confirmed = window.confirm(
-        'Se ritiri la scelta, questa chat potrebbe chiudersi subito per entrambi, senza possibilità di tornare indietro. Continuare davvero?'
-      );
+      const confirmed = await askConfirm({
+        title: 'Non conservare più la chat?',
+        message:
+          'Se ritiri la scelta, questa chat potrebbe chiudersi subito per entrambi, senza possibilità di tornare indietro.',
+        confirmLabel: 'Ritira',
+        danger: true,
+      });
       if (!confirmed) return;
     }
     setMyWantsKeep(newValue); // ottimistico
@@ -207,9 +221,13 @@ export default function ChatWindow({
   // bidirezionale — nessuna delle due parti potrà più contattare
   // l'altra né vederla nel radar, in nessun locale futuro.
   const handleBlock = useCallback(async () => {
-    const confirmed = window.confirm(
-      `Vuoi davvero bloccare ${otherUserName}? Non potrete più contattarvi né vedervi nel radar, in nessun locale — questa scelta non si può annullare.`
-    );
+    const confirmed = await askConfirm({
+      title: `Bloccare ${otherUserName}?`,
+      message:
+        'Non potrete più contattarvi né vedervi nel radar, in nessun locale. Questa scelta non si può annullare.',
+      confirmLabel: 'Blocca',
+      danger: true,
+    });
     if (!confirmed) return;
     await apiFetch(`/api/chat/${conversationId}/block`, { method: 'POST' });
     setIsClosed(true);

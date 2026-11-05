@@ -4,6 +4,7 @@ import ProfileFullScreen from './ProfileFullScreen';
 
 import { apiFetch, getOptimizedPhotoUrl } from './apiClient';
 import { openExternal } from './native';
+import { askConfirm } from './Dialogs';
 
 const TIER_META = {
   standalone: { label: 'Solo Pulse', sub: 'Anonima al 100% — nessun contatto' },
@@ -85,9 +86,12 @@ export function PulseSend({ receiverId, arenaSessionId, venueId, onSent, onCance
   // il Pulse), offriamo di comprarne altri 5 invece di un errore
   // muto che non spiega cosa manca davvero.
   const offerSuperlikePurchase = useCallback(async () => {
-    const confirmed = window.confirm(
-      'Superlike esauriti per questa settimana — il Pulse ha bisogno anche di quello. Vuoi acquistarne altri 5?'
-    );
+    const confirmed = await askConfirm({
+      title: 'Superlike esauriti',
+      message:
+        'Questo Pulse ha bisogno anche di un Superlike, e quelli di questa settimana sono finiti. Vuoi acquistarne altri 5?',
+      confirmLabel: 'Acquista',
+    });
     if (!confirmed) {
       setSending(false);
       return;

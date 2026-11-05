@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import ProfileFullScreen from './ProfileFullScreen';
 import { Heart, Star, PulseWaveIcon, Bell } from './PopuLiveIcons';
 import { apiFetch } from './apiClient';
+import { showToast } from './Dialogs';
 
 /**
  * ============================================================
@@ -120,7 +121,7 @@ export default function LikeCenter({ userId, arenaSessionId, venueId, onOpenChat
       const data = await res.json();
 
       if (!data.success) {
-        window.alert("Non è stato possibile completare l'azione. Riprova.");
+        showToast("Non è stato possibile completare l'azione. Riprova.", { tone: 'error' });
         return;
       }
 
@@ -133,8 +134,9 @@ export default function LikeCenter({ userId, arenaSessionId, venueId, onOpenChat
       // Pulse+Like accettata: la chat non è automatica, dipende dal
       // minigioco.
       if (action === 'accept' && item.kind === 'pulse_like' && data.canStillPlayGuessGame) {
-        window.alert(
-          "Pulse accettata! Vai nella scheda Pulse per provare a indovinare chi te l'ha mandata e sbloccare la chat."
+        showToast(
+          "Pulse accettata! Vai nella scheda Pulse per provare a indovinare chi te l'ha mandata e sbloccare la chat.",
+          { tone: 'success' }
         );
       }
 
@@ -148,9 +150,9 @@ export default function LikeCenter({ userId, arenaSessionId, venueId, onOpenChat
       }
       setViewingItem(null);
     } catch {
-      window.alert(
-        "Non è stato possibile completare l'azione — controlla la connessione e riprova."
-      );
+      showToast("Non è stato possibile completare l'azione — controlla la connessione e riprova.", {
+        tone: 'error',
+      });
     } finally {
       setRespondingIds((prev) => {
         const next = new Set(prev);

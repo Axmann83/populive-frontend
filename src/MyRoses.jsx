@@ -6,6 +6,7 @@ import ProfileFullScreen from './ProfileFullScreen';
 
 import { apiFetch, getOptimizedPhotoUrl } from './apiClient';
 import { openExternal } from './native';
+import { askConfirm } from './Dialogs';
 
 /**
  * ============================================================
@@ -148,8 +149,15 @@ export default function MyPulses({
     apiFetch(`/api/users/${userId}/pulses/${pulseId}/dismiss`, { method: 'POST' }).catch(() => {});
   }
 
-  function handleClearAll() {
-    if (!window.confirm('Vuoi davvero eliminare tutte le notifiche Pulse?')) return;
+  async function handleClearAll() {
+    if (
+      !(await askConfirm({
+        title: 'Eliminare tutte le notifiche Pulse?',
+        confirmLabel: 'Elimina',
+        danger: true,
+      }))
+    )
+      return;
     setPulses([]);
     setSentPulses([]);
     apiFetch(`/api/users/${userId}/pulses/clear-all`, { method: 'POST' }).catch(() => {});

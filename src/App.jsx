@@ -58,6 +58,7 @@ import VenuesMap from './VenuesMap';
 import Dashboard from './Dashboard';
 import NearbyMissions from './NearbyMissions';
 import SuperlikeNotification from './SuperlikeNotification';
+import { askConfirm, showToast } from './Dialogs';
 import {
   API_BASE,
   apiFetch,
@@ -287,9 +288,12 @@ export default function App() {
     const id = arenaSessionIdRef.current;
     if (!id) return;
     if (
-      !window.confirm(
-        'Vuoi uscire dal locale? Non sarai più nel radar di stasera. Se torni, inquadra di nuovo il QR.'
-      )
+      !(await askConfirm({
+        title: 'Uscire dal locale?',
+        message: 'Non sarai più nel radar di stasera. Se torni, inquadra di nuovo il QR.',
+        confirmLabel: 'Esci',
+        danger: true,
+      }))
     )
       return;
     setLeavingVenue(true);
@@ -301,9 +305,9 @@ export default function App() {
       });
       const data = await res.json();
       if (data.success) handleLeftVenue('manual');
-      else window.alert('Non siamo riusciti a farti uscire dal locale — riprova.');
+      else showToast('Non siamo riusciti a farti uscire dal locale — riprova.', { tone: 'error' });
     } catch {
-      window.alert('Non siamo riusciti a raggiungere il server — riprova.');
+      showToast('Non siamo riusciti a raggiungere il server — riprova.', { tone: 'error' });
     } finally {
       setLeavingVenue(false);
     }
@@ -632,9 +636,13 @@ export default function App() {
       } catch {
         /* senza localStorage si chiede comunque, una volta per avvio */
       }
-      const wants = window.confirm(
-        'Vuoi attivare le notifiche? Finché sei nel locale ti avvisiamo di Like, Superlike, Pulse e messaggi anche con l’app chiusa.'
-      );
+      const wants = await askConfirm({
+        title: 'Attivare le notifiche?',
+        message:
+          'Finché sei nel locale ti avvisiamo di Like, Superlike, Pulse e messaggi anche con l’app chiusa.',
+        confirmLabel: 'Attiva',
+        cancelLabel: 'Non ora',
+      });
       if (wants && (await requestPushPermission()) === 'granted') registerPushDevice();
     })();
     return () => {
@@ -809,9 +817,12 @@ export default function App() {
   // il prodotto giusto per SKU nel catalogo (l'id vero lo assegna
   // il database), poi mandiamo su Stripe se serve pagare davvero.
   const offerLikeCreditsPurchase = useCallback(async () => {
-    const confirmed = window.confirm(
-      'Da qui in poi i tuoi Like in questa Arena non ti fanno più guadagnare punti. Vuoi sbloccarne altri 10?'
-    );
+    const confirmed = await askConfirm({
+      title: 'Like senza punti',
+      message:
+        'Da qui in poi i tuoi Like in questa Arena non ti fanno più guadagnare punti. Vuoi sbloccarne altri 10?',
+      confirmLabel: 'Sblocca',
+    });
     if (!confirmed) return;
 
     try {
@@ -1151,9 +1162,13 @@ export default function App() {
           /* senza localStorage si chiede comunque, una volta per avvio */
         }
         if (alreadyAsked) return;
-        const wants = window.confirm(
-          'Vuoi vedere chi hai vicino? Con il Bluetooth mettiamo in cima al radar le persone a pochi metri da te, solo mentre l’app è aperta.'
-        );
+        const wants = await askConfirm({
+          title: 'Vuoi vedere chi hai vicino?',
+          message:
+            'Con il Bluetooth mettiamo in cima al radar le persone a pochi metri da te, solo mentre l’app è aperta.',
+          confirmLabel: 'Attiva',
+          cancelLabel: 'Non ora',
+        });
         if (!wants || cancelled) return;
         state = await requestProximityPermission();
         justGranted = state === 'granted';
@@ -1170,9 +1185,12 @@ export default function App() {
       }
       const wants =
         justGranted ||
-        window.confirm(
-          'Il Bluetooth è spento. Vuoi accenderlo per vedere chi hai vicino nel locale?'
-        );
+        (await askConfirm({
+          title: 'Il Bluetooth è spento',
+          message: 'Vuoi accenderlo per vedere chi hai vicino nel locale?',
+          confirmLabel: 'Accendi',
+          cancelLabel: 'Non ora',
+        }));
       if (wants && !cancelled && (await requestBluetoothEnable()) === 'on' && !cancelled) {
         setBluetoothOff(false);
       }

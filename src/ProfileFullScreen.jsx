@@ -5,6 +5,7 @@ import { openExternal } from './native';
 import { PulseSend } from './RosaFlow';
 import ProfileDetail from './ProfileDetail';
 import { Heart, Star, PulseWaveIcon, Link2, Coins, Crown, Sparkles } from './PopuLiveIcons';
+import { askConfirm, showToast } from './Dialogs';
 
 /**
  * ============================================================
@@ -120,7 +121,7 @@ export default function ProfileFullScreen({
         // già colorato da subito, niente da fare qui
       } else if (data.reason === 'requires_premium_for_historical_board') {
         setActionState(null);
-        window.alert(
+        showToast(
           'Serve Premium per contattare qualcuno dalla Bacheca Storica — puoi attivarlo dal tuo profilo.'
         );
       } else if (data.reason === 'superlike_balance_exhausted') {
@@ -128,12 +129,12 @@ export default function ProfileFullScreen({
         offerSuperlikePurchase();
       } else if (data.reason === 'like_already_sent_tonight') {
         setActionState(null);
-        window.alert(
+        showToast(
           "Hai già mandato un Like a questa persona stasera — puoi riprovare in un'altra serata."
         );
       } else if (data.reason === 'superlike_already_sent_tonight') {
         setActionState(null);
-        window.alert(
+        showToast(
           "Hai già mandato un Superlike a questa persona stasera — puoi riprovare in un'altra serata."
         );
       } else {
@@ -149,9 +150,11 @@ export default function ProfileFullScreen({
   // non fa nulla. Il prodotto si cerca per SKU nel catalogo (l'id
   // vero è generato dal database, non lo conosciamo in anticipo).
   async function offerSuperlikePurchase() {
-    const confirmed = window.confirm(
-      'Superlike esauriti per questa settimana. Vuoi acquistarne altri 5?'
-    );
+    const confirmed = await askConfirm({
+      title: 'Superlike esauriti',
+      message: 'Hai usato tutti i Superlike di questa settimana. Vuoi acquistarne altri 5?',
+      confirmLabel: 'Acquista',
+    });
     if (!confirmed) return;
 
     try {

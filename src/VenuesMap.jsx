@@ -6,6 +6,7 @@ import { getCurrentPosition } from './native';
 import HistoricalBoard from './HistoricalBoard';
 import HistoricalStories from './HistoricalStories';
 import VenueSearchSelect from './VenueSearchSelect';
+import { showToast } from './Dialogs';
 
 /**
  * ============================================================
@@ -97,12 +98,15 @@ export default function VenuesMap({ currentUserId, onClose, mode = 'browse' }) {
       });
       const data = await res.json();
       if (data.success) {
-        window.alert(
-          `Fatto — "${venue.name}" è ora attivabile su PopuLive. Puoi già farci check-in.`
+        showToast(
+          `Fatto — "${venue.name}" è ora attivabile su PopuLive. Puoi già farci check-in.`,
+          {
+            tone: 'success',
+          }
         );
         loadVenues();
       } else {
-        window.alert('Qualcosa è andato storto — riprova.');
+        showToast('Qualcosa è andato storto — riprova.', { tone: 'error' });
       }
     },
     [loadVenues]
@@ -539,7 +543,7 @@ function NewVenueForm({ coords, onCancel, onCreated }) {
       if (data.success) {
         onCreated();
       } else {
-        window.alert('Qualcosa è andato storto — riprova.');
+        showToast('Qualcosa è andato storto — riprova.', { tone: 'error' });
       }
     } finally {
       setSaving(false);

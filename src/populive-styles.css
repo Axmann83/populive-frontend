@@ -1345,3 +1345,126 @@ body.pl-day-mode .pl-seal-flash {
 .pl-photo-gallery-scroll::-webkit-scrollbar {
   display: none;
 }
+
+/* ============================================================
+   AVVISI E CONFERME (B15, M5, M6 — novembre 2026), v. Dialogs.jsx
+   Sopra ogni finestra dell'app (anche la foto a tutto schermo,
+   9000), sotto solo la grana (9998) e lo splash (9999).
+   ============================================================ */
+.pl-toast-stack {
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  /* in alto, sotto la barra di stato: in basso coprirebbe il campo
+     della chat quando la tastiera è aperta */
+  top: calc(12px + env(safe-area-inset-top, 0px));
+  z-index: 9500;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+}
+.pl-toast {
+  max-width: 420px;
+  padding: 11px 18px;
+  border-radius: 16px;
+  background: var(--surface-2);
+  border: 1px solid rgba(217, 204, 192, 0.18);
+  color: var(--text);
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.45;
+  text-align: center;
+  box-shadow: var(--shadow-lg);
+  pointer-events: auto;
+  cursor: pointer;
+  animation: pl-toast-in 0.22s ease both;
+}
+.pl-toast-success {
+  border-color: var(--cyan);
+}
+.pl-toast-error {
+  border-color: rgba(229, 57, 53, 0.6);
+}
+@keyframes pl-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.pl-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.62);
+  animation: pl-dialog-fade 0.18s ease both;
+}
+.pl-dialog {
+  width: 100%;
+  max-width: 340px;
+  padding: 22px 20px 18px;
+  border-radius: 22px;
+  background: var(--surface);
+  border: 1px solid rgba(217, 204, 192, 0.12);
+  box-shadow: var(--shadow-lg);
+  text-align: center;
+}
+.pl-dialog-title {
+  margin: 0 0 8px;
+  font-family: 'Unbounded', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+}
+.pl-dialog-message {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+.pl-dialog-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+.pl-dialog-actions button {
+  flex: 1;
+  padding: 12px 10px;
+  border-radius: 14px;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.pl-dialog-cancel {
+  background: var(--surface-2);
+  border: 1px solid rgba(217, 204, 192, 0.16);
+  color: var(--text-muted);
+}
+.pl-dialog-confirm {
+  border: none;
+  background: var(--cyan);
+  color: #fff;
+  box-shadow: var(--shadow-glow-cyan);
+}
+.pl-dialog-danger {
+  background: var(--red);
+  box-shadow: none;
+}
+@keyframes pl-dialog-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

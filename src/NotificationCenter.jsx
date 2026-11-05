@@ -3,6 +3,7 @@ import SwipeableRow from './SwipeableRow';
 import ProfileFullScreen from './ProfileFullScreen';
 import { Star, PulseWaveIcon, Bell, PartyPopper } from './PopuLiveIcons';
 import { apiFetch, getOptimizedPhotoUrl } from './apiClient';
+import { askConfirm } from './Dialogs';
 
 /**
  * ============================================================
@@ -118,11 +119,14 @@ export default function NotificationCenter({
     }).catch(() => {});
   }
 
-  function handleClearAll() {
+  async function handleClearAll() {
     if (
-      !window.confirm(
-        'Svuotare tutto il Centro Notifiche? Quelle nuove che arriveranno dopo restano visibili.'
-      )
+      !(await askConfirm({
+        title: 'Svuotare il Centro Notifiche?',
+        message: 'Quelle nuove che arriveranno dopo restano visibili.',
+        confirmLabel: 'Svuota',
+        danger: true,
+      }))
     )
       return;
     setHistory([]);

@@ -6,6 +6,7 @@ import ProfileFullScreen from './ProfileFullScreen';
 import QrScannerModal from './QrScannerModal';
 import { Armchair, Radar as RadarIcon, Signal, SignalMedium } from './PopuLiveIcons';
 import { subscribeNearby } from './proximity';
+import { showToast } from './Dialogs';
 
 /**
  * ============================================================
@@ -143,8 +144,9 @@ export default function CheckinRadar({
         setIsTableConnector(!!data.isConnector);
         setShowTableJoin(false);
       } else if (data.reason === 'table_locked') {
-        window.alert(
-          'Questo tavolo è stato chiuso dal suo Connector — chiedi a chi lo gestisce di riaprirlo.'
+        showToast(
+          'Questo tavolo è stato chiuso dal suo Connector — chiedi a chi lo gestisce di riaprirlo.',
+          { tone: 'error' }
         );
       }
     } finally {
@@ -169,7 +171,9 @@ export default function CheckinRadar({
         setIsTableConnector(true);
         setShowTableJoin(false);
       } else if (data.reason === 'table_already_has_a_connector') {
-        window.alert('Questo tavolo ha già un Connector — non puoi sovrascriverlo.');
+        showToast('Questo tavolo ha già un Connector — non puoi sovrascriverlo.', {
+          tone: 'error',
+        });
       }
     } finally {
       setTableJoinLoading(false);
@@ -1068,8 +1072,9 @@ export default function CheckinRadar({
             setShowTableScanner(false);
             if (text) setTableCode(text);
             else if (error === 'camera_error')
-              window.alert(
-                'Non riesco ad accedere alla fotocamera — controlla i permessi del browser, oppure inserisci il codice a mano.'
+              showToast(
+                'Non riesco ad accedere alla fotocamera — controlla i permessi, oppure inserisci il codice a mano.',
+                { tone: 'error' }
               );
           }}
           onClose={() => setShowTableScanner(false)}

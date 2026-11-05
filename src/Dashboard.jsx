@@ -1912,6 +1912,10 @@ function VenueOrganizePanel({ venue, onVenueUpdate }) {
  * un'app "lite" nelle prime serate test.
  * ============================================================
  */
+// Varianti di Pulse tolte nel novembre 2026 (decisione A5): le righe
+// restano nella tabella feature_flags, ma nessuno le legge più.
+const RETIRED_FLAGS = ['pulse_standalone', 'pulse_like', 'pulse_simple', 'pulse_super'];
+
 function FeatureFlagsSection() {
   const [flags, setFlags] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -1954,10 +1958,6 @@ function FeatureFlagsSection() {
     historical_board: 'Bacheca storica',
     venues_map: 'Mappa di tutti i locali',
     instant_influencer: 'Instant Influencer',
-    pulse_standalone: 'Pulse anonimo (nessun contatto)',
-    pulse_like: 'Pulse + Like (minigioco)',
-    pulse_simple: 'Pulse (svela subito, senza Superlike)',
-    pulse_super: 'Pulse + Superlike (svela subito, richiede un Superlike)',
     chat_keep_required:
       'Chat: richiedi "Conserva" esplicito (se spento, si conservano come su Tinder/Hinge)',
     big_spender: 'Big Spender (soglia di spesa)',
@@ -1970,57 +1970,57 @@ function FeatureFlagsSection() {
     <div>
       <p className="pl-hint" style={{ marginBottom: 12 }}>
         Spegni una funzionalità per offrire un'app "lite" nelle prime serate test — Like, Superlike,
-        classifiche e check-in restano sempre accesi, non sono qui. Le varianti di Pulse invece sono
-        tutte qui sotto, comprese "Pulse" e "Pulse + Superlike" (prima quest'ultima era sempre
-        accesa per definizione — ora è un interruttore come le altre). L'effetto è immediato per
+        Pulse, classifiche e check-in restano sempre accesi, non sono qui. L'effetto è immediato per
         tutti, senza bisogno di ricaricare nulla lato codice.
       </p>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {flags.map((f) => (
-          <div
-            key={f.key}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              background: 'var(--surface)',
-              border: '1px solid rgba(228,212,200,0.12)',
-              borderRadius: 12,
-              padding: '12px 14px',
-            }}
-          >
-            <span style={{ fontSize: 12.5, fontWeight: 600 }}>{labels[f.key] || f.key}</span>
-            <button
-              onClick={() => toggle(f)}
-              disabled={togglingKey === f.key}
+        {flags
+          .filter((f) => !RETIRED_FLAGS.includes(f.key))
+          .map((f) => (
+            <div
+              key={f.key}
               style={{
-                width: 46,
-                height: 26,
-                borderRadius: 999,
-                border: 'none',
-                position: 'relative',
-                flexShrink: 0,
-                background: f.isEnabled ? 'var(--cyan)' : 'rgba(228,212,200,0.2)',
-                cursor: togglingKey === f.key ? 'default' : 'pointer',
-                transition: 'background 0.2s',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                background: 'var(--surface)',
+                border: '1px solid rgba(228,212,200,0.12)',
+                borderRadius: 12,
+                padding: '12px 14px',
               }}
             >
-              <span
+              <span style={{ fontSize: 12.5, fontWeight: 600 }}>{labels[f.key] || f.key}</span>
+              <button
+                onClick={() => toggle(f)}
+                disabled={togglingKey === f.key}
                 style={{
-                  position: 'absolute',
-                  top: 3,
-                  left: f.isEnabled ? 23 : 3,
-                  width: 20,
-                  height: 20,
-                  borderRadius: '50%',
-                  background: '#fff',
-                  transition: 'left 0.2s',
+                  width: 46,
+                  height: 26,
+                  borderRadius: 999,
+                  border: 'none',
+                  position: 'relative',
+                  flexShrink: 0,
+                  background: f.isEnabled ? 'var(--cyan)' : 'rgba(228,212,200,0.2)',
+                  cursor: togglingKey === f.key ? 'default' : 'pointer',
+                  transition: 'background 0.2s',
                 }}
-              />
-            </button>
-          </div>
-        ))}
+              >
+                <span
+                  style={{
+                    position: 'absolute',
+                    top: 3,
+                    left: f.isEnabled ? 23 : 3,
+                    width: 20,
+                    height: 20,
+                    borderRadius: '50%',
+                    background: '#fff',
+                    transition: 'left 0.2s',
+                  }}
+                />
+              </button>
+            </div>
+          ))}
       </div>
     </div>
   );

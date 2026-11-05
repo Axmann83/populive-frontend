@@ -15,7 +15,7 @@ import {
   getBluetoothState,
   requestBluetoothEnable,
   onBluetoothStateChange,
-  setStatusBarForTheme,
+  setSystemBarsForTheme,
 } from './native';
 import { startNearby, stopNearby } from './proximity';
 
@@ -127,7 +127,7 @@ export default function App() {
       const hour = new Date().getHours();
       const isDaytime = hour >= 6 && hour < 18;
       document.body.classList.toggle('pl-day-mode', isDaytime);
-      setStatusBarForTheme(isDaytime); // icone del telefono leggibili sul tema dell'app
+      setSystemBarsForTheme(isDaytime); // icone del telefono leggibili sul tema dell'app
     }
     applyTimeBasedMode();
     const interval = setInterval(applyTimeBasedMode, 5 * 60 * 1000);
@@ -1681,6 +1681,11 @@ export default function App() {
               alignItems: 'flex-end',
               justifyContent: 'center',
               zIndex: 50,
+              // Il pannello si ferma sopra i tasti del telefono (B6): sotto
+              // resta lo sfondo scuro, su cui i tasti si leggono. Prima il
+              // margine era in fondo al contenuto e valeva solo a fine
+              // scorrimento.
+              paddingBottom: 'env(safe-area-inset-bottom, 0px)',
             }}
           >
             <div
@@ -1690,7 +1695,6 @@ export default function App() {
                 background: 'var(--surface)',
                 borderRadius: '24px 24px 0 0',
                 padding: 20,
-                paddingBottom: 'calc(20px + env(safe-area-inset-bottom, 0px))', // sopra i tasti del telefono (B6)
                 maxHeight: '85vh',
                 overflowY: 'auto',
                 boxShadow: 'var(--shadow-lg)',
@@ -1715,6 +1719,11 @@ export default function App() {
               alignItems: 'flex-end',
               justifyContent: 'center',
               zIndex: 50,
+              // Il pannello si ferma sopra i tasti del telefono (B6): sotto
+              // resta lo sfondo scuro, su cui i tasti si leggono. Prima il
+              // margine era in fondo al contenuto e valeva solo a fine
+              // scorrimento.
+              paddingBottom: 'env(safe-area-inset-bottom, 0px)',
             }}
           >
             <div
@@ -1724,7 +1733,6 @@ export default function App() {
                 background: 'var(--surface)',
                 borderRadius: '24px 24px 0 0',
                 padding: 20,
-                paddingBottom: 'calc(20px + env(safe-area-inset-bottom, 0px))', // sopra i tasti del telefono (B6)
                 maxHeight: '85vh',
                 overflowY: 'auto',
                 boxShadow: 'var(--shadow-lg)',
@@ -1745,6 +1753,11 @@ export default function App() {
               alignItems: 'flex-end',
               justifyContent: 'center',
               zIndex: 50,
+              // Il pannello si ferma sopra i tasti del telefono (B6): sotto
+              // resta lo sfondo scuro, su cui i tasti si leggono. Prima il
+              // margine era in fondo al contenuto e valeva solo a fine
+              // scorrimento.
+              paddingBottom: 'env(safe-area-inset-bottom, 0px)',
             }}
           >
             <div
@@ -1754,7 +1767,6 @@ export default function App() {
                 background: 'var(--surface)',
                 borderRadius: '24px 24px 0 0',
                 padding: 20,
-                paddingBottom: 'calc(20px + env(safe-area-inset-bottom, 0px))', // sopra i tasti del telefono (B6)
                 maxHeight: '85vh',
                 overflowY: 'auto',
                 boxShadow: 'var(--shadow-lg)',
@@ -1785,6 +1797,11 @@ export default function App() {
               alignItems: 'flex-end',
               justifyContent: 'center',
               zIndex: 50,
+              // Il pannello si ferma sopra i tasti del telefono (B6): sotto
+              // resta lo sfondo scuro, su cui i tasti si leggono. Prima il
+              // margine era in fondo al contenuto e valeva solo a fine
+              // scorrimento.
+              paddingBottom: 'env(safe-area-inset-bottom, 0px)',
             }}
           >
             <div
@@ -1794,7 +1811,6 @@ export default function App() {
                 background: 'var(--surface)',
                 borderRadius: '24px 24px 0 0',
                 padding: 20,
-                paddingBottom: 'calc(20px + env(safe-area-inset-bottom, 0px))', // sopra i tasti del telefono (B6)
                 maxHeight: '85vh',
                 overflowY: 'auto',
                 boxShadow: 'var(--shadow-lg)',

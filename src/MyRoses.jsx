@@ -164,9 +164,8 @@ export default function MyPulses({
   }
 
   // Decisione presa direttamente dal profilo a tutto schermo (aperto
-  // toccando la foto sulla riga "Da decidere") — sempre e solo per
-  // tier 'super', l'unico caso in cui l'identità è già svelata
-  // mentre si sta ancora decidendo. Chiude il profilo e aggiorna
+  // toccando la foto sulla riga "Da decidere") — solo per le Pulse
+  // che svelano chi le manda (tutte, dal novembre 2026). Chiude il profilo e aggiorna
   // subito la lista, stesso comportamento della schermata di
   // decisione originale.
   async function respondFromProfile(action) {

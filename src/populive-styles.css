@@ -114,7 +114,6 @@ button:active:not(:disabled),
 .pl-radar-card,
 .pl-rank-row,
 .pl-pulse-option,
-.pl-guess-candidate,
 .pl-seal,
 .pl-sheet-close {
   transition: transform 0.12s ease;
@@ -122,7 +121,6 @@ button:active:not(:disabled),
 .pl-radar-card:active,
 .pl-rank-row:active,
 .pl-pulse-option:active,
-.pl-guess-candidate:active,
 .pl-seal:active {
   transform: scale(0.97);
 }
@@ -851,41 +849,6 @@ button {
   color: var(--red);
   border-color: rgba(229, 57, 53, 0.3);
 }
-.pl-guess-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin: 10px 0;
-}
-.pl-guess-candidate {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  background: var(--surface);
-  border: 1px solid rgba(217, 204, 192, 0.14);
-  border-radius: 14px;
-  padding: 14px 10px;
-  cursor: pointer;
-}
-.pl-guess-candidate img {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-.pl-abandon-btn {
-  width: 100%;
-  margin-top: 10px;
-  padding: 11px;
-  border-radius: 12px;
-  border: 1px dashed rgba(217, 204, 192, 0.3);
-  background: transparent;
-  color: var(--text-muted);
-  font-size: 11.5px;
-  font-weight: 600;
-  cursor: pointer;
-}
 .pl-redeem-card {
   align-items: center;
   text-align: center;
@@ -902,7 +865,13 @@ button {
   font-weight: 700;
   font-size: 16px;
   cursor: pointer;
-  display: block;
+  /* Contenuto al centro in tutti e due gli stati: da fermo è un
+     <button> (centra da solo), durante il conto alla rovescia un
+     <div>, dove il numero finiva in alto a sinistra (5/11). */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
   box-shadow: var(--shadow-md);
 }
 .pl-seal-live {
@@ -1467,4 +1436,25 @@ body.pl-day-mode .pl-seal-flash {
   to {
     opacity: 1;
   }
+}
+
+/* ============================================================
+   STRISCIA SOTTO I TASTI DEL TELEFONO (novembre 2026)
+   Alta quanto la barra di navigazione di Android / la barretta
+   dell'iPhone (0 sul web), sempre scura come la barra in basso
+   dell'app: i tasti, colorati sempre chiari (setSystemBarsForTheme
+   in native.js), si leggono anche sulle schermate chiare a tutto
+   schermo (sigillo, dettaglio profilo, login di giorno). Sopra le
+   schermate (fino a 9000), sotto avvisi e conferme (9500).
+   ============================================================ */
+body::after {
+  content: '';
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: env(safe-area-inset-bottom, 0px);
+  background: #14100f;
+  z-index: 9450;
+  pointer-events: none;
 }

@@ -1,30 +1,20 @@
 import { useState, useEffect, useCallback } from 'react';
-import { PartyPopper } from './PopuLiveIcons';
 import ProfileFullScreen from './ProfileFullScreen';
 
-import { apiFetch, getOptimizedPhotoUrl } from './apiClient';
+import { apiFetch } from './apiClient';
 import { openExternal } from './native';
-import { askConfirm } from './Dialogs';
-
-const TIER_META = {
-  standalone: { label: 'Solo Pulse', sub: 'Anonima al 100% — nessun contatto' },
-  like: { label: 'Pulse + Like', sub: 'Mistero — si svela solo con reciprocità' },
-  simple: { label: 'Pulse', sub: 'Il tuo profilo sarà subito visibile' },
-  super: {
-    label: 'Pulse + Superlike',
-    sub: 'Il tuo profilo sarà subito visibile, con un Superlike incluso',
-  },
-};
 
 /**
  * ============================================================
  * POPULIVE — CICLO PULSE COMPLETO (componenti reali)
  * ============================================================
- * Quattro pezzi, ognuno collegato a un endpoint vero:
+ * Tre pezzi, ognuno collegato a un endpoint vero:
  *   1) PulseSend       → POST /api/pulses/send
  *   2) PulseNotification → POST /api/pulses/:id/respond
- *   3) PulseGuessGame   → POST /api/pulses/:id/guess
- *   4) PulseRedeemSeal  → POST /api/pulses/:id/redeem
+ *   3) PulseRedeemSeal  → POST /api/pulses/:id/redeem
+ * Una sola Pulse dal novembre 2026 (decisione A5): svela subito chi
+ * la manda e, se accettata, apre la chat. Tolte le varianti anonima,
+ * "+ Like" (con il minigioco "indovina chi") e "+ Superlike".
  * ============================================================
  */
 
@@ -34,34 +24,8 @@ const TIER_META = {
 export function PulseSend({ receiverId, arenaSessionId, venueId, onSent, onCancel }) {
   const [drinks, setDrinks] = useState([]);
   const [selectedDrink, setSelectedDrink] = useState(null);
-  // Quali modalità mostrare dipende dagli interruttori decisi dagli
-  // Architetti in dashboard (scheda Funzionalità) — TUTTE e quattro
-  // le varianti sono ora interruttori veri (25/8: prima "Pulse +
-  // Superlike" era sempre acceso per definizione, scritto fisso nel
-  // codice — ora è un interruttore come gli altri, spento di
-  // default). "Pulse" (semplice, slegato dal Superlike) parte
-  // acceso, pensato per la massima immediatezza delle prime serate.
-  const [availableTiers, setAvailableTiers] = useState(['simple']);
-  const [tier, setTier] = useState('simple');
   const [sending, setSending] = useState(false);
   const [error, setError] = useState(null);
-
-  useEffect(() => {
-    apiFetch('/api/feature-flags')
-      .then((r) => r.json())
-      .then((data) => {
-        if (!data.success) return;
-        const tiers = [];
-        if (data.flags.pulse_standalone) tiers.push('standalone');
-        if (data.flags.pulse_like) tiers.push('like');
-        if (data.flags.pulse_simple) tiers.push('simple');
-        if (data.flags.pulse_super) tiers.push('super');
-        if (tiers.length === 0) tiers.push('simple'); // difesa: mai una lista vuota, anche se per errore tutti gli interruttori finissero spenti
-        setAvailableTiers(tiers);
-        setTier(tiers[0]); // segue davvero ciò che è disponibile, non resta bloccato sul valore di partenza
-      })
-      .catch(() => {});
-  }, []);
 
   useEffect(() => {
     apiFetch(`/api/venues/${venueId}/drinks`)
@@ -81,52 +45,6 @@ export function PulseSend({ receiverId, arenaSessionId, venueId, onSent, onCance
       });
   }, [venueId]);
 
-  // Stesso identico meccanismo già usato per il Superlike puro
-  // (ProfileFullScreen.jsx) — quando manca proprio il Superlike (non
-  // il Pulse), offriamo di comprarne altri 5 invece di un errore
-  // muto che non spiega cosa manca davvero.
-  const offerSuperlikePurchase = useCallback(async () => {
-    const confirmed = await askConfirm({
-      title: 'Superlike esauriti',
-      message:
-        'Questo Pulse ha bisogno anche di un Superlike, e quelli di questa settimana sono finiti. Vuoi acquistarne altri 5?',
-      confirmLabel: 'Acquista',
-    });
-    if (!confirmed) {
-      setSending(false);
-      return;
-    }
-
-    try {
-      const catalogRes = await apiFetch('/api/products');
-      const catalogData = await catalogRes.json();
-      const product = catalogData.products?.find((p) => p.product_type === 'superlike_credits');
-      if (!product) {
-        setSending(false);
-        return;
-      }
-
-      const purchaseRes = await apiFetch('/api/purchases/initiate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ productId: product.id, arenaSessionId }),
-      });
-      const purchaseData = await purchaseRes.json();
-
-      if (purchaseData.requiresPayment) {
-        openExternal(purchaseData.checkoutUrl);
-      } else {
-        // Account di prova/gratis: il saldo è già ricaricato lato
-        // server, la persona può semplicemente riprovare a inviare.
-        setSending(false);
-        setError('Fatto! Riprova a inviare il Pulse.');
-      }
-    } catch (err) {
-      console.error('Errore nella proposta di acquisto Superlike:', err);
-      setSending(false);
-    }
-  }, [arenaSessionId]);
-
   const handleSend = useCallback(async () => {
     if (!selectedDrink) return;
     setSending(true);
@@ -140,15 +58,10 @@ export function PulseSend({ receiverId, arenaSessionId, venueId, onSent, onCance
           receiverId,
           arenaSessionId,
           drinkProductId: selectedDrink.id,
-          tier,
         }),
       });
       const data = await res.json();
       if (!data.success) {
-        if (data.reason === 'superlike_balance_exhausted') {
-          offerSuperlikePurchase();
-          return;
-        }
         setError(reasonToMessage(data.reason));
         return;
       }
@@ -168,7 +81,7 @@ export function PulseSend({ receiverId, arenaSessionId, venueId, onSent, onCance
     } finally {
       setSending(false);
     }
-  }, [selectedDrink, tier, receiverId, arenaSessionId, onSent, offerSuperlikePurchase]);
+  }, [selectedDrink, receiverId, arenaSessionId, onSent]);
 
   return (
     <div className="pl-sheet">
@@ -221,29 +134,10 @@ export function PulseSend({ receiverId, arenaSessionId, venueId, onSent, onCance
         <p className="pl-hint">Nessun drink disponibile in questo locale al momento.</p>
       )}
 
-      {availableTiers.length === 1 ? (
-        <p className="pl-hint" style={{ marginBottom: 14 }}>
-          Se chi la riceve accetta, il tuo profilo diventa subito visibile e si apre la chat — se
-          non accetta, semplicemente non succede nulla.
-        </p>
-      ) : (
-        <>
-          <div className="pl-section-label">Come vuoi inviarla</div>
-          {availableTiers.map((tId) => {
-            const meta = TIER_META[tId];
-            return (
-              <div
-                key={tId}
-                className={`pl-pulse-option ${tier === tId ? 'selected' : ''}`}
-                onClick={() => setTier(tId)}
-              >
-                <div className="pl-pulse-title">{meta.label}</div>
-                <div className="pl-pulse-price">{meta.sub}</div>
-              </div>
-            );
-          })}
-        </>
-      )}
+      <p className="pl-hint" style={{ marginBottom: 14 }}>
+        Se chi la riceve accetta, il tuo profilo diventa subito visibile e si apre la chat — se non
+        accetta, semplicemente non succede nulla.
+      </p>
 
       {error && <p className="pl-error">{error}</p>}
       <button className="pl-send-btn" onClick={handleSend} disabled={!selectedDrink || sending}>
@@ -264,15 +158,16 @@ function reasonToMessage(reason) {
 }
 
 // ------------------------------------------------------------
-// 2) NOTIFICA DI RICEZIONE — le tre varianti
+// 2) NOTIFICA DI RICEZIONE
 // ------------------------------------------------------------
 export function PulseNotification({ pulse, currentUserId, arenaSessionId, venueId, onResolved }) {
   const [loading, setLoading] = useState(false);
-  const [showGuessGame, setShowGuessGame] = useState(false);
-  const [guessCandidates, setGuessCandidates] = useState([]);
   const [redeemInfo, setRedeemInfo] = useState(null);
-  const [pendingRedeemCode, setPendingRedeemCode] = useState(null);
   const [showFullProfile, setShowFullProfile] = useState(false);
+  // Le Pulse di oggi svelano sempre chi le manda; restano nel
+  // database alcune vecchie anonime ('standalone', 'like') di prima
+  // del novembre 2026, che danno solo il drink.
+  const showsSender = pulse.tier === 'simple' || pulse.tier === 'super';
   const [error, setError] = useState(null);
 
   async function respond(action) {
@@ -298,13 +193,7 @@ export function PulseNotification({ pulse, currentUserId, arenaSessionId, venueI
       }
 
       if (action === 'accept') {
-        if (pulse.tier === 'like' && data.canStillPlayGuessGame) {
-          setPendingRedeemCode(data.redeemCode);
-          const candRes = await apiFetch(`/api/arenas/${arenaSessionId}/guess-candidates`);
-          const candData = await candRes.json();
-          setGuessCandidates(candData.candidates || []);
-          setShowGuessGame(true);
-        } else if (pulse.tier === 'super' || pulse.tier === 'simple') {
+        if (data.conversationId) {
           // Nessuna schermata intermedia apposta: la chat si sblocca
           // da sola (v. banner/lista match), e la Pulse resta in
           // lista pronta da riscattare quando si vuole — un
@@ -341,44 +230,15 @@ export function PulseNotification({ pulse, currentUserId, arenaSessionId, venueI
     );
   }
 
-  if (showGuessGame) {
-    return (
-      <PulseGuessGame
-        pulseId={pulse.pulseId}
-        currentUserId={currentUserId}
-        candidates={guessCandidates}
-        onFinished={({ matched }) => {
-          if (matched) {
-            // Stesso principio del Pulse+Superlike: niente schermata
-            // di mezzo, la chat si sblocca da sola e la Pulse resta
-            // in lista pronta per il riscatto quando si vuole.
-            onResolved({ action: 'accepted', chatUnlocked: true });
-          } else {
-            setRedeemInfo({ redeemCode: pendingRedeemCode });
-          }
-        }}
-      />
-    );
-  }
-
-  const copy = {
-    standalone: {
-      title: 'Un ammiratore misterioso ti ha inviato un Pulse',
-      sub: `Vuoi accettarlo? Riscattabile al bancone.`,
-    },
-    like: {
-      title: 'Un ammiratore misterioso ti ha inviato un Pulse + Like',
-      sub: 'Se accetti, il Pulse è comunque tuo — poi potrai provare a indovinare chi è per sbloccare la chat.',
-    },
-    simple: {
-      title: `${pulse.senderName || 'Qualcuno'} ti ha inviato un Pulse`,
-      sub: `Vuoi accettarlo? Il tuo profilo è già visibile a chi l'ha inviato.`,
-    },
-    super: {
-      title: `${pulse.senderName || 'Qualcuno'} ti ha inviato un Pulse`,
-      sub: `Ha anche inviato un Superlike: se non accetti, non potrà più contattarti.`,
-    },
-  }[pulse.tier];
+  const copy = showsSender
+    ? {
+        title: `${pulse.senderName || 'Qualcuno'} ti ha inviato un Pulse`,
+        sub: `Vuoi accettarlo? Il tuo profilo è già visibile a chi l'ha inviato.`,
+      }
+    : {
+        title: 'Un ammiratore misterioso ti ha inviato un Pulse',
+        sub: `Vuoi accettarlo? Riscattabile al bancone.`,
+      };
 
   return (
     <div className="pl-sheet">
@@ -386,10 +246,9 @@ export function PulseNotification({ pulse, currentUserId, arenaSessionId, venueI
       <div className="pl-sheet-close" onClick={() => onResolved({ action: 'closed' })}>
         Chiudi ✕
       </div>
-      {/* Per Pulse+Superlike e Pulse semplice: anteprima vera del
-          profilo, stessa esperienza già costruita per il Superlike
-          puro — entrambe le varianti svelano subito l'identità. */}
-      {(pulse.tier === 'super' || pulse.tier === 'simple') && (
+      {/* Anteprima vera del profilo di chi la manda, stessa
+          esperienza già costruita per il Superlike. */}
+      {showsSender && (
         <div
           onClick={() => pulse.senderId && setShowFullProfile(true)}
           style={{
@@ -448,15 +307,8 @@ export function PulseNotification({ pulse, currentUserId, arenaSessionId, venueI
           }}
         />
       )}
-      <h3
-        style={{ textAlign: pulse.tier === 'super' || pulse.tier === 'simple' ? 'center' : 'left' }}
-      >
-        {copy.title}
-      </h3>
-      <p
-        className="pl-hint"
-        style={{ textAlign: pulse.tier === 'super' || pulse.tier === 'simple' ? 'center' : 'left' }}
-      >
+      <h3 style={{ textAlign: showsSender ? 'center' : 'left' }}>{copy.title}</h3>
+      <p className="pl-hint" style={{ textAlign: showsSender ? 'center' : 'left' }}>
         {copy.sub}
       </p>
 
@@ -472,9 +324,7 @@ export function PulseNotification({ pulse, currentUserId, arenaSessionId, venueI
         </button>
       </div>
       <button className="pl-send-btn" disabled={loading} onClick={() => respond('accept')}>
-        {pulse.tier === 'super' || pulse.tier === 'simple'
-          ? 'Accetta e apri la chat'
-          : 'Accetta il Pulse'}
+        {showsSender ? 'Accetta e apri la chat' : 'Accetta il Pulse'}
       </button>
       {error && <p className="pl-error">{error}</p>}
     </div>
@@ -482,74 +332,7 @@ export function PulseNotification({ pulse, currentUserId, arenaSessionId, venueI
 }
 
 // ------------------------------------------------------------
-// 3) MINIGIOCO — indovina chi ti ha inviato il Pulse+Like
-// ------------------------------------------------------------
-export function PulseGuessGame({ pulseId, candidates, onFinished }) {
-  const [message, setMessage] = useState('Hai tot tentativi per provare a scoprire chi è.');
-  const [justMatched, setJustMatched] = useState(false);
-
-  async function guess(guessedUserId) {
-    const res = await apiFetch(`/api/pulses/${pulseId}/guess`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ guessedUserId }),
-    });
-    const data = await res.json();
-
-    if (!data.success) {
-      setMessage('Non è stato possibile registrare il tentativo.');
-      return;
-    }
-    if (data.matched) {
-      setJustMatched(true);
-      setMessage('Match! La chat si sblocca.');
-      setTimeout(() => onFinished({ matched: true }), 1200);
-    } else if (data.attemptsExhausted) {
-      setMessage('Tentativi esauriti — il Pulse resta tuo, il mittente rimane un mistero.');
-      setTimeout(() => onFinished({ matched: false }), 1500);
-    } else {
-      setMessage(`Non era lui/lei — ${data.attemptsRemaining} tentativi rimasti.`);
-    }
-  }
-
-  return (
-    <div className="pl-sheet">
-      <h3>Indovina chi ti ha inviato il Pulse</h3>
-      <p className="pl-hint" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-        {justMatched && <PartyPopper size={15} color="var(--cyan)" />} {message}
-      </p>
-      <div className="pl-guess-grid">
-        {candidates.map((c) => (
-          <div key={c.userId} className="pl-guess-candidate" onClick={() => guess(c.userId)}>
-            {c.photoUrl ? (
-              <img
-                src={getOptimizedPhotoUrl(c.photoUrl, { width: 40, height: 40 })}
-                alt={c.displayName}
-              />
-            ) : (
-              c.avatarEmoji || '🙂'
-            )}
-            <span>{c.displayName}</span>
-          </div>
-        ))}
-      </div>
-      {/* Nessuno dei candidati mostrati interessa davvero? Nessun
-          problema: un tentativo sbagliato manda comunque un Like
-          vero a quella persona (v. attemptGuess lato server) — chi
-          non vuole rischiare un match indesiderato può uscire senza
-          giocare, il Pulse resta comunque suo. */}
-      <button
-        className="pl-abandon-btn"
-        onClick={() => onFinished({ matched: false, abandoned: true })}
-      >
-        Nessuno mi interessa — abbandona e riscatta il Pulse
-      </button>
-    </div>
-  );
-}
-
-// ------------------------------------------------------------
-// 4) RISCATTO AL BANCONE — sigillo con timer, mostrato al bartender
+// 3) RISCATTO AL BANCONE — sigillo con timer, mostrato al bartender
 // ------------------------------------------------------------
 // onCancel (facoltativo): "Non ora" — dalla scheda Pulse prima non
 // c'era modo di uscire senza riscattare (B10, 1/11).

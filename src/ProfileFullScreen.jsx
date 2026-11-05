@@ -15,7 +15,7 @@ import { askConfirm, showToast } from './Dialogs';
  * una sola schermata, foto grande per riconoscere subito la
  * persona, e i tre bottoni di interazione già lì — niente menu
  * intermedi, niente passaggi in più. Come deciso insieme: se
- * tocchi "Pulse", si apre il riquadro di scelta (drink + variante)
+ * tocchi "Pulse", si apre il riquadro di scelta del drink
  * SOPRA questa stessa schermata, stesso principio "un tocco, una
  * schermata".
  * ============================================================
@@ -211,7 +211,15 @@ export default function ProfileFullScreen({
 
   if (showPulseSend) {
     return createPortal(
-      <div className="pl-fullscreen-modal" style={{ ...overlayStyle, paddingTop: 0 }}>
+      <div
+        className="pl-fullscreen-modal"
+        // Il pannello si ferma sopra i tasti del telefono (B6)
+        style={{
+          ...overlayStyle,
+          paddingTop: 0,
+          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+        }}
+      >
         <div
           style={{
             width: '100%',
@@ -219,7 +227,6 @@ export default function ProfileFullScreen({
             background: 'var(--surface)',
             borderRadius: '24px 24px 0 0',
             padding: 20,
-            paddingBottom: 'calc(20px + env(safe-area-inset-bottom, 0px))', // sopra i tasti del telefono (B6)
             boxSizing: 'border-box',
             maxHeight: '85vh',
             overflowY: 'auto',

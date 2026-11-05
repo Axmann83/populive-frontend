@@ -1,9 +1,14 @@
-import { Capacitor, registerPlugin } from '@capacitor/core';
+import {
+  Capacitor,
+  registerPlugin,
+  SystemBars,
+  SystemBarsStyle,
+  SystemBarType,
+} from '@capacitor/core';
 import { App as CapApp } from '@capacitor/app';
 import { Browser } from '@capacitor/browser';
 import { Geolocation } from '@capacitor/geolocation';
 import { Haptics } from '@capacitor/haptics';
-import { StatusBar, Style } from '@capacitor/status-bar';
 import { FirebaseMessaging, Importance } from '@capacitor-firebase/messaging';
 
 /**
@@ -179,18 +184,26 @@ export async function getCurrentPosition({
 }
 
 /**
- * Colore di orario e icone del telefono in alto, secondo il tema
- * dell'app (lotto 3 bis, novembre 2026): di giorno (sfondo crema)
- * scuri, di notte chiari. Senza, il telefono li colora secondo il
- * SUO tema, e di giorno risultavano bianchi su crema. Sul web non fa
- * nulla.
+ * Colore delle icone delle barre del telefono (lotto 3 bis, novembre
+ * 2026), con SystemBars del nucleo di Capacitor 8:
+ * - in alto (orario, batteria) secondo il tema dell'app: scure di
+ *   giorno sullo sfondo crema, chiare di notte. Senza, il telefono le
+ *   colora secondo il SUO tema, e di giorno erano bianche su crema;
+ * - in basso (tasti di Android) sempre chiare: sotto c'è sempre lo
+ *   scuro della barra dell'app, dei pannelli o della striscia
+ *   .pl-system-nav-strip (populive-styles.css), in tutti e due i temi.
+ * Sul web non fa nulla.
  */
-export async function setStatusBarForTheme(isDaytime) {
+export async function setSystemBarsForTheme(isDaytime) {
   if (!isNative()) return;
   try {
-    await StatusBar.setStyle({ style: isDaytime ? Style.Light : Style.Dark });
+    await SystemBars.setStyle({
+      style: isDaytime ? SystemBarsStyle.Light : SystemBarsStyle.Dark,
+      bar: SystemBarType.StatusBar,
+    });
+    await SystemBars.setStyle({ style: SystemBarsStyle.Dark, bar: SystemBarType.NavigationBar });
   } catch {
-    /* barra di stato non configurabile: resta com'è */
+    /* barre non configurabili: restano come sono */
   }
 }
 

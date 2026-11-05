@@ -9,7 +9,6 @@
     "@capacitor/core": "^8.5.2",
     "@capacitor/geolocation": "^8.2.2",
     "@capacitor/haptics": "^8.0.2",
-    "@capacitor/status-bar": "^8.0.4",
     "firebase": "^12.19.0",
     "html5-qrcode": "^2.3.8",
     "leaflet": "^1.9.4",

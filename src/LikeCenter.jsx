@@ -131,15 +131,6 @@ export default function LikeCenter({ userId, arenaSessionId, venueId, onOpenChat
         onOpenChat?.(data.conversationId);
       }
 
-      // Pulse+Like accettata: la chat non è automatica, dipende dal
-      // minigioco.
-      if (action === 'accept' && item.kind === 'pulse_like' && data.canStillPlayGuessGame) {
-        showToast(
-          "Pulse accettata! Vai nella scheda Pulse per provare a indovinare chi te l'ha mandata e sbloccare la chat.",
-          { tone: 'success' }
-        );
-      }
-
       // Decisa: sparisce da qui. "Sospendi" invece la lascia, segnata
       // "In sospeso": si può ancora decidere dopo (D9, 2/10).
       const same = (p) => p.kind === item.kind && p.id === item.id;

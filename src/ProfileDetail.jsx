@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { apiFetch, getOptimizedPhotoUrl } from './apiClient';
+import { apiFetch, getOptimizedPhotoUrl, getStoredUserId } from './apiClient';
 import { usePhotoPreview } from './PhotoPreview';
 import { Link2, Coins, Crown, Sparkles } from './PopuLiveIcons';
+import { SafetyMenuButton } from './ReportBlock';
 
 /**
  * ============================================================
@@ -19,6 +20,7 @@ export default function ProfileDetail({ userId, arenaSessionId, onClose, onBack 
   const [profile, setProfile] = useState(null);
   const [ranking, setRanking] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [unavailable, setUnavailable] = useState(false); // sospeso o bloccato (B2)
   // Anche qui l'avatar è pur sempre un cerchietto: un tocco lo apre
   // in grande (v. PhotoPreview.jsx).
   const { photoTapProps, photoPreview } = usePhotoPreview();
@@ -36,6 +38,7 @@ export default function ProfileDetail({ userId, arenaSessionId, onClose, onBack 
         const rankingData = await rankingRes.json();
         if (!cancelled) {
           if (profileData.success) setProfile(profileData.profile);
+          else setUnavailable(true);
           if (rankingData.success) setRanking(rankingData.summary);
         }
 
@@ -85,12 +88,28 @@ export default function ProfileDetail({ userId, arenaSessionId, onClose, onBack 
         <button onClick={onBack} style={navBtnStyle} aria-label="Indietro">
           ‹
         </button>
-        <button onClick={onClose} style={navBtnStyle} aria-label="Chiudi">
-          ✕
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          {/* Segnala / Blocca (B2): mai sul proprio profilo. Bloccare
+              chiude anche il profilo a tutto schermo sotto (onClose). */}
+          {profile && userId !== getStoredUserId() && (
+            <SafetyMenuButton
+              userId={userId}
+              displayName={profile.displayName}
+              style={{ ...navBtnStyle, boxShadow: 'none', backdropFilter: 'none' }}
+              onBlocked={onClose}
+            />
+          )}
+          <button onClick={onClose} style={navBtnStyle} aria-label="Chiudi">
+            ✕
+          </button>
+        </div>
       </div>
 
-      {loading || !profile ? (
+      {unavailable ? (
+        <div className="pl-hint" style={{ textAlign: 'center', marginTop: 60 }}>
+          Profilo non disponibile
+        </div>
+      ) : loading || !profile ? (
         <div className="pl-hint" style={{ textAlign: 'center', marginTop: 60 }}>
           Caricamento…
         </div>

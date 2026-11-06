@@ -145,6 +145,8 @@ function reasonToMessage(reason) {
     code_expired: 'Il codice è scaduto — richiedine uno nuovo.',
     too_many_attempts: 'Troppi tentativi sbagliati — richiedi un nuovo codice.',
     wrong_code: 'Codice errato, riprova.',
+    account_suspended:
+      'Questo account è stato sospeso perché non rispetta le regole della community di PopuLive.',
   };
   return messages[reason] || 'Qualcosa è andato storto — riprova.';
 }

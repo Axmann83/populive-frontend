@@ -29,6 +29,7 @@ import {
   Signal,
   SignalMedium,
   ChevronLeft,
+  Flag,
 } from 'lucide-react';
 
 /**
@@ -79,6 +80,7 @@ export {
   Signal,
   SignalMedium,
   ChevronLeft,
+  Flag,
 };
 
 export function PulseWaveIcon({ size = 20, color = 'currentColor', strokeWidth = 2, ...props }) {

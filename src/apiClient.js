@@ -132,8 +132,24 @@ async function apiFetch(path, options = {}) {
     clearSession();
   }
 
+  // Account sospeso da un Architetto dopo una segnalazione (B2): fuori
+  // dalla sessione, e App.jsx torna al login con un avviso.
+  if (res.status === 403) {
+    try {
+      const body = await res.clone().json();
+      if (body?.reason === 'account_suspended') {
+        clearSession();
+        window.dispatchEvent(new Event(ACCOUNT_SUSPENDED_EVENT));
+      }
+    } catch {
+      /* risposta senza JSON: non è una sospensione */
+    }
+  }
+
   return res;
 }
+
+const ACCOUNT_SUSPENDED_EVENT = 'populive:account-suspended';
 
 /**
  * Notifiche push (D3, ottobre 2026): manda al backend il token Firebase
@@ -167,6 +183,7 @@ export {
   setSession,
   clearSession,
   apiFetch,
+  ACCOUNT_SUSPENDED_EVENT,
   isRecentOwnDecision,
   getLastVenue,
   setLastVenue,

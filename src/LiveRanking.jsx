@@ -6,6 +6,8 @@ import ProfileDetail from './ProfileDetail';
 import AdminChatPanel from './AdminChatPanel';
 import { Link2, Coins, Crown } from './PopuLiveIcons';
 import { usePhotoPreview } from './PhotoPreview';
+import { apiFetch } from './apiClient';
+import { onPairHidden } from './ReportBlock';
 
 /**
  * ============================================================
@@ -46,6 +48,26 @@ export default function LiveRanking({
   // Tocco sulla foto in classifica → anteprima grande, senza aprire
   // il profilo (v. PhotoPreview.jsx).
   const { photoTapProps, photoPreview } = usePhotoPreview();
+  // Persone con un blocco manuale (B2) con chi guarda, in una
+  // qualunque direzione: non compaiono in classifica (la classifica
+  // è pubblica, il server non sa chi la guarda). Nella dashboard no:
+  // gli Architetti vedono tutti.
+  const [hiddenUserIds, setHiddenUserIds] = useState(new Set());
+  useEffect(() => {
+    if (isDashboard || !currentUserId) return undefined;
+    let cancelled = false;
+    apiFetch(`/api/users/${currentUserId}/blocked-pairs`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (!cancelled && data.success) setHiddenUserIds(new Set(data.userBlockedIds || []));
+      })
+      .catch(() => {});
+    const stop = onPairHidden((id) => setHiddenUserIds((prev) => new Set(prev).add(id)));
+    return () => {
+      cancelled = true;
+      stop();
+    };
+  }, [currentUserId, isDashboard]);
 
   // --------------------------------------------------------
   // Caricamento della classifica — estratta come funzione a sé
@@ -299,40 +321,42 @@ export default function LiveRanking({
 
       {!loading &&
         !thresholdInfo &&
-        ranking.map((entry) => (
-          <RankRow
-            key={entry.userId}
-            entry={entry}
-            isMe={entry.userId === currentUserId}
-            photoTapProps={photoTapProps}
-            delta={recentDeltas[entry.userId]}
-            onClick={() => {
-              // In dashboard, mai i soliti Like/Superlike/Pulse — si
-              // apre direttamente la possibilità di scrivere, senza
-              // bisogno di nessun match (26/8, richiesta esplicita:
-              // per contattare chi si nota emergere in classifica,
-              // tipicamente per proporgli un accordo Instant
-              // Influencer). Anche toccare la PROPRIA riga qui non fa
-              // eccezione — non c'è motivo di escluderla, a differenza
-              // dell'app normale dove avrebbe aperto interazioni verso
-              // se stessi (qui non ce ne sono).
-              if (isDashboard) {
-                setAdminChatTarget({ userId: entry.userId, displayName: entry.displayName });
-                return;
-              }
-              // Toccare la PROPRIA riga non apre i bottoni Like/Superlike/
-              // Pulse puntati verso se stessi (non avrebbe senso) — ti
-              // portiamo invece dritti alla tua tab Profilo, dove hai
-              // già foto, punti e impostazioni. Un tocco a vuoto sarebbe
-              // un'esperienza povera, anche se "corretta" a modo suo.
-              if (entry.userId === currentUserId) {
-                onSelectSelf?.();
-              } else {
-                setSelectedProfileUserId(entry.userId);
-              }
-            }}
-          />
-        ))}
+        ranking
+          .filter((entry) => !hiddenUserIds.has(entry.userId))
+          .map((entry) => (
+            <RankRow
+              key={entry.userId}
+              entry={entry}
+              isMe={entry.userId === currentUserId}
+              photoTapProps={photoTapProps}
+              delta={recentDeltas[entry.userId]}
+              onClick={() => {
+                // In dashboard, mai i soliti Like/Superlike/Pulse — si
+                // apre direttamente la possibilità di scrivere, senza
+                // bisogno di nessun match (26/8, richiesta esplicita:
+                // per contattare chi si nota emergere in classifica,
+                // tipicamente per proporgli un accordo Instant
+                // Influencer). Anche toccare la PROPRIA riga qui non fa
+                // eccezione — non c'è motivo di escluderla, a differenza
+                // dell'app normale dove avrebbe aperto interazioni verso
+                // se stessi (qui non ce ne sono).
+                if (isDashboard) {
+                  setAdminChatTarget({ userId: entry.userId, displayName: entry.displayName });
+                  return;
+                }
+                // Toccare la PROPRIA riga non apre i bottoni Like/Superlike/
+                // Pulse puntati verso se stessi (non avrebbe senso) — ti
+                // portiamo invece dritti alla tua tab Profilo, dove hai
+                // già foto, punti e impostazioni. Un tocco a vuoto sarebbe
+                // un'esperienza povera, anche se "corretta" a modo suo.
+                if (entry.userId === currentUserId) {
+                  onSelectSelf?.();
+                } else {
+                  setSelectedProfileUserId(entry.userId);
+                }
+              }}
+            />
+          ))}
 
       {/* Locale: schermata completa con Like/Superlike/Pulse —
           stesso identico strumento del radar, riusato senza

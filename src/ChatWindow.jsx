@@ -4,6 +4,7 @@ import { BookmarkCheck, Sparkles, ChevronLeft } from './PopuLiveIcons';
 import { apiFetch } from './apiClient';
 import { onBackButton } from './native';
 import { askConfirm, isConfirmOpen, showToast } from './Dialogs';
+import { ReportSheet, blockUserWithConfirm } from './ReportBlock';
 
 /**
  * ============================================================
@@ -33,14 +34,19 @@ export default function ChatWindow({
   useEffect(
     () =>
       onBackButton(() => {
-        // Con una conferma aperta (es. "Blocca") il tasto chiude solo quella
-        if (!isConfirmOpen()) onBackRef.current?.();
+        // Con una conferma aperta (es. "Blocca") o la segnalazione, il
+        // tasto chiude solo quella
+        if (!isConfirmOpen() && !reportingRef.current) onBackRef.current?.();
       }),
     []
   );
 
   const [messages, setMessages] = useState([]);
   const [isClosed, setIsClosed] = useState(false);
+  // Finestra "Segnala" aperta (B2)
+  const [reporting, setReporting] = useState(false);
+  const reportingRef = useRef(false);
+  reportingRef.current = reporting;
   const [myWantsKeep, setMyWantsKeep] = useState(false);
   const [theirWantsKeep, setTheirWantsKeep] = useState(false);
   const [draft, setDraft] = useState('');
@@ -197,7 +203,7 @@ export default function ChatWindow({
       const confirmed = await askConfirm({
         title: 'Non conservare più la chat?',
         message:
-          'Se ritiri la scelta, questa chat potrebbe chiudersi subito per entrambi, senza possibilità di tornare indietro.',
+          'Se ritiri la scelta, questa chat potrebbe essere rimossa subito per entrambi, senza possibilità di tornare indietro.',
         confirmLabel: 'Ritira',
         danger: true,
       });
@@ -213,24 +219,16 @@ export default function ChatWindow({
     if (data.chatNowClosed) setIsClosed(true);
   }, [myWantsKeep, conversationId]);
 
-  // Bottone "Blocca utente" — richiesta esplicita dell'utente
-  // (22/8), consolidata insieme all'idea di "cancellazione della
-  // chat": bloccare qualcuno chiude per forza anche questa
-  // conversazione, non avrebbe senso restasse aperta. A differenza
-  // di un rifiuto (a senso unico), il blocco manuale è SEMPRE
-  // bidirezionale — nessuna delle due parti potrà più contattare
-  // l'altra né vederla nel radar, in nessun locale futuro.
+  // Bottone "Blocca utente" (22/8): bloccare qualcuno chiude per
+  // forza anche questa conversazione. Dal lotto 6 (B2) passa dallo
+  // stesso flusso del profilo (ReportBlock.jsx): blocco nelle due
+  // direzioni, che si può togliere dalle Impostazioni. La chat bloccata
+  // sparisce dall'elenco: si torna lì.
   const handleBlock = useCallback(async () => {
-    const confirmed = await askConfirm({
-      title: `Bloccare ${otherUserName}?`,
-      message:
-        'Non potrete più contattarvi né vedervi nel radar, in nessun locale. Questa scelta non si può annullare.',
-      confirmLabel: 'Blocca',
-      danger: true,
-    });
-    if (!confirmed) return;
-    await apiFetch(`/api/chat/${conversationId}/block`, { method: 'POST' });
-    setIsClosed(true);
+    if (await blockUserWithConfirm({ conversationId, displayName: otherUserName })) {
+      setIsClosed(true);
+      onBackRef.current?.();
+    }
   }, [conversationId, otherUserName]);
 
   if (loading) return <div className="pl-chat-loading">Caricamento…</div>;
@@ -272,6 +270,9 @@ export default function ChatWindow({
         >
           {myWantsKeep && <BookmarkCheck size={12} />}{' '}
           {myWantsKeep ? 'Chat conservata ✓' : 'Conserva la chat'}
+        </button>
+        <button onClick={() => setReporting(true)} style={chatHeaderLinkStyle}>
+          Segnala
         </button>
         {!isClosed && (
           <button
@@ -343,6 +344,28 @@ export default function ChatWindow({
           </button>
         </div>
       )}
+
+      {reporting && (
+        <ReportSheet
+          conversationId={conversationId}
+          context="chat"
+          displayName={otherUserName}
+          onClose={() => setReporting(false)}
+          onBlocked={() => {
+            setIsClosed(true);
+            onBackRef.current?.();
+          }}
+        />
+      )}
     </div>
   );
 }
+
+const chatHeaderLinkStyle = {
+  background: 'none',
+  border: 'none',
+  color: 'var(--text-muted)',
+  fontSize: 10.5,
+  cursor: 'pointer',
+  padding: '4px 6px',
+};

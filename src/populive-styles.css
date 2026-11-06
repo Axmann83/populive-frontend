@@ -1458,3 +1458,79 @@ body::after {
   z-index: 9450;
   pointer-events: none;
 }
+
+/* ============================================================
+   SEGNALA E BLOCCA (B2, novembre 2026), v. ReportBlock.jsx
+   Stessa finestra di Dialogs.jsx (.pl-dialog), con i tre motivi,
+   il testo facoltativo e il menu "⋯" dei profili.
+   ============================================================ */
+.pl-report {
+  max-width: 360px;
+  text-align: left;
+}
+.pl-report .pl-dialog-title,
+.pl-report .pl-dialog-message {
+  text-align: center;
+}
+.pl-report-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+}
+.pl-report-option {
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(217, 204, 192, 0.16);
+  background: var(--surface-2);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.pl-report-option-on {
+  border-color: var(--red);
+  background: rgba(229, 57, 53, 0.12);
+}
+.pl-report-details {
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 12px;
+  margin-bottom: 0;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(217, 204, 192, 0.16);
+  background: var(--surface-2);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 12.5px;
+  resize: none;
+}
+.pl-safety-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.pl-safety-menu .pl-dialog-title {
+  margin-bottom: 6px;
+}
+.pl-safety-menu-item {
+  padding: 13px 10px;
+  border-radius: 14px;
+  border: 1px solid rgba(217, 204, 192, 0.16);
+  background: var(--surface-2);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.pl-safety-menu-danger {
+  color: var(--red);
+}
+.pl-safety-menu-cancel {
+  background: none;
+  color: var(--text-muted);
+}

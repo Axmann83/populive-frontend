@@ -72,7 +72,9 @@ import {
   checkStillAtVenue,
   isRecentOwnDecision,
   registerPushDevice,
+  ACCOUNT_SUSPENDED_EVENT,
 } from './apiClient';
+import { announcePairHidden } from './ReportBlock';
 
 import './populive-styles.css';
 
@@ -664,6 +666,13 @@ export default function App() {
     if ((type === 'match' || type === 'message') && conversationId) openMatch(conversationId);
     else if (type === 'pulse') navigateToTab('pulse');
     else if (type === 'like' || type === 'superlike') navigateToTab('like_center');
+    // Nuova segnalazione (B2), solo agli Architetti: si apre la
+    // dashboard sulla sezione Segnalazioni (indirizzo vero, letto
+    // all'avvio: v. isDashboardRoute)
+    else if (type === 'report') {
+      window.history.pushState(null, '', '/dashboard?section=reports');
+      window.location.reload();
+    }
     // openMatch e navigateToTab sono funzioni normali, ricreate a ogni
     // render: servono solo nel momento del tocco.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -896,6 +905,28 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Account sospeso da un Architetto (B2): lo dice il server a una
+  // qualunque richiesta (apiFetch, 403 'account_suspended') o subito
+  // via socket ('account_suspended', qui sotto). Si torna al login,
+  // che rifiuta lo stesso numero con lo stesso messaggio.
+  useEffect(() => {
+    let lastNoticeAt = 0;
+    function onSuspended() {
+      // Più richieste in volo arrivano tutte insieme: un solo avviso
+      if (Date.now() - lastNoticeAt < 10000) return;
+      lastNoticeAt = Date.now();
+      clearSession();
+      clearLastVenue();
+      setAuthState('login');
+      showToast(
+        'Il tuo account è stato sospeso perché non rispetta le regole della community di PopuLive.',
+        { tone: 'error', duration: 8000 }
+      );
+    }
+    window.addEventListener(ACCOUNT_SUSPENDED_EVENT, onSuspended);
+    return () => window.removeEventListener(ACCOUNT_SUSPENDED_EVENT, onSuspended);
+  }, []);
+
   // Totale vero del numero sulla Pulse appena si sa chi è connesso —
   // senza questo, il numero partirebbe da zero e si vedrebbe solo
   // dopo il primo evento in diretta, non riflettendo Pulse già in
@@ -1053,6 +1084,20 @@ export default function App() {
       if (ackId && ackId === arenaSessionIdRef.current) {
         setOwnProximity({ arenaSessionId: ackId, code: proximityCode || null });
       }
+    });
+
+    // Blocco (B2), da una delle due parti: la chat chiusa sparisce
+    // dall'elenco, e radar e classifica tolgono subito la persona (in
+    // silenzio: a chi è bloccato non si dice niente).
+    socket.on('chat_closed', () => {
+      refreshActiveChats();
+      refreshUnreadChatCount();
+    });
+    socket.on('pair_hidden', ({ userId: hiddenUserId } = {}) => {
+      if (hiddenUserId) announcePairHidden(hiddenUserId);
+    });
+    socket.on('account_suspended', () => {
+      window.dispatchEvent(new Event(ACCOUNT_SUSPENDED_EVENT));
     });
 
     socket.on('chat_unlocked', (payload) => {

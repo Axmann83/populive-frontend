@@ -3,6 +3,7 @@ import { Html5Qrcode } from 'html5-qrcode';
 import { apiFetch, setLastVenue, clearLastVenue, getOptimizedPhotoUrl } from './apiClient';
 import { usePhotoPreview } from './PhotoPreview';
 import ProfileFullScreen from './ProfileFullScreen';
+import { onPairHidden } from './ReportBlock';
 import QrScannerModal from './QrScannerModal';
 import { Armchair, Radar as RadarIcon, Signal, SignalMedium } from './PopuLiveIcons';
 import { subscribeNearby } from './proximity';
@@ -80,6 +81,17 @@ export default function CheckinRadar({
       setRadarPeople((prev) => prev.filter((p) => !blockedPairIds.has(p.userId)));
     }
   }, [blockedPairIds]);
+  // Blocco (B2) fatto adesso, da qui o dall'altra persona: sparisce
+  // subito, come dopo un rifiuto.
+  useEffect(
+    () =>
+      onPairHidden((hiddenUserId) =>
+        setBlockedPairIds((prev) =>
+          prev.has(hiddenUserId) ? prev : new Set(prev).add(hiddenUserId)
+        )
+      ),
+    []
+  );
   // Stato per "Aggancia il tuo tavolo" — dichiarato qui in cima,
   // insieme a tutti gli altri, MAI dopo un return condizionale
   // (le regole di React sugli hook lo richiedono sempre).
@@ -846,7 +858,11 @@ export default function CheckinRadar({
 
                 {/* Non "connesse ora": dal D14 nel radar c'è anche chi
                     ha l'app chiusa, finché non esce dalla serata. */}
-                <p>{othersOnly.length} persone nel locale stasera</p>
+                <p>
+                  {othersOnly.length === 1
+                    ? '1 persona nel locale stasera'
+                    : `${othersOnly.length} persone nel locale stasera`}
+                </p>
                 {/* Bluetooth spento (D4): una riga discreta, toccabile,
                     finché non si accende — decisione dell'utente del 22/10. */}
                 {bluetoothOff && (

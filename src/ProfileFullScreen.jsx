@@ -6,6 +6,7 @@ import { PulseSend } from './RosaFlow';
 import ProfileDetail from './ProfileDetail';
 import { Heart, Star, PulseWaveIcon, Link2, Coins, Crown, Sparkles } from './PopuLiveIcons';
 import { askConfirm, showToast } from './Dialogs';
+import { SafetyMenuButton } from './ReportBlock';
 
 /**
  * ============================================================
@@ -32,6 +33,9 @@ export default function ProfileFullScreen({
 }) {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  // Profilo che non si può mostrare: account sospeso, persona bloccata
+  // (da una delle due parti, B2) o cancellata.
+  const [unavailable, setUnavailable] = useState(false);
   const [actionState, setActionState] = useState(null); // null | 'liked' | 'superliked' | 'sending'
   const [showPulseSend, setShowPulseSend] = useState(false);
   const [pulseSentConfirmation, setPulseSentConfirmation] = useState(false);
@@ -75,6 +79,7 @@ export default function ProfileFullScreen({
         );
         const data = await res.json();
         if (!cancelled && data.success) setProfile(data.profile);
+        if (!cancelled && !data.success) setUnavailable(true);
 
         // Registra la visita — genera punti (a te e a chi guardi),
         // La visita conta per i punti solo se sei dentro un'Arena
@@ -257,8 +262,30 @@ export default function ProfileFullScreen({
       <button onClick={onClose} style={closeButtonStyle} aria-label="Chiudi">
         ✕
       </button>
+      {/* Segnala / Blocca (B2), in alto a sinistra: mai sul proprio profilo */}
+      {profile && userId !== currentUserId && (
+        <SafetyMenuButton
+          userId={userId}
+          displayName={profile.displayName}
+          style={safetyButtonStyle}
+          onBlocked={onClose}
+        />
+      )}
 
-      {loading || !profile ? (
+      {unavailable ? (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: '100%',
+          }}
+        >
+          <div className="pl-hint" style={{ color: '#F7EEE6' }}>
+            Profilo non disponibile
+          </div>
+        </div>
+      ) : loading || !profile ? (
         <div
           style={{
             display: 'flex',
@@ -665,6 +692,13 @@ const closeButtonStyle = {
   cursor: 'pointer',
   boxShadow: '0 4px 12px -2px rgba(0,0,0,0.5)',
   backdropFilter: 'blur(4px)',
+};
+
+const safetyButtonStyle = {
+  position: 'absolute',
+  top: 'calc(18px + env(safe-area-inset-top, 0px))',
+  left: 18,
+  zIndex: 5,
 };
 
 const arrowButtonStyle = {

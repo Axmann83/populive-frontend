@@ -7,6 +7,7 @@ import {
   getOptimizedPhotoUrl,
 } from './apiClient';
 import { PRIVACY_POLICY_URL, TERMS_URL, openLegalLink } from './legalLinks';
+import { askConfirm, showToast } from './Dialogs';
 
 const MAX_PHOTOS = 6; // stessa galleria di ProfileCreation.jsx
 
@@ -363,6 +364,8 @@ export default function Settings({ userId, onClose, onAccountDeleted }) {
         {saving ? 'Salvataggio…' : 'Salva impostazioni'}
       </button>
 
+      <BlockedUsersSection />
+
       {/* Sezione legale — link ai testi (pagine statiche di public/,
           legalLinks.js) + richiesta di cancellazione account, un
           diritto GDPR a sé che non passa dai toggle sopra. */}
@@ -448,6 +451,127 @@ export default function Settings({ userId, onClose, onAccountDeleted }) {
     </div>
   );
 }
+
+/**
+ * Persone bloccate (B2, novembre 2026) — da qui si sbloccano. Chi è
+ * sbloccato torna a vedere e a poter contattare; le chat chiuse dal
+ * blocco non si riaprono.
+ */
+function BlockedUsersSection() {
+  const [blockedUsers, setBlockedUsers] = useState(null);
+  const [unblockingId, setUnblockingId] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    apiFetch('/api/blocks')
+      .then((r) => r.json())
+      .then((data) => {
+        if (!cancelled) setBlockedUsers(data.success ? data.blockedUsers : []);
+      })
+      .catch(() => !cancelled && setBlockedUsers([]));
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  async function unblock(person) {
+    const confirmed = await askConfirm({
+      title: `Sbloccare ${person.displayName}?`,
+      message: 'Potrete di nuovo vedervi nel radar e contattarvi. Le chat rimosse non tornano.',
+      confirmLabel: 'Sblocca',
+    });
+    if (!confirmed) return;
+    setUnblockingId(person.userId);
+    try {
+      const res = await apiFetch(`/api/users/${person.userId}/block`, { method: 'DELETE' });
+      const data = await res.json();
+      if (data.success) {
+        setBlockedUsers((prev) => prev.filter((p) => p.userId !== person.userId));
+        showToast(`Hai sbloccato ${person.displayName}.`, { tone: 'success' });
+      } else {
+        showToast('Non siamo riusciti a sbloccare — riprova.', { tone: 'error' });
+      }
+    } catch {
+      showToast('Connessione assente — riprova.', { tone: 'error' });
+    } finally {
+      setUnblockingId(null);
+    }
+  }
+
+  return (
+    <>
+      <div className="pl-section-label" style={{ marginTop: 20 }}>
+        Persone bloccate
+      </div>
+      {blockedUsers === null ? (
+        <p className="pl-hint">Caricamento…</p>
+      ) : blockedUsers.length === 0 ? (
+        <p className="pl-hint">Nessuna. Puoi bloccare qualcuno dal suo profilo (⋯) o dalla chat.</p>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 4 }}>
+          {blockedUsers.map((person) => (
+            <div key={person.userId} style={blockedRowStyle}>
+              <span style={blockedAvatarStyle}>
+                {person.photoUrl ? (
+                  <img
+                    src={getOptimizedPhotoUrl(person.photoUrl, { width: 64, height: 64 })}
+                    alt=""
+                    style={photoTileImgStyle}
+                  />
+                ) : (
+                  person.avatarEmoji
+                )}
+              </span>
+              <span style={{ flex: 1, fontSize: 13, fontWeight: 600 }}>{person.displayName}</span>
+              <button
+                type="button"
+                onClick={() => unblock(person)}
+                disabled={unblockingId === person.userId}
+                style={unblockButtonStyle}
+              >
+                {unblockingId === person.userId ? '…' : 'Sblocca'}
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
+
+const blockedRowStyle = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 10,
+  padding: '8px 10px',
+  borderRadius: 12,
+  background: 'var(--surface-2)',
+};
+
+const blockedAvatarStyle = {
+  width: 32,
+  height: 32,
+  borderRadius: '50%',
+  overflow: 'hidden',
+  flexShrink: 0,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  fontSize: 18,
+  background: 'var(--surface)',
+};
+
+const unblockButtonStyle = {
+  padding: '6px 12px',
+  borderRadius: 10,
+  border: '1px solid rgba(228,212,200,0.3)',
+  background: 'none',
+  color: 'var(--text)',
+  fontFamily: 'inherit',
+  fontSize: 11.5,
+  fontWeight: 700,
+  cursor: 'pointer',
+};
 
 function ToggleRow({ label, sub, checked, onChange }) {
   return (

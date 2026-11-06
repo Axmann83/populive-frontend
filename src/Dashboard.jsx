@@ -12,8 +12,10 @@ import {
   Search,
   Armchair,
   Crown,
+  Flag,
 } from './PopuLiveIcons';
 import LiveRanking from './LiveRanking';
+import { askConfirm, showToast } from './Dialogs';
 
 /**
  * ============================================================
@@ -37,7 +39,16 @@ import LiveRanking from './LiveRanking';
  */
 export default function Dashboard({ userId }) {
   const [accessState, setAccessState] = useState('checking'); // checking | denied | granted
-  const [activeSection, setActiveSection] = useState('missioni');
+  // ?section=reports (tocco sulla push "Nuova segnalazione") apre
+  // direttamente le Segnalazioni
+  const [activeSection, setActiveSection] = useState(() =>
+    new URLSearchParams(window.location.search).get('section') === 'reports'
+      ? 'segnalazioni'
+      : 'missioni'
+  );
+  // Segnalazioni ancora da decidere (B2): il numero sta sulla scheda,
+  // così si vede appena si apre la dashboard.
+  const [openReportCount, setOpenReportCount] = useState(0);
 
   useEffect(() => {
     apiFetch('/api/auth/is-architect')
@@ -45,6 +56,14 @@ export default function Dashboard({ userId }) {
       .then((data) => setAccessState(data.success && data.isArchitect ? 'granted' : 'denied'))
       .catch(() => setAccessState('denied'));
   }, []);
+
+  useEffect(() => {
+    if (accessState !== 'granted') return;
+    apiFetch('/api/dashboard/reports')
+      .then((r) => r.json())
+      .then((data) => data.success && setOpenReportCount(data.openCount))
+      .catch(() => {});
+  }, [accessState]);
 
   function goHome() {
     window.history.pushState(null, '', '/');
@@ -148,6 +167,12 @@ export default function Dashboard({ userId }) {
             onClick={() => setActiveSection('persone')}
           />
           <SectionTab
+            icon={Flag}
+            label={openReportCount > 0 ? `Segnalazioni (${openReportCount})` : 'Segnalazioni'}
+            active={activeSection === 'segnalazioni'}
+            onClick={() => setActiveSection('segnalazioni')}
+          />
+          <SectionTab
             icon={SettingsIcon}
             label="Funzioni"
             active={activeSection === 'funzionalita'}
@@ -170,6 +195,7 @@ export default function Dashboard({ userId }) {
         {activeSection === 'locali' && <VenueMetricsSection />}
         {activeSection === 'prezzi' && <PricingSection />}
         {activeSection === 'funzionalita' && <FeatureFlagsSection />}
+        {activeSection === 'segnalazioni' && <ReportsSection onOpenCount={setOpenReportCount} />}
       </div>
     </div>
   );
@@ -1914,6 +1940,298 @@ function VenueOrganizePanel({ venue, onVenueUpdate }) {
  */
 // Varianti di Pulse tolte nel novembre 2026 (decisione A5): le righe
 // restano nella tabella feature_flags, ma nessuno le legge più.
+/**
+ * ============================================================
+ * SEZIONE "SEGNALAZIONI" (B2, novembre 2026)
+ * ============================================================
+ * Profili, foto e chat segnalati dagli utenti (regola 1.2 di Apple:
+ * vanno controllati, Apple indica entro 24 ore; agli Architetti arriva
+ * una push a ogni nuova segnalazione). Per ognuna: la "fotografia" di
+ * cosa c'era al momento (foto, bio, ultimi messaggi della chat), chi
+ * l'ha fatta, il motivo. "Archivia" = nessuna violazione; "Sospendi"
+ * = l'account non può più entrare nell'app (e le altre segnalazioni
+ * aperte sulla stessa persona si chiudono). Tra le decise, "Riattiva"
+ * toglie la sospensione.
+ * ============================================================
+ */
+const REPORT_REASON_LABELS = {
+  adult_content: 'Nudo o contenuti per adulti',
+  harassment: 'Molestie, odio o bullismo',
+  fake_or_spam: 'Profilo falso, spam o truffa',
+};
+const REPORT_CONTEXT_LABELS = { profile: 'Profilo', photo: 'Foto', chat: 'Chat' };
+
+function ReportsSection({ onOpenCount }) {
+  const [view, setView] = useState('open'); // open | closed
+  const [reports, setReports] = useState(null);
+  const [busyId, setBusyId] = useState(null);
+  const { photoTapProps, photoPreview } = usePhotoPreview();
+
+  const load = useCallback(async () => {
+    try {
+      const res = await apiFetch(`/api/dashboard/reports?status=${view}`);
+      const data = await res.json();
+      setReports(data.success ? data.reports : []);
+      if (data.success) onOpenCount?.(data.openCount);
+    } catch {
+      setReports([]);
+    }
+  }, [view, onOpenCount]);
+
+  useEffect(() => {
+    setReports(null);
+    load();
+  }, [load]);
+
+  async function resolve(report, action) {
+    if (action === 'suspend') {
+      const confirmed = await askConfirm({
+        title: `Sospendere ${report.reported.displayName}?`,
+        message:
+          "Non potrà più entrare nell'app; esce dalla serata e sparisce da classifiche e profili. Si può riattivare dalle segnalazioni decise.",
+        confirmLabel: 'Sospendi',
+        danger: true,
+      });
+      if (!confirmed) return;
+    }
+    setBusyId(report.id);
+    try {
+      const res = await apiFetch(`/api/dashboard/reports/${report.id}/resolve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(action === 'suspend' ? 'Account sospeso.' : 'Segnalazione archiviata.', {
+          tone: 'success',
+        });
+      } else if (data.reason === 'cannot_suspend_architect') {
+        showToast('Un Architetto non si può sospendere da qui.', { tone: 'error' });
+      } else {
+        showToast('Qualcosa è andato storto — riprova.', { tone: 'error' });
+      }
+      await load();
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function unsuspend(report) {
+    setBusyId(report.id);
+    try {
+      const res = await apiFetch(`/api/dashboard/users/${report.reported.userId}/unsuspend`, {
+        method: 'POST',
+      });
+      const data = await res.json();
+      showToast(data.success ? 'Account riattivato.' : 'Qualcosa è andato storto — riprova.', {
+        tone: data.success ? 'success' : 'error',
+      });
+      await load();
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  return (
+    <div>
+      <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
+        {[
+          ['open', 'Da decidere'],
+          ['closed', 'Decise'],
+        ].map(([key, label]) => (
+          <button
+            key={key}
+            onClick={() => setView(key)}
+            style={{
+              flex: 1,
+              padding: '8px 10px',
+              borderRadius: 10,
+              border: view === key ? '1px solid var(--cyan)' : '1px solid rgba(228,212,200,0.14)',
+              background: view === key ? 'rgba(255,61,110,0.12)' : 'var(--surface)',
+              color: view === key ? 'var(--cyan)' : 'var(--text-muted)',
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {reports === null && <p className="pl-hint">Caricamento…</p>}
+      {reports?.length === 0 && (
+        <p className="pl-hint">
+          {view === 'open' ? 'Nessuna segnalazione da decidere.' : 'Nessuna segnalazione decisa.'}
+        </p>
+      )}
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {reports?.map((report) => {
+          const photos = report.snapshot?.photoUrls?.length
+            ? report.snapshot.photoUrls
+            : report.reported.photoUrls;
+          return (
+            <div key={report.id} style={reportCardStyle}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 700 }}>
+                    {report.reported.displayName}
+                    {report.reported.suspended && <span style={suspendedPillStyle}>Sospeso</span>}
+                    {report.reported.deleted && <span style={suspendedPillStyle}>Eliminato</span>}
+                  </div>
+                  <div className="pl-hint" style={{ marginTop: 2 }}>
+                    {REPORT_CONTEXT_LABELS[report.context]} ·{' '}
+                    {REPORT_REASON_LABELS[report.reason] || report.reason}
+                  </div>
+                </div>
+                <div className="pl-hint" style={{ textAlign: 'right', flexShrink: 0 }}>
+                  {new Date(report.createdAt).toLocaleString('it-IT', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                  <br />
+                  {report.reported.totalReports > 1 &&
+                    `${report.reported.totalReports} segnalazioni in tutto`}
+                </div>
+              </div>
+
+              {photos.length > 0 && (
+                <div style={{ display: 'flex', gap: 6, overflowX: 'auto', margin: '10px 0 4px' }}>
+                  {photos.map((url, i) => (
+                    <img
+                      key={i}
+                      src={getOptimizedPhotoUrl(url, { width: 120, height: 160 })}
+                      alt=""
+                      {...photoTapProps(url, report.reported.displayName, reportPhotoStyle)}
+                    />
+                  ))}
+                </div>
+              )}
+              {report.snapshot?.bio && (
+                <p className="pl-hint" style={{ margin: '6px 0' }}>
+                  Bio: {report.snapshot.bio}
+                </p>
+              )}
+              {report.details && (
+                <p style={{ fontSize: 12.5, margin: '8px 0', lineHeight: 1.45 }}>
+                  «{report.details}»
+                </p>
+              )}
+              {report.snapshot?.messages?.length > 0 && (
+                <details style={{ margin: '8px 0' }}>
+                  <summary className="pl-hint" style={{ cursor: 'pointer' }}>
+                    Ultimi messaggi della chat ({report.snapshot.messages.length})
+                  </summary>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 8 }}>
+                    {report.snapshot.messages.map((m, i) => (
+                      <div
+                        key={i}
+                        style={{
+                          fontSize: 12,
+                          lineHeight: 1.4,
+                          color: m.fromReported ? 'var(--text)' : 'var(--text-muted)',
+                        }}
+                      >
+                        <strong>
+                          {m.fromReported
+                            ? report.reported.displayName
+                            : report.reporter.displayName}
+                          :
+                        </strong>{' '}
+                        {m.body}
+                      </div>
+                    ))}
+                  </div>
+                </details>
+              )}
+              <div className="pl-hint" style={{ marginTop: 6 }}>
+                Segnalato da {report.reporter.displayName}
+                {report.status !== 'open' &&
+                  ` · ${report.status === 'reviewed' ? 'violazione confermata' : 'archiviata'}${
+                    report.reviewerName ? ` da ${report.reviewerName}` : ''
+                  }`}
+              </div>
+
+              {report.status === 'open' && (
+                <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                  <button
+                    onClick={() => resolve(report, 'dismiss')}
+                    disabled={busyId === report.id}
+                    style={reportActionStyle}
+                  >
+                    Archivia
+                  </button>
+                  <button
+                    onClick={() => resolve(report, 'suspend')}
+                    disabled={busyId === report.id || report.reported.suspended}
+                    style={{ ...reportActionStyle, ...reportDangerStyle }}
+                  >
+                    {report.reported.suspended ? 'Già sospeso' : 'Sospendi'}
+                  </button>
+                </div>
+              )}
+              {report.status !== 'open' && report.reported.suspended && (
+                <div style={{ display: 'flex', marginTop: 12 }}>
+                  <button
+                    onClick={() => unsuspend(report)}
+                    disabled={busyId === report.id}
+                    style={reportActionStyle}
+                  >
+                    Riattiva l&apos;account
+                  </button>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      {photoPreview}
+    </div>
+  );
+}
+
+const reportCardStyle = {
+  background: 'var(--surface)',
+  border: '1px solid rgba(228,212,200,0.12)',
+  borderRadius: 14,
+  padding: 14,
+};
+const reportPhotoStyle = {
+  width: 72,
+  height: 96,
+  objectFit: 'cover',
+  borderRadius: 8,
+  flexShrink: 0,
+  cursor: 'pointer',
+};
+const suspendedPillStyle = {
+  marginLeft: 8,
+  padding: '2px 8px',
+  borderRadius: 999,
+  fontSize: 10,
+  fontWeight: 700,
+  color: '#fff',
+  background: 'var(--red)',
+  verticalAlign: 'middle',
+};
+const reportActionStyle = {
+  flex: 1,
+  padding: 10,
+  borderRadius: 10,
+  border: '1px solid rgba(228,212,200,0.3)',
+  background: 'none',
+  color: 'var(--text)',
+  fontFamily: 'inherit',
+  fontSize: 12,
+  fontWeight: 700,
+  cursor: 'pointer',
+};
+const reportDangerStyle = { border: 'none', background: 'var(--red)', color: '#fff' };
+
 const RETIRED_FLAGS = ['pulse_standalone', 'pulse_like', 'pulse_simple', 'pulse_super'];
 
 function FeatureFlagsSection() {

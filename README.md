@@ -268,6 +268,8 @@ public/index.html       pagina host
 src/index.js            entry point
 src/App.jsx             root dell'app e navigazione tra le schermate
 src/apiClient.js        client HTTP centralizzato (token, sessione, apiFetch)
+src/Dialogs.jsx         avvisi (showToast) e conferme (askConfirm) dell'app, al posto di alert/confirm
+src/ReportBlock.jsx     segnala e blocca (menu ⋯ dei profili, finestra della segnalazione, conferma del blocco)
 src/*.jsx               schermate e componenti (Login, Dashboard, ExploreMap, ChatCenter, ...)
 src/native.js           ponte verso Capacitor (unico file che lo importa): browser in-app, deep link, back, posizione, vibrazione, push, Bluetooth
 src/proximity.js        vicinanza via Bluetooth nel radar (fasce dal segnale)

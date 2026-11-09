@@ -58,6 +58,38 @@ workflows:
         # quelle info, quando si passerà ai test esterni.
         submit_to_testflight: false
 
+  # App Preview di Codemagic (09/11): l'app gira su un simulatore iPhone nel
+  # browser, senza TestFlight. Serve un .app non firmato compilato per il
+  # simulatore; a build finita, "Quick launch" nella pagina della build.
+  # Solo a mano, nessun trigger. Fotocamera, Bluetooth e push non ci sono:
+  # quelle prove restano sull'iPhone vero.
+  ios-simulator-preview:
+    name: iOS → Simulatore (App Preview)
+    instance_type: mac_mini_m2
+    max_build_duration: 45
+    environment:
+      node: 22
+      xcode: latest
+    scripts:
+      - name: Installa dipendenze
+        script: npm ci
+      - name: Build web
+        script: npm run build
+      - name: Sincronizza Capacitor iOS
+        script: npx cap sync ios
+      - name: Build per il simulatore
+        script: |
+          xcodebuild \
+            -project ios/App/App.xcodeproj \
+            -scheme App \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -derivedDataPath build/ios-sim \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+    artifacts:
+      - build/ios-sim/Build/Products/Debug-iphonesimulator/*.app
+
   android-debug-apk:
     name: Android → APK di debug
     instance_type: linux_x2

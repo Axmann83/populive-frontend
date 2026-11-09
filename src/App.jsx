@@ -17,6 +17,8 @@ import {
   requestBluetoothEnable,
   onBluetoothStateChange,
   setSystemBarsForTheme,
+  markIosGestureNavigation,
+  watchKeyboard,
 } from './native';
 import { startNearby, stopNearby } from './proximity';
 
@@ -142,7 +144,12 @@ export default function App() {
     }
     applyTimeBasedMode();
     const interval = setInterval(applyTimeBasedMode, 5 * 60 * 1000);
-    return () => clearInterval(interval);
+    markIosGestureNavigation(); // iPhone: niente striscia scura in basso
+    const stopKeyboardWatch = watchKeyboard(); // barra delle schede nascosta con la tastiera aperta
+    return () => {
+      clearInterval(interval);
+      stopKeyboardWatch();
+    };
   }, []);
 
   useEffect(() => {
@@ -1518,7 +1525,9 @@ export default function App() {
         </div>
 
         <div
-          className={`pl-content ${tabSlideDirection === 'forward' ? 'pl-tab-panel-forward' : 'pl-tab-panel-back'}`}
+          className={`pl-content ${tabSlideDirection === 'forward' ? 'pl-tab-panel-forward' : 'pl-tab-panel-back'}${
+            activeTab === 'chat' ? ' pl-content-chat' : ''
+          }`}
           key={activeTab}
           onTouchStart={handleSwipeStart}
           onTouchEnd={handleSwipeEnd}
@@ -1828,7 +1837,7 @@ export default function App() {
               // resta lo sfondo scuro, su cui i tasti si leggono. Prima il
               // margine era in fondo al contenuto e valeva solo a fine
               // scorrimento.
-              paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+              paddingBottom: 'var(--pl-sheet-gap)',
             }}
           >
             <div
@@ -1838,6 +1847,7 @@ export default function App() {
                 background: 'var(--surface)',
                 borderRadius: '24px 24px 0 0',
                 padding: 20,
+                paddingBottom: 'calc(20px + var(--pl-sheet-inner))',
                 maxHeight: '85vh',
                 overflowY: 'auto',
                 boxShadow: 'var(--shadow-lg)',
@@ -1866,7 +1876,7 @@ export default function App() {
               // resta lo sfondo scuro, su cui i tasti si leggono. Prima il
               // margine era in fondo al contenuto e valeva solo a fine
               // scorrimento.
-              paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+              paddingBottom: 'var(--pl-sheet-gap)',
             }}
           >
             <div
@@ -1876,6 +1886,7 @@ export default function App() {
                 background: 'var(--surface)',
                 borderRadius: '24px 24px 0 0',
                 padding: 20,
+                paddingBottom: 'calc(20px + var(--pl-sheet-inner))',
                 maxHeight: '85vh',
                 overflowY: 'auto',
                 boxShadow: 'var(--shadow-lg)',
@@ -1900,7 +1911,7 @@ export default function App() {
               // resta lo sfondo scuro, su cui i tasti si leggono. Prima il
               // margine era in fondo al contenuto e valeva solo a fine
               // scorrimento.
-              paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+              paddingBottom: 'var(--pl-sheet-gap)',
             }}
           >
             <div
@@ -1910,6 +1921,7 @@ export default function App() {
                 background: 'var(--surface)',
                 borderRadius: '24px 24px 0 0',
                 padding: 20,
+                paddingBottom: 'calc(20px + var(--pl-sheet-inner))',
                 maxHeight: '85vh',
                 overflowY: 'auto',
                 boxShadow: 'var(--shadow-lg)',
@@ -1944,7 +1956,7 @@ export default function App() {
               // resta lo sfondo scuro, su cui i tasti si leggono. Prima il
               // margine era in fondo al contenuto e valeva solo a fine
               // scorrimento.
-              paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+              paddingBottom: 'var(--pl-sheet-gap)',
             }}
           >
             <div
@@ -1954,6 +1966,7 @@ export default function App() {
                 background: 'var(--surface)',
                 borderRadius: '24px 24px 0 0',
                 padding: 20,
+                paddingBottom: 'calc(20px + var(--pl-sheet-inner))',
                 maxHeight: '85vh',
                 overflowY: 'auto',
                 boxShadow: 'var(--shadow-lg)',

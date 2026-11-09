@@ -20,10 +20,15 @@ const config: CapacitorConfig = {
   ios: {
     contentInset: 'never',
   },
-  server: devServerUrl
-    ? { url: devServerUrl, cleartext: true }
-    : { androidScheme: 'https' },
+  server: devServerUrl ? { url: devServerUrl, cleartext: true } : { androidScheme: 'https' },
   plugins: {
+    // Tastiera (build 23, 09/11): su iOS la WebView si accorcia quando
+    // si apre la tastiera, come già fa Android. Senza, iOS faceva
+    // scorrere in su tutta la pagina (intestazione e barra in basso
+    // fuori posto, campo della chat nascosto).
+    Keyboard: {
+      resize: 'native',
+    },
     // Notifiche push (D3): con l'app aperta iOS non le mostra; avvisi e
     // vibrazione arrivano già dagli eventi socket (src/App.jsx).
     FirebaseMessaging: {

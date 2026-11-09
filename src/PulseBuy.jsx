@@ -179,7 +179,7 @@ export default function PulseBuySheet({ arenaSessionId, onClose, onBought }) {
         alignItems: 'flex-end',
         justifyContent: 'center',
         // Il pannello si ferma sopra i tasti del telefono (B6)
-        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+        paddingBottom: 'var(--pl-sheet-gap)',
       }}
     >
       <div
@@ -190,6 +190,7 @@ export default function PulseBuySheet({ arenaSessionId, onClose, onBought }) {
           background: 'var(--surface)',
           borderRadius: '24px 24px 0 0',
           padding: 20,
+          paddingBottom: 'calc(20px + var(--pl-sheet-inner))',
           boxSizing: 'border-box',
           maxHeight: '85vh',
           overflowY: 'auto',

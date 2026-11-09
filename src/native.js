@@ -9,6 +9,7 @@ import { App as CapApp } from '@capacitor/app';
 import { Browser } from '@capacitor/browser';
 import { Geolocation } from '@capacitor/geolocation';
 import { Haptics } from '@capacitor/haptics';
+import { Keyboard } from '@capacitor/keyboard';
 import { FirebaseMessaging, Importance } from '@capacitor-firebase/messaging';
 
 /**
@@ -215,10 +216,49 @@ export async function setSystemBarsForTheme(isDaytime) {
       style: isDaytime ? SystemBarsStyle.Light : SystemBarsStyle.Dark,
       bar: SystemBarType.StatusBar,
     });
-    await SystemBars.setStyle({ style: SystemBarsStyle.Dark, bar: SystemBarType.NavigationBar });
+    // Solo Android: su iOS setStyle ignora `bar` e cambia sempre la
+    // barra di stato, quindi questa seconda chiamata rendeva bianche
+    // orario e batteria anche di giorno (build 23, 09/11). L'iPhone
+    // non ha tasti in basso, la barretta si colora da sola.
+    if (Capacitor.getPlatform() === 'android') {
+      await SystemBars.setStyle({ style: SystemBarsStyle.Dark, bar: SystemBarType.NavigationBar });
+    }
   } catch {
     /* barre non configurabili: restano come sono */
   }
+}
+
+/**
+ * iPhone: niente striscia scura in basso (build 23, 09/11, scelta
+ * dell'utente). L'iPhone ha sempre e solo la barretta dei gesti, che
+ * sta sopra l'app come nelle altre app: mette pl-gesture-nav su body
+ * (v. populive-styles.css). Android resta com'era, con la striscia
+ * sotto i tasti o i gesti. Sul web e su Android non fa nulla.
+ */
+export function markIosGestureNavigation() {
+  if (Capacitor.getPlatform() === 'ios') document.body.classList.add('pl-gesture-nav');
+}
+
+/**
+ * Tastiera aperta? (build 23, 09/11) Mette pl-keyboard-open su body
+ * mentre la tastiera è aperta: la barra delle schede si nasconde e il
+ * campo della chat resta appena sopra la tastiera (populive-styles.css).
+ * La WebView si accorcia da sola (Keyboard.resize 'native' in
+ * capacitor.config.ts su iOS, adjustResize su Android). Sul web non fa
+ * nulla. Restituisce la funzione per smettere.
+ */
+export function watchKeyboard() {
+  if (!isNative()) return () => {};
+  const handles = [
+    Keyboard.addListener('keyboardWillShow', () => document.body.classList.add('pl-keyboard-open')),
+    Keyboard.addListener('keyboardWillHide', () =>
+      document.body.classList.remove('pl-keyboard-open')
+    ),
+  ];
+  return () => {
+    document.body.classList.remove('pl-keyboard-open');
+    handles.forEach((h) => Promise.resolve(h).then((x) => x.remove()));
+  };
 }
 
 /**

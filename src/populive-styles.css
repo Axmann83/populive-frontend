@@ -882,10 +882,34 @@ button {
 }
 
 /* --- Chat --- */
+/* La chat riempie la sezione fino alla barra delle schede (build 23,
+   09/11: con 60vh il campo per scrivere restava a metà schermo sui
+   telefoni alti). .pl-content-chat non scorre: scorrono solo i
+   messaggi. */
 .pl-chat-window {
   display: flex;
   flex-direction: column;
-  height: 60vh;
+  height: 100%;
+}
+.pl-content-chat {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  /* barra delle schede (~67 px) + un po' d'aria sotto il campo (09/11) */
+  padding-bottom: calc(var(--pl-bottom-nav-h, 84px) + env(safe-area-inset-bottom, 0px));
+}
+.pl-content-chat > .pl-chat-window {
+  flex: 1;
+  min-height: 0;
+  height: auto;
+}
+/* Tastiera aperta (watchKeyboard in native.js): niente barra delle
+   schede, il campo della chat sta appena sopra la tastiera. */
+body.pl-keyboard-open .pl-bottom-nav {
+  display: none;
+}
+body.pl-keyboard-open .pl-content-chat {
+  padding-bottom: 14px;
 }
 .pl-chat-header {
   display: flex;
@@ -1415,6 +1439,24 @@ body::after {
   background: #14100f;
   z-index: 9450;
   pointer-events: none;
+}
+
+/* iPhone (build 23, 09/11, scelta dell'utente; classe messa da
+   markIosGestureNavigation in native.js): niente striscia scura, la
+   barretta dei gesti sta sopra l'app, come nelle altre app. I pannelli
+   che salgono dal basso arrivano al bordo e tengono lo spazio della
+   barretta al loro interno. Su Android resta la striscia e i pannelli
+   si fermano sopra (B6). */
+:root {
+  --pl-sheet-gap: env(safe-area-inset-bottom, 0px);
+  --pl-sheet-inner: 0px;
+}
+body.pl-gesture-nav {
+  --pl-sheet-gap: 0px;
+  --pl-sheet-inner: env(safe-area-inset-bottom, 0px);
+}
+body.pl-gesture-nav::after {
+  display: none;
 }
 
 /* ============================================================

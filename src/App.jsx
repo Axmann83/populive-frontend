@@ -4,6 +4,7 @@ import {
   openExternal,
   onAppUrlOpen,
   onAppForeground,
+  onInAppBrowserClosed,
   closeInAppBrowser,
   vibrate,
   getPushPermissionState,
@@ -60,6 +61,13 @@ import Dashboard from './Dashboard';
 import NearbyMissions from './NearbyMissions';
 import SuperlikeNotification from './SuperlikeNotification';
 import { askConfirm, showToast } from './Dialogs';
+import { PulseNightBar } from './PulseBuy';
+import {
+  notifyPulseNightChanged,
+  syncPulsePurchases,
+  isCheckoutPending,
+  nightEndingText,
+} from './pulseNight';
 import {
   API_BASE,
   apiFetch,
@@ -168,6 +176,9 @@ export default function App() {
   // — stesso identico principio del check-in, un link semplice
   // riconosciuto da qualunque fotocamera di sistema.
   const [pendingMissionId, setPendingMissionId] = useState(null);
+  // Ritorno dalla pagina di pagamento di Stripe (M11): 'done' |
+  // 'cancelled' | null. Si controlla l'acquisto appena si è dentro.
+  const [pulsePurchaseReturn, setPulsePurchaseReturn] = useState(null);
 
   // Interpreta un indirizzo "in ingresso" — all'avvio (web) oppure
   // quando l'app nativa viene aperta da un QR / Universal Link
@@ -190,12 +201,12 @@ export default function App() {
       handled = true;
     }
 
-    // Ritorno da Stripe dopo il pagamento di una Pulse (riuscito o
-    // annullato) — non c'è altro da fare qui: se il pagamento è
-    // andato a buon fine, il popup punti universale scatterà da
-    // solo appena il webhook avrà creato la Pulse. Ripuliamo solo
-    // l'indirizzo, che altrimenti resterebbe sporco.
-    if (search.includes('pulse_sent') || search.includes('pulse_cancelled')) {
+    // Ritorno da Stripe dopo l'acquisto di Pulse (M11), riuscito o
+    // annullato: il controllo vero lo fa il server (effetto qui sotto),
+    // qui si ripulisce solo l'indirizzo.
+    const purchaseReturn = new URLSearchParams(search).get('pulse_purchase');
+    if (purchaseReturn) {
+      setPulsePurchaseReturn(purchaseReturn === 'done' ? 'done' : 'cancelled');
       handled = true;
     }
 
@@ -256,6 +267,53 @@ export default function App() {
       .catch(() => {});
   }, [authState, userId, arrivedViaQr]);
 
+  // Esito del controllo al ritorno da Stripe: true se c'era da dire qualcosa.
+  function showPurchaseOutcome(outcome) {
+    if (outcome === 'credited') {
+      showToast('Pulse aggiunte: puoi offrirle stasera.', { tone: 'success' });
+      return true;
+    }
+    if (outcome === 'refunded') {
+      showToast(
+        'Il pagamento è arrivato a serata finita: ti abbiamo rimborsato, nessuna Pulse aggiunta.',
+        { duration: 9000 }
+      );
+      return true;
+    }
+    return false;
+  }
+
+  // --------------------------------------------------------
+  // Pulse comprate su Stripe (M11): al ritorno si chiede al server di
+  // controllare l'acquisto, che legge lo stato vero da Stripe — così
+  // il saldo si aggiorna anche se il webhook tarda. Sul web il ritorno
+  // è la pagina ?pulse_purchase=…; nell'app anche la chiusura del
+  // browser in-app o il ritorno in primo piano.
+  // --------------------------------------------------------
+  useEffect(() => {
+    if (authState !== 'app' || !userId || !pulsePurchaseReturn) return;
+    const kind = pulsePurchaseReturn;
+    setPulsePurchaseReturn(null);
+    syncPulsePurchases().then((outcome) => {
+      if (!showPurchaseOutcome(outcome) && kind === 'cancelled')
+        showToast('Pagamento annullato: nessun addebito.');
+    });
+  }, [authState, userId, pulsePurchaseReturn]);
+
+  useEffect(() => {
+    if (authState !== 'app' || !userId) return undefined;
+    const check = () => {
+      if (!isCheckoutPending()) return;
+      syncPulsePurchases().then(showPurchaseOutcome);
+    };
+    const removeBrowser = onInAppBrowserClosed(check);
+    const removeForeground = onAppForeground(check);
+    return () => {
+      removeBrowser();
+      removeForeground();
+    };
+  }, [authState, userId]);
+
   // --------------------------------------------------------
   // Geofence del radar (28/9): uscito dal locale → fuori dal radar
   // --------------------------------------------------------
@@ -294,7 +352,8 @@ export default function App() {
     if (
       !(await askConfirm({
         title: 'Uscire dal locale?',
-        message: 'Non sarai più nel radar di stasera. Se torni, inquadra di nuovo il QR.',
+        message:
+          'Non sarai più nel radar di stasera. Se torni, inquadra di nuovo il QR: le tue Pulse restano valide se rientri stasera.',
         confirmLabel: 'Esci',
         danger: true,
       }))
@@ -998,6 +1057,29 @@ export default function App() {
       buzz('strong');
     });
 
+    // Pulse della serata (M11): saldo cambiato (acquisto accreditato,
+    // Pulse rifiutata che torna), serata finita, pagamento rimborsato.
+    socket.on('pulse_balance_updated', () => notifyPulseNightChanged());
+    socket.on('pulse_night_ended', () => {
+      notifyPulseNightChanged();
+      setPulseListVersion((v) => v + 1);
+      refreshPulseBadge();
+    });
+    socket.on('pulse_purchase_refunded', ({ venueName } = {}) => {
+      notifyPulseNightChanged();
+      showToast(
+        `Il pagamento è arrivato a serata finita da ${venueName || 'questo locale'}: ti abbiamo rimborsato le Pulse.`,
+        { tone: 'info', duration: 9000 }
+      );
+    });
+    // Avviso un'ora prima della chiusura: Pulse da usare o drink da
+    // ritirare, che dopo scadono (anche come push ad app chiusa).
+    socket.on('pulse_night_ending', (payload = {}) => {
+      notifyPulseNightChanged();
+      showToast(nightEndingText(payload), { tone: 'info', duration: 12000 });
+      buzz('normal');
+    });
+
     // Solo per vibrare: il banner del Like resta legato a points_update
     // qui sotto. like_received arriva sempre, anche oltre il tetto dei
     // Like che danno punti, quando points_update non parte.
@@ -1453,6 +1535,8 @@ export default function App() {
                 bluetoothOff={radarLive && !!proximityCode && bluetoothOff}
                 onEnableBluetooth={handleEnableBluetooth}
               />
+              {/* Pulse da usare stasera e "Compra" (M11) */}
+              {arenaSessionId && <PulseNightBar arenaSessionId={arenaSessionId} />}
               {featureFlags.historical_board && (
                 <button
                   onClick={() => setVenuesMapMode('historical')}

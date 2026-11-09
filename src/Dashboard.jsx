@@ -700,8 +700,8 @@ function PricingSection() {
   return (
     <div>
       <p className="pl-hint" style={{ marginBottom: 12 }}>
-        Il prezzo resta unico per tutta la piattaforma (un Pulse è spendibile in qualunque locale) —
-        cambialo qui quando gli accordi coi locali partner cambiano.
+        Prezzi dei prodotti del catalogo, uguali per tutta la piattaforma. Il prezzo delle Pulse
+        invece si imposta per locale e per serata, in Organizza serata.
       </p>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -1253,11 +1253,13 @@ function VenueOrganizePanel({ venue, onVenueUpdate }) {
   const [savingPct, setSavingPct] = useState(false);
   const [savedPct, setSavedPct] = useState(false);
 
+  // Prezzo di una Pulse (M11, N1): predefinito del locale (ogni serata
+  // nuova nasce con questo) e quello della serata in corso.
   const [pulsePriceEdit, setPulsePriceEdit] = useState(
-    venue.pulsePriceCents ? (venue.pulsePriceCents / 100).toString() : ''
+    venue.pulsePriceCents ? (venue.pulsePriceCents / 100).toString() : '10'
   );
-  const [bundlePriceEdit, setBundlePriceEdit] = useState(
-    venue.pulseBundle5PriceCents ? (venue.pulseBundle5PriceCents / 100).toString() : ''
+  const [tonightPriceEdit, setTonightPriceEdit] = useState(
+    venue.tonight?.pulsePriceCents ? (venue.tonight.pulsePriceCents / 100).toString() : ''
   );
   const [savingPrices, setSavingPrices] = useState(false);
   const [savedPrices, setSavedPrices] = useState(false);
@@ -1326,22 +1328,32 @@ function VenueOrganizePanel({ venue, onVenueUpdate }) {
   }
 
   async function savePrices() {
-    const single = pulsePriceEdit.trim()
-      ? Math.round(parseFloat(pulsePriceEdit.replace(',', '.')) * 100)
-      : null;
-    const bundle = bundlePriceEdit.trim()
-      ? Math.round(parseFloat(bundlePriceEdit.replace(',', '.')) * 100)
-      : null;
+    const toCents = (text) =>
+      text.trim() ? Math.round(parseFloat(text.replace(',', '.')) * 100) : null;
+    const defaultPriceCents = toCents(pulsePriceEdit);
+    const tonightPriceCents = venue.tonight ? toCents(tonightPriceEdit) : null;
+    const isValid = (v) => v === null || (Number.isInteger(v) && v >= 50 && v <= 100000);
+    if (defaultPriceCents === null || !isValid(defaultPriceCents) || !isValid(tonightPriceCents)) {
+      window.alert('Inserisci prezzi validi, tra 0,50 € e 1.000 €.');
+      return;
+    }
     setSavingPrices(true);
     try {
       const res = await apiFetch(`/api/dashboard/venues/${venue.venueId}/pulse-prices`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ singlePriceCents: single, bundle5PriceCents: bundle }),
+        body: JSON.stringify({ defaultPriceCents, tonightPriceCents }),
       });
       const data = await res.json();
       if (data.success) {
-        onVenueUpdate({ ...venue, pulsePriceCents: single, pulseBundle5PriceCents: bundle });
+        onVenueUpdate({
+          ...venue,
+          pulsePriceCents: defaultPriceCents,
+          tonight:
+            venue.tonight && tonightPriceCents !== null && data.tonightUpdated
+              ? { ...venue.tonight, pulsePriceCents: tonightPriceCents }
+              : venue.tonight,
+        });
         setSavedPrices(true);
         setTimeout(() => setSavedPrices(false), 2000);
       } else {
@@ -1530,9 +1542,15 @@ function VenueOrganizePanel({ venue, onVenueUpdate }) {
   return (
     <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 12 }}>
       <MetricCard title={`${venue.venueName} — commissione`}>
-        <div style={{ fontSize: 10.5, color: 'var(--text-muted)', marginBottom: 10 }}>
-          {venue.redeemedCount} Pulse riscattati finora · {(venue.venueOwedCents / 100).toFixed(2)}€
-          dovuti al locale
+        <div
+          style={{ fontSize: 10.5, color: 'var(--text-muted)', marginBottom: 10, lineHeight: 1.6 }}
+        >
+          {venue.redeemedCount} Pulse ritirate al bancone finora ·{' '}
+          {(venue.venueOwedCents / 100).toFixed(2)}€ dovuti al locale
+          <br />
+          {venue.expiredUncollectedCount} accettate e scadute senza ritiro (
+          {(venue.expiredUncollectedCents / 100).toFixed(2)}€) · incassati su Stripe{' '}
+          {(venue.paidCents / 100).toFixed(2)}€ per {venue.paidPulses} Pulse
         </div>
         <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
           <div style={{ flex: 1 }}>
@@ -1611,28 +1629,36 @@ function VenueOrganizePanel({ venue, onVenueUpdate }) {
         </button>
       </MetricCard>
 
-      <MetricCard title="Prezzi Pulse di questo locale">
+      <MetricCard title="Prezzo della Pulse">
         <p className="pl-hint" style={{ marginBottom: 10 }}>
-          Vuoti finché non li imposti — finché resta vuoto, l'acquisto non compare in app per questo
-          locale. Da concordare con il proprietario.
+          Una Pulse vale una consumazione al bancone, al prezzo della serata. Ogni serata nuova
+          nasce con il prezzo predefinito; quello di stasera si può cambiare a parte. Le Pulse già
+          comprate tengono il prezzo pagato. Cosa comprende la consumazione lo decide il locale.
         </p>
         <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
           <div style={{ flex: 1 }}>
-            <label style={{ fontSize: 9.5, color: 'var(--text-muted)' }}>Pulse singolo (€)</label>
+            <label style={{ fontSize: 9.5, color: 'var(--text-muted)' }}>Predefinito (€)</label>
             <input
               value={pulsePriceEdit}
               onChange={(e) => setPulsePriceEdit(e.target.value)}
-              placeholder="non impostato"
+              placeholder="10"
+              inputMode="decimal"
               style={{ marginBottom: 0 }}
             />
           </div>
           <div style={{ flex: 1 }}>
-            <label style={{ fontSize: 9.5, color: 'var(--text-muted)' }}>Pacchetto da 5 (€)</label>
+            <label style={{ fontSize: 9.5, color: 'var(--text-muted)' }}>
+              {venue.tonight
+                ? `Stasera (€), fino alle ${new Date(venue.tonight.pulseDeadline).toLocaleTimeString('it-IT', { timeZone: 'Europe/Rome', hour: '2-digit', minute: '2-digit' })}`
+                : 'Stasera (€)'}
+            </label>
             <input
-              value={bundlePriceEdit}
-              onChange={(e) => setBundlePriceEdit(e.target.value)}
-              placeholder="non impostato"
-              style={{ marginBottom: 0 }}
+              value={tonightPriceEdit}
+              onChange={(e) => setTonightPriceEdit(e.target.value)}
+              placeholder={venue.tonight ? '' : 'nessuna serata in corso'}
+              disabled={!venue.tonight}
+              inputMode="decimal"
+              style={{ marginBottom: 0, opacity: venue.tonight ? 1 : 0.6 }}
             />
           </div>
         </div>
@@ -2879,8 +2905,8 @@ function VenueDrinksSection({ venueId }) {
   return (
     <MetricCard title="Catalogo drink Pulse">
       <p className="pl-hint" style={{ marginBottom: 10 }}>
-        I drink che chi invia una Pulse può scegliere in questo locale. Senza almeno uno, l'invio
-        resta bloccato — nessuna scelta possibile.
+        Il listino dei drink del locale, solo come riferimento: dal novembre 2026 chi invia una
+        Pulse non sceglie più il drink, la Pulse vale una consumazione al prezzo della serata.
       </p>
 
       {loading ? (

@@ -2,7 +2,14 @@ import { useState, useEffect, useCallback } from 'react';
 import ProfileFullScreen from './ProfileFullScreen';
 
 import { apiFetch } from './apiClient';
-import { openExternal } from './native';
+import PulseBuySheet from './PulseBuy';
+import {
+  usePulseNight,
+  notifyPulseNightChanged,
+  formatEuro,
+  formatNightTime,
+  pulsesLabel,
+} from './pulseNight';
 
 /**
  * ============================================================
@@ -15,134 +22,103 @@ import { openExternal } from './native';
  * Una sola Pulse dal novembre 2026 (decisione A5): svela subito chi
  * la manda e, se accettata, apre la chat. Tolte le varianti anonima,
  * "+ Like" (con il minigioco "indovina chi") e "+ Superlike".
+ * Dal novembre 2026 (M11) la Pulse si compra prima, per la serata
+ * (PulseBuy.jsx), e inviarla la scala dal saldo: niente più scelta
+ * del drink dal listino, vale una consumazione al prezzo della serata.
  * ============================================================
  */
 
 // ------------------------------------------------------------
 // 1) INVIO
 // ------------------------------------------------------------
-export function PulseSend({ receiverId, arenaSessionId, venueId, onSent, onCancel }) {
-  const [drinks, setDrinks] = useState([]);
-  const [selectedDrink, setSelectedDrink] = useState(null);
+export function PulseSend({ receiverId, arenaSessionId, onSent, onCancel }) {
+  const { info } = usePulseNight(arenaSessionId);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState(null);
+  const [showBuy, setShowBuy] = useState(false);
 
-  useEffect(() => {
-    apiFetch(`/api/venues/${venueId}/drinks`)
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.success) {
-          setDrinks(data.drinks);
-          // Se il locale offre UN SOLO drink per la Pulse (scelta
-          // comune per chi preferisce una consumazione fissa,
-          // invece di un catalogo), lo selezioniamo da soli —
-          // niente da "scegliere" quando c'è una sola opzione,
-          // un passaggio in meno per chi invia.
-          if (data.drinks.length === 1) {
-            setSelectedDrink(data.drinks[0]);
-          }
-        }
-      });
-  }, [venueId]);
+  const available = info?.available || 0;
 
   const handleSend = useCallback(async () => {
-    if (!selectedDrink) return;
     setSending(true);
     setError(null);
-
     try {
       const res = await apiFetch(`/api/pulses/send`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          receiverId,
-          arenaSessionId,
-          drinkProductId: selectedDrink.id,
-        }),
+        body: JSON.stringify({ receiverId, arenaSessionId }),
       });
       const data = await res.json();
+      notifyPulseNightChanged();
       if (!data.success) {
+        if (data.reason === 'no_pulses_left') setShowBuy(true);
         setError(reasonToMessage(data.reason));
         return;
       }
-
-      // Due esiti possibili: il Pulse nasce SUBITO (Pulse gratis
-      // settimanale, o account di prova) — oppure serve prima
-      // pagare davvero, e Stripe ci dà un indirizzo a cui mandare
-      // il cliente per completare il pagamento con la sua carta.
-      if (data.requiresPayment) {
-        openExternal(data.checkoutUrl);
-        return; // usciamo dall'app per andare su Stripe — non c'è altro da fare qui
-      }
-
       onSent(data.pulseId);
     } catch {
       setError('Non siamo riusciti a raggiungere il server — riprova.');
     } finally {
       setSending(false);
     }
-  }, [selectedDrink, receiverId, arenaSessionId, onSent]);
+  }, [receiverId, arenaSessionId, onSent]);
 
   return (
     <div className="pl-sheet">
       <div className="pl-sheet-close" onClick={onCancel}>
         Chiudi ✕
       </div>
-      <h3>Invia un Pulse</h3>
+      <h3>Offri un drink con una Pulse</h3>
 
-      {drinks.length > 1 && (
+      {!info && <p className="pl-hint">Caricamento…</p>}
+
+      {info && !info.isAvailable && (
+        <p className="pl-hint">In questo locale le Pulse non sono disponibili.</p>
+      )}
+
+      {info && info.isAvailable && (
         <>
-          <div className="pl-section-label">Scegli il Pulse</div>
-          {drinks.map((d) => (
-            <div
-              key={d.id}
-              className={`pl-pulse-option ${selectedDrink?.id === d.id ? 'selected' : ''}`}
-              onClick={() => setSelectedDrink(d)}
-            >
-              <div className="pl-pulse-title">
-                {d.name}
-                {d.sponsor_name && <span className="pl-sponsor-tag"> · {d.sponsor_name}</span>}
-              </div>
-              <div className="pl-pulse-price">
-                {((d.base_price_cents - (d.sponsor_discount_cents || 0)) / 100).toFixed(2)}€
-              </div>
+          <div className="pl-pulse-option selected" style={{ cursor: 'default' }}>
+            <div className="pl-pulse-title">Una consumazione al bancone di {info.venueName}</div>
+            <div className="pl-pulse-price">
+              Stasera una Pulse vale {formatEuro(info.priceCents)} · la ritira al bancone entro la
+              chiusura ({formatNightTime(info.deadline)})
             </div>
-          ))}
+          </div>
+          <p className="pl-hint" style={{ textAlign: 'center' }}>
+            {available > 0
+              ? `Hai ${pulsesLabel(available)} da usare stasera.`
+              : 'Non hai Pulse da usare stasera.'}
+          </p>
         </>
       )}
 
-      {/* Locale con un unico Pulse fisso — niente da scegliere, solo
-          una conferma di cosa si sta per inviare. */}
-      {drinks.length === 1 && (
-        <div className="pl-pulse-option selected" style={{ cursor: 'default' }}>
-          <div className="pl-pulse-title">
-            {drinks[0].name}
-            {drinks[0].sponsor_name && (
-              <span className="pl-sponsor-tag"> · {drinks[0].sponsor_name}</span>
-            )}
-          </div>
-          <div className="pl-pulse-price">
-            {((drinks[0].base_price_cents - (drinks[0].sponsor_discount_cents || 0)) / 100).toFixed(
-              2
-            )}
-            €
-          </div>
-        </div>
-      )}
-
-      {drinks.length === 0 && (
-        <p className="pl-hint">Nessun drink disponibile in questo locale al momento.</p>
-      )}
-
       <p className="pl-hint" style={{ marginBottom: 14 }}>
-        Se chi la riceve accetta, il tuo profilo diventa subito visibile e si apre la chat — se non
-        accetta, semplicemente non succede nulla.
+        Se chi la riceve accetta, si apre la chat. Se la rifiuta, la Pulse ti torna indietro.
       </p>
 
       {error && <p className="pl-error">{error}</p>}
-      <button className="pl-send-btn" onClick={handleSend} disabled={!selectedDrink || sending}>
-        {sending ? 'Invio…' : 'Invia Pulse'}
-      </button>
+      {info?.isAvailable && available > 0 && (
+        <button className="pl-send-btn" onClick={handleSend} disabled={sending}>
+          {sending ? 'Invio…' : 'Invia Pulse'}
+        </button>
+      )}
+      {info?.isAvailable && available === 0 && info.isOpen && (
+        <button className="pl-send-btn" onClick={() => setShowBuy(true)}>
+          Compra Pulse
+        </button>
+      )}
+
+      {showBuy && (
+        <PulseBuySheet
+          arenaSessionId={arenaSessionId}
+          onClose={() => setShowBuy(false)}
+          onBought={() => {
+            setShowBuy(false);
+            setError(null);
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -153,6 +129,8 @@ function reasonToMessage(reason) {
     receiver_requires_verified: 'Questo profilo accetta contatti solo da utenti verificati.',
     receiver_requires_premium: 'Questo profilo accetta contatti solo da utenti premium.',
     cannot_interact_with_self: 'Non puoi inviare un Pulse a te stesso.',
+    no_pulses_left: 'Non hai Pulse da usare stasera: comprane per inviarla.',
+    pulse_night_ended: 'La serata è finita: le Pulse non si possono più inviare.',
   };
   return messages[reason] || 'Invio non riuscito — riprova.';
 }
@@ -184,7 +162,11 @@ export function PulseNotification({ pulse, currentUserId, arenaSessionId, venueI
         // Già decisa (elenco vecchio, altro telefono): prima la
         // finestra restava aperta e i bottoni non facevano nulla (B9,
         // 1/11). Si chiude e l'elenco delle Pulse si ricarica.
-        if (data.reason === 'already_decided' || data.reason === 'not_found_or_not_yours') {
+        if (
+          data.reason === 'already_decided' ||
+          data.reason === 'not_found_or_not_yours' ||
+          data.reason === 'pulse_night_ended'
+        ) {
           onResolved({ action: 'stale' });
         } else {
           setError('Non è andata a buon fine, riprova.');
@@ -230,10 +212,16 @@ export function PulseNotification({ pulse, currentUserId, arenaSessionId, venueI
     );
   }
 
+  // Dove e entro quando si ritira (M11): solo in quel locale, entro
+  // la chiusura di stasera.
+  const collectHint =
+    pulse.venueName && pulse.deadline
+      ? ` Se accetti, ritira la tua consumazione al bancone di ${pulse.venueName} entro la chiusura (${formatNightTime(pulse.deadline)}).`
+      : '';
   const copy = showsSender
     ? {
-        title: `${pulse.senderName || 'Qualcuno'} ti ha inviato un Pulse`,
-        sub: `Vuoi accettarlo? Il tuo profilo è già visibile a chi l'ha inviato.`,
+        title: `${pulse.senderName || 'Qualcuno'} ti offre un drink con una Pulse`,
+        sub: `Vuoi accettarla? Il tuo profilo è già visibile a chi l'ha inviata.${collectHint}`,
       }
     : {
         title: 'Un ammiratore misterioso ti ha inviato un Pulse',
@@ -383,9 +371,9 @@ export function PulseRedeemSeal({ pulseId, redeemCode, venueId, onDone, onCancel
       setErrorMessage(
         'Questo Pulse è valido solo nel locale in cui è stato ricevuto — qui non può essere riscattato.'
       );
-    } else if (data.reason === 'pulse_expired_changed_venue') {
+    } else if (data.reason === 'pulse_expired') {
       setErrorMessage(
-        'Questo Pulse è scaduto — hai fatto check-in in un altro locale nel frattempo.'
+        'Questa Pulse è scaduta: andava ritirata entro la chiusura del locale di quella sera.'
       );
     } else if (data.reason === 'code_expired') {
       setErrorMessage(

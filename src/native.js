@@ -53,6 +53,20 @@ export async function closeInAppBrowser() {
 }
 
 /**
+ * Registra un handler per la chiusura del browser in-app (l'utente
+ * chiude la pagina di pagamento di Stripe, o ci torna dall'app). Sul
+ * web non fa nulla: lì Stripe rimanda alla pagina dell'app.
+ * Ritorna una funzione di cleanup.
+ */
+export function onInAppBrowserClosed(handler) {
+  if (!isNative()) return () => {};
+  const listener = Browser.addListener('browserFinished', () => handler());
+  return () => {
+    listener.then((l) => l.remove());
+  };
+}
+
+/**
  * Registra un handler per gli URL con cui l'app viene aperta
  * (Universal/App Link, es. QR /checkin/:id). Sul web non fa nulla.
  * Ritorna una funzione di cleanup.

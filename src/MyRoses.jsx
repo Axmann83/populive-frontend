@@ -5,8 +5,15 @@ import SwipeableRow from './SwipeableRow';
 import ProfileFullScreen from './ProfileFullScreen';
 
 import { apiFetch, getOptimizedPhotoUrl } from './apiClient';
-import { openExternal } from './native';
 import { askConfirm } from './Dialogs';
+import PulseBuySheet from './PulseBuy';
+import {
+  usePulseNight,
+  formatEuro,
+  formatNightTime,
+  isEndingSoon,
+  pulsesLabel,
+} from './pulseNight';
 
 /**
  * ============================================================
@@ -17,10 +24,10 @@ import { askConfirm } from './Dialogs';
  * (PulseNotification) che si vede quando arrivano in tempo reale —
  * utile per chi non li ha gestiti subito e vuole tornarci sopra.
  *
- * In cima, il saldo di Pulse pronti da INVIARE — gratis settimanali
- * + pre-pagati comprati in pacchetto (mai a scadenza, utilizzabili
- * in qualunque locale partner). Prima l'unico modo di avere un
- * Pulse extra era pagarlo uno alla volta al momento dell'invio.
+ * In cima, le Pulse da usare STASERA (M11, novembre 2026): si
+ * comprano con Stripe per la serata in cui si è dentro e scadono alla
+ * chiusura del locale. Tolti i crediti validi ovunque e per sempre, i
+ * pacchetti per locale e le Pulse gratis settimanali.
  * ============================================================
  */
 export default function MyPulses({
@@ -33,10 +40,9 @@ export default function MyPulses({
 }) {
   const [pulses, setPulses] = useState([]);
   const [sentPulses, setSentPulses] = useState([]); // visione complessiva richiesta dall'utente — anche le inviate, non solo ricevute
-  const [balance, setBalance] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [purchasing, setPurchasing] = useState(null); // null | 1 | 5, quale quantità è in corso
-  const [purchaseError, setPurchaseError] = useState(null);
+  const [showBuy, setShowBuy] = useState(false);
+  const { info: night } = usePulseNight(arenaSessionId);
   const [redeemingPulse, setRedeemingPulse] = useState(null); // { pulseId, redeemCode } | null — riscatto rimandato, attivato da qui quando si è pronti
   const [viewingProfile, setViewingProfile] = useState(null); // { senderId, pulseId, isPending } | null — profilo aperto per decidere in modo ragionato, solo dove l'identità è già svelata
 
@@ -46,17 +52,14 @@ export default function MyPulses({
     async ({ silent = false } = {}) => {
       if (!silent) setLoading(true);
       try {
-        const [pulsesRes, sentRes, balanceRes] = await Promise.all([
+        const [pulsesRes, sentRes] = await Promise.all([
           apiFetch(`/api/users/${userId}/pulses`),
           apiFetch(`/api/users/${userId}/sent-pulses`),
-          apiFetch(`/api/users/${userId}/pulse-balance`),
         ]);
         const pulsesData = await pulsesRes.json();
         const sentData = await sentRes.json();
-        const balanceData = await balanceRes.json();
         if (pulsesData.success) setPulses(pulsesData.pulses);
         if (sentData.success) setSentPulses(sentData.pulses);
-        if (balanceData.success) setBalance(balanceData);
       } catch (err) {
         console.error('Errore nel caricamento dei Pulse:', err);
       } finally {
@@ -77,56 +80,6 @@ export default function MyPulses({
     if (refreshKey) load({ silent: true });
   }, [refreshKey, load]);
 
-  // Prezzi specifici DI QUESTO LOCALE — non più un catalogo globale.
-  // Se il locale non ha ancora concordato un prezzo con gli
-  // Architetti, il campo resta vuoto (null) e quel bottone
-  // semplicemente non compare — mai un prezzo finto.
-  const [venuePrices, setVenuePrices] = useState({
-    singlePriceCents: null,
-    bundle5PriceCents: null,
-  });
-
-  useEffect(() => {
-    if (!venueId) return;
-    apiFetch(`/api/venues/${venueId}/pulse-prices`)
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.success) setVenuePrices(data);
-      })
-      .catch(() => {});
-  }, [venueId]);
-
-  const buyCredits = useCallback(
-    async (quantity) => {
-      setPurchasing(quantity);
-      setPurchaseError(null);
-      try {
-        const purchaseRes = await apiFetch(`/api/venues/${venueId}/pulse-credits/purchase`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ quantity }),
-        });
-        const purchaseData = await purchaseRes.json();
-
-        if (purchaseData.requiresPayment) {
-          openExternal(purchaseData.checkoutUrl);
-          return;
-        }
-
-        if (purchaseData.success) {
-          load(); // account di prova/gratis: il saldo è già aggiornato sul server
-        } else {
-          setPurchaseError('Qualcosa è andato storto — riprova.');
-        }
-      } catch {
-        setPurchaseError('Non siamo riusciti a raggiungere il server — riprova.');
-      } finally {
-        setPurchasing(null);
-      }
-    },
-    [load, venueId]
-  );
-
   if (loading)
     return (
       <div className="pl-hint" style={{ textAlign: 'center', marginTop: 30 }}>
@@ -134,8 +87,8 @@ export default function MyPulses({
       </div>
     );
 
-  const totalAvailable = (balance?.freeBalance || 0) + (balance?.paidCredits || 0);
-  const hasAnyPriceSet = venuePrices.singlePriceCents || venuePrices.bundle5PriceCents;
+  const available = night?.available || 0;
+  const endingSoon = isEndingSoon(night?.deadline);
 
   // Nasconde solo QUESTA Pulse dalla lista di lavoro — mai la riga
   // vera sottostante (serve anche per punti/storico altrove). Sparisce
@@ -209,6 +162,9 @@ export default function MyPulses({
   const awaitingSentPulses = sentPulses.filter((p) => ['pending', 'ignored'].includes(p.status));
   const acceptedSentPulses = sentPulses.filter((p) => ['accepted', 'redeemed'].includes(p.status));
   const rejectedSentPulses = sentPulses.filter((p) => ['rejected', 'expired'].includes(p.status));
+  const rejectedLabel = rejectedSentPulses.some((p) => p.status === 'expired')
+    ? 'Rifiutate o scadute'
+    : 'Rifiutate';
 
   function renderPulseRow(r) {
     // Il bottone "Riscatta" funziona solo nel locale dove il Pulse è
@@ -266,10 +222,15 @@ export default function MyPulses({
             <PulseWaveIcon size={22} color="var(--cyan)" />
           )}
           <div style={{ flex: 1 }}>
-            <div className="pl-pulse-title">{r.drinkType}</div>
+            <div className="pl-pulse-title">{r.drinkType || 'Una consumazione'}</div>
             <div className="pl-pulse-price">
               DA {r.senderName ? r.senderName : 'Ammiratore misterioso'} · {r.venueName}
             </div>
+            {r.status === 'accepted' && r.deadline && (
+              <div className="pl-pulse-price" style={{ color: 'var(--teak)' }}>
+                Ritirala al bancone entro le {formatNightTime(r.deadline)}
+              </div>
+            )}
           </div>
           {canRedeemHere && (
             <button
@@ -331,7 +292,7 @@ export default function MyPulses({
         >
           <PulseWaveIcon size={22} color="var(--cyan)" />
           <div style={{ flex: 1 }}>
-            <div className="pl-pulse-title">{r.drinkType}</div>
+            <div className="pl-pulse-title">{r.drinkType || 'Una consumazione'}</div>
             <div className="pl-pulse-price">
               A {r.receiverName} · {r.venueName}
             </div>
@@ -421,95 +382,72 @@ export default function MyPulses({
         </div>
       </div>
 
-      {/* Saldo — sempre in cima, prima della lista */}
+      {/* Pulse da usare stasera — sempre in cima, prima della lista */}
       <div
         style={{
           display: 'flex',
           alignItems: 'center',
           gap: 12,
           background: 'var(--surface)',
-          border: '1px solid rgba(255,61,110,0.3)',
+          border: `1px solid ${endingSoon ? 'var(--red)' : 'rgba(255,61,110,0.3)'}`,
           borderRadius: 14,
           padding: 12,
-          marginBottom: 10,
+          marginBottom: 14,
           boxShadow: 'var(--shadow-glow-cyan)',
         }}
       >
         <PulseWaveIcon size={26} color="var(--cyan)" />
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 13, fontWeight: 700 }}>
-            {totalAvailable} Pulse pronti da inviare
-          </div>
-          <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>
-            {balance?.freeBalance || 0} gratis · {balance?.paidCredits || 0} pre-pagati
-          </div>
+          {night?.isAvailable ? (
+            <>
+              <div style={{ fontSize: 13, fontWeight: 700 }}>
+                {available > 0
+                  ? `${pulsesLabel(available)} da usare stasera`
+                  : 'Nessuna Pulse da usare stasera'}
+              </div>
+              <div style={{ fontSize: 10, color: endingSoon ? 'var(--red)' : 'var(--text-muted)' }}>
+                {night.isOpen
+                  ? `${night.venueName} · ${formatEuro(night.priceCents)} l'una · scadono alle ${formatNightTime(night.deadline)}`
+                  : `${night.venueName} · serata finita`}
+              </div>
+            </>
+          ) : (
+            <>
+              <div style={{ fontSize: 13, fontWeight: 700 }}>Offri un drink a chi è qui</div>
+              <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>
+                {arenaSessionId
+                  ? 'In questo locale le Pulse non sono disponibili.'
+                  : 'Entra in un locale con il QR per comprare e inviare Pulse.'}
+              </div>
+            </>
+          )}
         </div>
+        {night?.canBuy && (
+          <button
+            onClick={() => setShowBuy(true)}
+            style={{
+              padding: '8px 14px',
+              borderRadius: 999,
+              border: 'none',
+              background: 'var(--cyan)',
+              color: '#fff',
+              fontSize: 11,
+              fontWeight: 700,
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            Compra
+          </button>
+        )}
       </div>
 
-      {/* Opzioni di acquisto — prezzo specifico DI QUESTO LOCALE,
-          compare solo se è stato davvero concordato (mai un prezzo
-          finto). Se il locale non ne ha impostato nessuno, questa
-          sezione sparisce del tutto. */}
-      {hasAnyPriceSet && (
-        <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
-          {venuePrices.singlePriceCents && (
-            <button
-              onClick={() => buyCredits(1)}
-              disabled={purchasing !== null}
-              style={{
-                flex: 1,
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: 2,
-                background: 'var(--surface-2)',
-                border: '1px solid rgba(228,212,200,0.16)',
-                borderRadius: 12,
-                padding: '10px 8px',
-                cursor: purchasing !== null ? 'default' : 'pointer',
-                opacity: purchasing !== null && purchasing !== 1 ? 0.5 : 1,
-              }}
-            >
-              <span style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--cyan)' }}>
-                {purchasing === 1 ? 'Un attimo…' : '+1 Pulse'}
-              </span>
-              <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>
-                {(venuePrices.singlePriceCents / 100).toFixed(2)}€
-              </span>
-            </button>
-          )}
-          {venuePrices.bundle5PriceCents && (
-            <button
-              onClick={() => buyCredits(5)}
-              disabled={purchasing !== null}
-              style={{
-                flex: 1,
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: 2,
-                background: 'var(--surface-2)',
-                border: '1px solid rgba(228,212,200,0.16)',
-                borderRadius: 12,
-                padding: '10px 8px',
-                cursor: purchasing !== null ? 'default' : 'pointer',
-                opacity: purchasing !== null && purchasing !== 5 ? 0.5 : 1,
-              }}
-            >
-              <span style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--cyan)' }}>
-                {purchasing === 5 ? 'Un attimo…' : '+5 Pulse'}
-              </span>
-              <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>
-                {(venuePrices.bundle5PriceCents / 100).toFixed(2)}€
-              </span>
-            </button>
-          )}
-        </div>
-      )}
-      {purchaseError && (
-        <p className="pl-error" style={{ marginBottom: 10 }}>
-          {purchaseError}
-        </p>
+      {showBuy && (
+        <PulseBuySheet
+          arenaSessionId={arenaSessionId}
+          onClose={() => setShowBuy(false)}
+          onBought={() => setShowBuy(false)}
+        />
       )}
 
       {(pulses.length > 0 || sentPulses.length > 0) && (
@@ -625,7 +563,7 @@ export default function MyPulses({
           {rejectedSentPulses.length > 0 && (
             <div style={{ marginBottom: 14 }}>
               <div className="pl-section-label" style={{ marginTop: 0, marginBottom: 8 }}>
-                Rifiutato
+                {rejectedLabel}
               </div>
               {rejectedSentPulses.map(renderSentPulseRow)}
             </div>
@@ -692,14 +630,15 @@ function StatusBadge({ status, context = 'received' }) {
   // debito" chi l'ha ricevuta. Tre stati soli, non sei: quello che
   // conta per chi ha inviato è solo "deve ancora decidere", "ha
   // detto sì" (poi i dettagli restano tra loro in chat) o "ha detto
-  // no" (rimborso già arrivato in entrambi i casi rejected/expired).
+  // no". Rifiutata: la Pulse è tornata nel saldo della serata (M11);
+  // scaduta: la serata è finita senza una decisione o senza il ritiro.
   const sentLabels = {
     pending: { text: 'In attesa di decisione', color: 'var(--cyan)' },
     ignored: { text: 'In attesa di decisione', color: 'var(--cyan)' },
     accepted: { text: 'Accettato', color: 'var(--teak)' },
     redeemed: { text: 'Accettato', color: 'var(--teak)' },
-    rejected: { text: 'Rifiutato', color: 'var(--text-muted)' },
-    expired: { text: 'Rifiutato', color: 'var(--text-muted)' },
+    rejected: { text: 'Rifiutata · ti è tornata', color: 'var(--text-muted)' },
+    expired: { text: 'Scaduta', color: 'var(--text-muted)' },
   };
 
   const labels = context === 'sent' ? sentLabels : receivedLabels;

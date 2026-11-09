@@ -205,9 +205,13 @@ export default function App() {
     // annullato: il controllo vero lo fa il server (effetto qui sotto),
     // qui si ripulisce solo l'indirizzo.
     const purchaseReturn = new URLSearchParams(search).get('pulse_purchase');
+    // Non conta come "gestito": non è un QR, e sul web Stripe rimanda a
+    // una pagina appena caricata, dove la serata in corso va ripresa
+    // come dopo un aggiornamento (provato su Railway il 09/11: prima
+    // si tornava fuori dal locale, con il check-in ancora aperto).
     if (purchaseReturn) {
       setPulsePurchaseReturn(purchaseReturn === 'done' ? 'done' : 'cancelled');
-      handled = true;
+      window.history.replaceState(null, '', '/');
     }
 
     if (handled) window.history.replaceState(null, '', '/');

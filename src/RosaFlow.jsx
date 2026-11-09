@@ -10,6 +10,7 @@ import {
   formatNightTime,
   pulsesLabel,
 } from './pulseNight';
+import WavesSpinner from './WavesSpinner';
 
 /**
  * ============================================================
@@ -70,7 +71,7 @@ export function PulseSend({ receiverId, arenaSessionId, onSent, onCancel }) {
       </div>
       <h3>Offri un drink con una Pulse</h3>
 
-      {!info && <p className="pl-hint">Caricamento…</p>}
+      {!info && <WavesSpinner />}
 
       {info && !info.isAvailable && (
         <p className="pl-hint">In questo locale le Pulse non sono disponibili.</p>

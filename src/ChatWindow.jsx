@@ -6,6 +6,7 @@ import { onBackButton } from './native';
 import { isConfirmOpen, showToast } from './Dialogs';
 import { ReportSheet, blockUserWithConfirm } from './ReportBlock';
 import { deleteChatWithConfirm } from './ChatCenter';
+import WavesSpinner from './WavesSpinner';
 
 /**
  * ============================================================
@@ -191,7 +192,7 @@ export default function ChatWindow({
     }
   }, [conversationId, otherUserName]);
 
-  if (loading) return <div className="pl-chat-loading">Caricamento…</div>;
+  if (loading) return <WavesSpinner />;
 
   return (
     <div className="pl-chat-window">

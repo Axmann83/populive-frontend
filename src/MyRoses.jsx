@@ -8,6 +8,7 @@ import { apiFetch, getOptimizedPhotoUrl } from './apiClient';
 import { askConfirm } from './Dialogs';
 import PulseBuySheet from './PulseBuy';
 import { usePulseNight, formatEuro, formatNightTime, isEndingSoon } from './pulseNight';
+import WavesSpinner from './WavesSpinner';
 
 /**
  * ============================================================
@@ -74,12 +75,7 @@ export default function MyPulses({
     if (refreshKey) load({ silent: true });
   }, [refreshKey, load]);
 
-  if (loading)
-    return (
-      <div className="pl-hint" style={{ textAlign: 'center', marginTop: 30 }}>
-        Caricamento…
-      </div>
-    );
+  if (loading) return <WavesSpinner />;
 
   const available = night?.available || 0;
   const endingSoon = isEndingSoon(night?.deadline);

@@ -3,8 +3,14 @@
     "apps": [],
     "details": [
       {
+        "appIDs": ["JWW33N22VY.com.populive.app"],
+        "components": [
+          { "/": "/checkin/*" },
+          { "/": "/mission/*" },
+          { "/": "/", "?": { "pulse_purchase": "*" } }
+        ],
         "appID": "JWW33N22VY.com.populive.app",
-        "paths": ["/checkin/*", "/mission/*", "/?pulse_sent*", "/?pulse_cancelled*"]
+        "paths": ["/checkin/*", "/mission/*"]
       }
     ]
   }

@@ -3,6 +3,7 @@ import { apiFetch, getOptimizedPhotoUrl, getStoredUserId } from './apiClient';
 import { usePhotoPreview } from './PhotoPreview';
 import { Link2, Coins, Crown, Sparkles } from './PopuLiveIcons';
 import { SafetyMenuButton } from './ReportBlock';
+import WavesSpinner from './WavesSpinner';
 
 /**
  * ============================================================
@@ -110,9 +111,7 @@ export default function ProfileDetail({ userId, arenaSessionId, onClose, onBack 
           Profilo non disponibile
         </div>
       ) : loading || !profile ? (
-        <div className="pl-hint" style={{ textAlign: 'center', marginTop: 60 }}>
-          Caricamento…
-        </div>
+        <WavesSpinner style={{ marginTop: 60 }} />
       ) : (
         <div
           style={{

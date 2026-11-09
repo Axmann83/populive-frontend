@@ -17,11 +17,43 @@ import ProfileFullScreen from './ProfileFullScreen';
  * limite in nessuna delle due direzioni). Il Superlike resta
  * l'unica azione possibile da qui, stessa regola già decisa per
  * la bacheca storica in generale.
+ *
+ * M1 (09/11): aprendo le storie non si capiva cosa fossero. In alto
+ * ora il nome del locale e "3 di 8"; le prime volte (INTRO_MAX_VIEWS)
+ * un riquadro spiega chi sono queste persone e come si usa.
  * ============================================================
  */
-export default function HistoricalStories({ people, currentUserId, onClose }) {
+const INTRO_KEY = 'pl_historical_stories_intro_views';
+const INTRO_MAX_VIEWS = 3;
+
+// Quante volte la spiegazione è già stata vista su questo telefono.
+// Senza memoria del browser (finestra privata) si mostra sempre.
+function readIntroViews() {
+  try {
+    return parseInt(localStorage.getItem(INTRO_KEY), 10) || 0;
+  } catch {
+    return 0;
+  }
+}
+
+function countIntroView() {
+  try {
+    localStorage.setItem(INTRO_KEY, String(readIntroViews() + 1));
+  } catch {
+    /* niente memoria: la spiegazione tornerà la prossima volta */
+  }
+}
+
+export default function HistoricalStories({ people, currentUserId, venueName, days = 7, onClose }) {
   const [index, setIndex] = useState(0);
   const [openProfile, setOpenProfile] = useState(false);
+  const [showIntro, setShowIntro] = useState(() => readIntroViews() < INTRO_MAX_VIEWS);
+
+  function closeIntro(e) {
+    e.stopPropagation();
+    countIntroView();
+    setShowIntro(false);
+  }
 
   const current = people[index];
 
@@ -72,6 +104,37 @@ export default function HistoricalStories({ people, currentUserId, onClose }) {
             }}
           />
         ))}
+      </div>
+
+      {/* Dove siamo: locale e posizione nella sequenza (M1) */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 'calc(24px + env(safe-area-inset-top, 0px))',
+          left: 16,
+          right: 60,
+          zIndex: 3,
+          color: '#fff',
+          textShadow: '0 1px 4px rgba(0,0,0,0.6)',
+          pointerEvents: 'none',
+        }}
+      >
+        {venueName && (
+          <div
+            style={{
+              fontSize: 13,
+              fontWeight: 700,
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}
+          >
+            {venueName}
+          </div>
+        )}
+        <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.75)', marginTop: 2 }}>
+          {index + 1} di {people.length} · ultimi {days} giorni
+        </div>
       </div>
 
       <button
@@ -127,6 +190,18 @@ export default function HistoricalStories({ people, currentUserId, onClose }) {
             bottom: 0,
             height: '38%',
             background: 'linear-gradient(to top, rgba(0,0,0,0.92), rgba(0,0,0,0))',
+          }}
+        />
+        {/* Sfumatura anche in alto: nome del locale e "3 di 8" restano
+            leggibili sopra una foto chiara o il fondo chiaro di giorno (M1) */}
+        <div
+          style={{
+            position: 'absolute',
+            left: 0,
+            right: 0,
+            top: 0,
+            height: 'calc(110px + env(safe-area-inset-top, 0px))',
+            background: 'linear-gradient(to bottom, rgba(0,0,0,0.6), rgba(0,0,0,0))',
           }}
         />
       </div>
@@ -201,6 +276,66 @@ export default function HistoricalStories({ people, currentUserId, onClose }) {
           </button>
         </div>
       </div>
+
+      {showIntro && (
+        <div
+          onClick={closeIntro}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            zIndex: 5,
+            background: 'rgba(0,0,0,0.72)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 24,
+          }}
+        >
+          <div
+            role="dialog"
+            aria-label="Come funziona la Bacheca Storica"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: 'var(--surface)',
+              color: 'var(--text)',
+              borderRadius: 18,
+              padding: '22px 20px 18px',
+              maxWidth: 340,
+              width: '100%',
+              boxShadow: 'var(--shadow-lg)',
+            }}
+          >
+            <div
+              style={{
+                fontFamily: "'Unbounded',sans-serif",
+                fontWeight: 700,
+                fontSize: 16,
+                marginBottom: 10,
+              }}
+            >
+              Chi c'era{venueName ? ` a ${venueName}` : ''}
+            </div>
+            <p style={{ fontSize: 13, lineHeight: 1.5, margin: '0 0 8px' }}>
+              Qui trovi le persone passate da questo locale negli ultimi {days} giorni: magari hai
+              incrociato qualcuno e non hai fatto in tempo a conoscerlo.
+            </p>
+            <p style={{ fontSize: 13, lineHeight: 1.5, margin: '0 0 8px' }}>
+              Tocca a destra per andare avanti, a sinistra per tornare indietro. Con "Guarda
+              profilo" vedi il profilo completo.
+            </p>
+            <p style={{ fontSize: 13, lineHeight: 1.5, margin: '0 0 16px' }}>
+              Da qui puoi mandare solo un <strong>Superlike</strong>: se lo accetta, si apre la
+              chat.
+            </p>
+            {/* stessi bottoni dei nostri dialoghi (Dialogs.jsx) */}
+            <div className="pl-dialog-actions" style={{ marginTop: 0 }}>
+              <button className="pl-dialog-confirm" onClick={closeIntro}>
+                Ho capito
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Il tocco su "Guarda profilo"/"Superlike" apre il profilo vero
           a tutto schermo — stessa schermata di sempre, con SOLO il

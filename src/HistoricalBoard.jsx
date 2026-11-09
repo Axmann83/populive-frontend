@@ -3,6 +3,7 @@ import { apiFetch, getOptimizedPhotoUrl } from './apiClient';
 import { usePhotoPreview } from './PhotoPreview';
 import { History } from './PopuLiveIcons';
 import ProfileFullScreen from './ProfileFullScreen';
+import WavesSpinner from './WavesSpinner';
 
 /**
  * ============================================================
@@ -51,7 +52,7 @@ export default function HistoricalBoard({ venueId, currentUserId, onClose }) {
         Chi ha fatto check-in qui negli ultimi 7 giorni e ha scelto di comparire qui.
       </p>
 
-      {loading && <p className="pl-hint">Caricamento…</p>}
+      {loading && <WavesSpinner />}
 
       {!loading && people.length === 0 && (
         <p className="pl-hint" style={{ textAlign: 'center', marginTop: 20 }}>

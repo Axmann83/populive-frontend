@@ -58,6 +58,7 @@ import WelcomeBack from './WelcomeBack';
 import MissionClaim from './MissionClaim';
 import VenuesMap from './VenuesMap';
 import Dashboard from './Dashboard';
+import WavesSpinner from './WavesSpinner';
 import NearbyMissions from './NearbyMissions';
 import SuperlikeNotification from './SuperlikeNotification';
 import { askConfirm, showToast } from './Dialogs';
@@ -1639,7 +1640,8 @@ export default function App() {
                     gap: 7,
                   }}
                 >
-                  <LogOut size={14} /> {leavingVenue ? 'Un attimo…' : 'Esci dal locale'}
+                  <LogOut size={14} />{' '}
+                  {leavingVenue ? <WavesSpinner size="sm" inline /> : 'Esci dal locale'}
                 </button>
               )}
             </>

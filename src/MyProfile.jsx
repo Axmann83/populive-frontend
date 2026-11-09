@@ -4,6 +4,7 @@ import { Settings as SettingsIcon, Zap, BadgeCheck } from './PopuLiveIcons';
 import { apiFetch, getOptimizedPhotoUrl } from './apiClient';
 import { usePhotoPreview } from './PhotoPreview';
 import { openExternal } from './native';
+import WavesSpinner from './WavesSpinner';
 
 const MAX_HASHTAGS = 5;
 
@@ -62,12 +63,7 @@ export default function MyProfile({ userId, arenaSessionId, onOpenSettings }) {
     };
   }, [userId, arenaSessionId]);
 
-  if (loading)
-    return (
-      <div className="pl-hint" style={{ textAlign: 'center', marginTop: 30 }}>
-        Caricamento…
-      </div>
-    );
+  if (loading) return <WavesSpinner />;
 
   if (editing) {
     return (
@@ -289,7 +285,7 @@ function PremiumVerifiedSection({ profile, arenaSessionId, onProfileRefresh }) {
           icon={Zap}
           title="Diventa Premium"
           sub="1.2x sui punti guadagnati per 30 giorni"
-          buttonLabel={purchasing === 'premium' ? 'Un attimo…' : 'Attiva'}
+          buttonLabel={purchasing === 'premium' ? <WavesSpinner size="sm" inline /> : 'Attiva'}
           disabled={purchasing !== null}
           onClick={() => buy('premium_subscription', 'premium')}
         />
@@ -315,7 +311,7 @@ function PremiumVerifiedSection({ profile, arenaSessionId, onProfileRefresh }) {
           icon={BadgeCheck}
           title="Verifica il profilo"
           sub="Badge identità confermata, revisione manuale"
-          buttonLabel={purchasing === 'verified' ? 'Un attimo…' : 'Richiedi'}
+          buttonLabel={purchasing === 'verified' ? <WavesSpinner size="sm" inline /> : 'Richiedi'}
           disabled={purchasing !== null}
           onClick={() => buy('verified_badge', 'verified')}
         />

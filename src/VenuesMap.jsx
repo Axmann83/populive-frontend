@@ -7,6 +7,7 @@ import HistoricalBoard from './HistoricalBoard';
 import HistoricalStories from './HistoricalStories';
 import VenueSearchSelect from './VenueSearchSelect';
 import { showToast } from './Dialogs';
+import WavesSpinner from './WavesSpinner';
 
 /**
  * ============================================================
@@ -65,6 +66,7 @@ export default function VenuesMap({ currentUserId, onClose, mode = 'browse' }) {
   const [historicalVenueId, setHistoricalVenueId] = useState(null);
   const [storiesPeople, setStoriesPeople] = useState(null); // null = non aperte, [] = aperte ma vuote, [...] = aperte con gente
   const [loadingStories, setLoadingStories] = useState(false);
+  const [storiesVenueName, setStoriesVenueName] = useState('');
   const [placingPin, setPlacingPin] = useState(false);
   const [newPinCoords, setNewPinCoords] = useState(null);
 
@@ -116,6 +118,7 @@ export default function VenuesMap({ currentUserId, onClose, mode = 'browse' }) {
   // apre DIRETTAMENTE la sequenza di profili — nessun popup
   // intermedio, coerente con "una vera e propria schermata" chiesta.
   const openHistoricalStories = useCallback(async (venue) => {
+    setStoriesVenueName(venue.name); // in alto nelle storie (M1)
     setLoadingStories(true);
     try {
       const res = await apiFetch(`/api/venues/${venue.venueId}/historical-checkins`);
@@ -216,8 +219,10 @@ export default function VenuesMap({ currentUserId, onClose, mode = 'browse' }) {
       // realistico che qualcuno abbia coordinate mancanti o rotte —
       // saltarlo qui invece di lasciare che rompa il disegno di
       // TUTTI gli altri puntini insieme a lui.
-      const lat = Number(v.latitude);
-      const lng = Number(v.longitude);
+      // Number(null) vale 0: senza il controllo su null un locale senza
+      // coordinate finiva con un puntino a 0,0, nel Golfo di Guinea (B16).
+      const lat = v.latitude == null ? NaN : Number(v.latitude);
+      const lng = v.longitude == null ? NaN : Number(v.longitude);
       if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
         console.warn('Locale con coordinate non valide, saltato:', v.name);
         return;
@@ -351,7 +356,13 @@ export default function VenuesMap({ currentUserId, onClose, mode = 'browse' }) {
   // modulo (26/8, richiesta esplicita).
   const handleVenueSearchSelect = useCallback((venueId) => {
     const found = markersByIdRef.current[venueId];
-    if (!found || !mapRef.current) return;
+    if (!mapRef.current) return;
+    // Locale senza coordinate valide (nessun puntino, v. sopra): prima
+    // la scelta non faceva nulla, in silenzio (B16).
+    if (!found) {
+      showToast('Questo locale non ha ancora una posizione sulla mappa.');
+      return;
+    }
     mapRef.current.setView([found.lat, found.lng], 16);
     found.marker.openPopup();
   }, []);
@@ -402,6 +413,7 @@ export default function VenuesMap({ currentUserId, onClose, mode = 'browse' }) {
       subView = (
         <HistoricalStories
           people={storiesPeople}
+          venueName={storiesVenueName}
           currentUserId={currentUserId}
           onClose={() => setStoriesPeople(null)}
         />
@@ -423,7 +435,7 @@ export default function VenuesMap({ currentUserId, onClose, mode = 'browse' }) {
           <span style={{ color: 'var(--teak)' }}>●</span> Non ancora ufficiale — puoi attivarlo tu
         </p>
 
-        {loading && <p className="pl-hint">Caricamento…</p>}
+        {loading && <WavesSpinner />}
 
         {!loading && venues.length > 0 && (
           <VenueSearchSelect
@@ -469,7 +481,7 @@ export default function VenuesMap({ currentUserId, onClose, mode = 'browse' }) {
                 fontSize: 12.5,
               }}
             >
-              Caricamento…
+              <WavesSpinner size="sm" inline label="Caricamento…" />
             </div>
           </div>
         )}
@@ -575,7 +587,7 @@ function NewVenueForm({ coords, onCancel, onCreated }) {
       </div>
       <div style={{ display: 'flex', gap: 8 }}>
         <button className="pl-send-btn" onClick={save} disabled={saving || !name.trim()}>
-          {saving ? 'Un attimo…' : 'Crea locale'}
+          {saving ? <WavesSpinner size="sm" inline /> : 'Crea locale'}
         </button>
         <button
           onClick={onCancel}

@@ -3,6 +3,7 @@ import ProfileFullScreen from './ProfileFullScreen';
 import { Heart, Star, PulseWaveIcon, Bell } from './PopuLiveIcons';
 import { apiFetch } from './apiClient';
 import { showToast } from './Dialogs';
+import WavesSpinner from './WavesSpinner';
 
 /**
  * ============================================================
@@ -191,11 +192,7 @@ export default function LikeCenter({ userId, arenaSessionId, venueId, onOpenChat
         ))}
       </div>
 
-      {loading && (
-        <p className="pl-hint" style={{ textAlign: 'center', marginTop: 30 }}>
-          Caricamento…
-        </p>
-      )}
+      {loading && <WavesSpinner />}
 
       {!loading && items.length === 0 && (
         <div style={{ textAlign: 'center', marginTop: 60, color: 'var(--text-muted)' }}>

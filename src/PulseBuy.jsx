@@ -15,6 +15,7 @@ import {
   isEndingSoon,
   pulsesLabel,
 } from './pulseNight';
+import WavesSpinner from './WavesSpinner';
 
 /**
  * ============================================================
@@ -72,7 +73,7 @@ export default function PulseBuySheet({ arenaSessionId, onClose, onBought }) {
 
   let body;
   if (!info) {
-    body = <p className="pl-hint">Caricamento…</p>;
+    body = <WavesSpinner />;
   } else if (!info.isAvailable) {
     body = <p className="pl-hint">In questo locale le Pulse non sono disponibili.</p>;
   } else if (!info.isOpen) {
@@ -153,7 +154,11 @@ export default function PulseBuySheet({ arenaSessionId, onClose, onBought }) {
         )}
         {error && <p className="pl-error">{error}</p>}
         <button className="pl-send-btn" onClick={pay} disabled={paying}>
-          {paying ? 'Un attimo…' : `Paga con Stripe · ${formatEuro(info.priceCents * quantity)}`}
+          {paying ? (
+            <WavesSpinner size="sm" inline />
+          ) : (
+            `Paga con Stripe · ${formatEuro(info.priceCents * quantity)}`
+          )}
         </button>
       </>
     );

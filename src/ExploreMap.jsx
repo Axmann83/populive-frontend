@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { apiFetch } from './apiClient';
+import WavesSpinner from './WavesSpinner';
 
 /**
  * ============================================================
@@ -40,7 +41,7 @@ export default function ExploreMap({ onClose }) {
       <p className="pl-hint" style={{ marginBottom: 12 }}>
         I locali più caldi di stasera, in tempo reale
       </p>
-      {loading && <p className="pl-hint">Caricamento…</p>}
+      {loading && <WavesSpinner />}
       {!loading && venues.length === 0 && (
         <p className="pl-hint">Nessun locale con check-in al momento — torna più tardi stasera.</p>
       )}

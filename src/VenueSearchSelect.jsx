@@ -1,5 +1,16 @@
 import { useState, useRef, useEffect } from 'react';
 
+// Per cercare senza badare a maiuscole e accenti (B16, 09/11):
+// "caffe" trova "Caffè", "perche" trova "Perché". NFD separa la
+// lettera dall'accento, poi l'accento si toglie.
+function normalizeForSearch(text) {
+  return (text || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
 /**
  * ============================================================
  * TENDINA LOCALI CON RICERCA VERA (26/8, richiesta esplicita)
@@ -14,7 +25,8 @@ import { useState, useRef, useEffect } from 'react';
  * Questo componente:
  *   - Ordina SEMPRE i locali alfabeticamente (aiuta anche solo
  *     scorrendo, prima ancora di scrivere qualcosa).
- *   - Permette di scrivere per filtrare in tempo reale per nome.
+ *   - Permette di scrivere per filtrare in tempo reale per nome
+ *     (maiuscole e accenti non contano, B16).
  *   - Supporta opzioni extra in fondo alla lista (es. "+ Inserisci
  *     manualmente…"), per i casi che ne hanno bisogno.
  * ============================================================
@@ -31,8 +43,9 @@ export default function VenueSearchSelect({
   const wrapperRef = useRef(null);
 
   const sortedVenues = [...venues].sort((a, b) => a.name.localeCompare(b.name, 'it'));
-  const filtered = query.trim()
-    ? sortedVenues.filter((v) => v.name.toLowerCase().includes(query.trim().toLowerCase()))
+  const needle = normalizeForSearch(query);
+  const filtered = needle
+    ? sortedVenues.filter((v) => normalizeForSearch(v.name).includes(needle))
     : sortedVenues;
 
   const selectedVenue = venues.find((v) => v.venueId === value);

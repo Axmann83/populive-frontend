@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { apiFetch, requestAndSendLocation, uploadPhotoToStorage } from './apiClient';
 import { PRIVACY_POLICY_URL, TERMS_URL, openLegalLink } from './legalLinks';
+import WavesSpinner from './WavesSpinner';
 
 /**
  * ============================================================
@@ -356,7 +357,7 @@ export default function ProfileCreation({ onComplete }) {
 
           {error && <p className="pl-error">{error}</p>}
           <button type="submit" disabled={loading || !displayName.trim()}>
-            {loading ? 'Un attimo…' : 'Continua'}
+            {loading ? <WavesSpinner size="sm" inline /> : 'Continua'}
           </button>
         </form>
       )}
@@ -432,7 +433,13 @@ export default function ProfileCreation({ onComplete }) {
           </div>
           {error && <p className="pl-error">{error}</p>}
           <button onClick={submitPhoto} disabled={loading}>
-            {loading ? 'Un attimo…' : photoFiles.length > 0 ? 'Continua' : 'Salta per ora'}
+            {loading ? (
+              <WavesSpinner size="sm" inline />
+            ) : photoFiles.length > 0 ? (
+              'Continua'
+            ) : (
+              'Salta per ora'
+            )}
           </button>
         </div>
       )}
@@ -519,7 +526,7 @@ export default function ProfileCreation({ onComplete }) {
 
           {error && <p className="pl-error">{error}</p>}
           <button onClick={submitConsent} disabled={loading || !legalAccepted}>
-            {loading ? 'Un attimo…' : 'Inizia a usare PopuLive'}
+            {loading ? <WavesSpinner size="sm" inline /> : 'Inizia a usare PopuLive'}
           </button>
         </div>
       )}

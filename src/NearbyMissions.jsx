@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { apiFetch } from './apiClient';
 import { Target } from './PopuLiveIcons';
 import MissionClaim from './MissionClaim';
+import WavesSpinner from './WavesSpinner';
 
 /**
  * ============================================================
@@ -54,7 +55,7 @@ export default function NearbyMissions({ onClose }) {
         Solo missioni attive nel tuo raggio, in base all'ultima posizione nota.
       </p>
 
-      {loading && <p className="pl-hint">Caricamento…</p>}
+      {loading && <WavesSpinner />}
 
       {!loading && missions.length === 0 && (
         <p className="pl-hint" style={{ textAlign: 'center', marginTop: 20 }}>

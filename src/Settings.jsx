@@ -8,6 +8,7 @@ import {
 } from './apiClient';
 import { PRIVACY_POLICY_URL, TERMS_URL, openLegalLink } from './legalLinks';
 import { askConfirm, showToast } from './Dialogs';
+import WavesSpinner from './WavesSpinner';
 
 const MAX_PHOTOS = 6; // stessa galleria di ProfileCreation.jsx
 
@@ -196,7 +197,7 @@ export default function Settings({ userId, onClose, onAccountDeleted }) {
     onClose();
   }
 
-  if (loading || !settings) return <div className="pl-hint">Caricamento…</div>;
+  if (loading || !settings) return <WavesSpinner />;
 
   return (
     <div className="pl-sheet">
@@ -278,9 +279,11 @@ export default function Settings({ userId, onClose, onAccountDeleted }) {
         )}
       </div>
       {uploadingPhoto && (
-        <p className="pl-hint" style={{ marginTop: -8, marginBottom: 16 }}>
-          Caricamento…
-        </p>
+        <WavesSpinner
+          size="sm"
+          label="Caricamento della foto…"
+          style={{ marginTop: -8, marginBottom: 16 }}
+        />
       )}
       {photoError && (
         <p className="pl-error" style={{ marginTop: -8, marginBottom: 16 }}>
@@ -504,7 +507,7 @@ function BlockedUsersSection() {
         Persone bloccate
       </div>
       {blockedUsers === null ? (
-        <p className="pl-hint">Caricamento…</p>
+        <WavesSpinner />
       ) : blockedUsers.length === 0 ? (
         <p className="pl-hint">Nessuna. Puoi bloccare qualcuno dal suo profilo (⋯) o dalla chat.</p>
       ) : (

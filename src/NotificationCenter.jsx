@@ -4,6 +4,7 @@ import ProfileFullScreen from './ProfileFullScreen';
 import { Star, PulseWaveIcon, Bell, PartyPopper } from './PopuLiveIcons';
 import { apiFetch, getOptimizedPhotoUrl } from './apiClient';
 import { askConfirm } from './Dialogs';
+import WavesSpinner from './WavesSpinner';
 
 /**
  * ============================================================
@@ -176,11 +177,7 @@ export default function NotificationCenter({
         )}
       </div>
 
-      {loading && (
-        <p className="pl-hint" style={{ textAlign: 'center', marginTop: 30 }}>
-          Caricamento…
-        </p>
-      )}
+      {loading && <WavesSpinner />}
 
       {!loading && history.length === 0 && (
         <div style={{ textAlign: 'center', marginTop: 60, color: 'var(--text-muted)' }}>

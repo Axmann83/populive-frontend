@@ -8,6 +8,7 @@ import QrScannerModal from './QrScannerModal';
 import { Armchair, Radar as RadarIcon, Signal, SignalMedium } from './PopuLiveIcons';
 import { subscribeNearby } from './proximity';
 import { showToast } from './Dialogs';
+import WavesSpinner from './WavesSpinner';
 
 /**
  * ============================================================
@@ -963,11 +964,13 @@ export default function CheckinRadar({
                   color: tableLocked ? 'var(--cyan)' : 'var(--teak)',
                 }}
               >
-                {tableLockLoading
-                  ? 'Un attimo…'
-                  : tableLocked
-                    ? '🔒 Tavolo chiuso — tocca per riaprirlo'
-                    : '🔓 Chiudi il tavolo a nuovi ingressi'}
+                {tableLockLoading ? (
+                  <WavesSpinner size="sm" inline />
+                ) : tableLocked ? (
+                  '🔒 Tavolo chiuso — tocca per riaprirlo'
+                ) : (
+                  '🔓 Chiudi il tavolo a nuovi ingressi'
+                )}
               </button>
             )}
           </div>
@@ -1051,7 +1054,7 @@ export default function CheckinRadar({
               onClick={handleJoinTable}
               disabled={!tableCode.trim() || tableJoinLoading}
             >
-              {tableJoinLoading ? 'Un attimo…' : 'Conferma'}
+              {tableJoinLoading ? <WavesSpinner size="sm" inline /> : 'Conferma'}
             </button>
 
             {/* PR professionista che gestisce più tavoli (19/9) — solo

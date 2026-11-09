@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { apiFetch, getOptimizedPhotoUrl } from './apiClient';
 import { Star } from './PopuLiveIcons';
 import ProfileFullScreen from './ProfileFullScreen';
+import WavesSpinner from './WavesSpinner';
 
 /**
  * ============================================================
@@ -199,7 +200,7 @@ export default function SuperlikeNotification({
           </>
         )}
 
-        {actionState === 'sending' && <p className="pl-hint">Un attimo…</p>}
+        {actionState === 'sending' && <WavesSpinner size="sm" />}
 
         {actionState === 'accepted' && (
           <>

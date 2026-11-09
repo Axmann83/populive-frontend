@@ -7,6 +7,7 @@ import ProfileDetail from './ProfileDetail';
 import { Heart, Star, PulseWaveIcon, Link2, Coins, Crown, Sparkles } from './PopuLiveIcons';
 import { askConfirm, showToast } from './Dialogs';
 import { SafetyMenuButton } from './ReportBlock';
+import WavesSpinner from './WavesSpinner';
 
 /**
  * ============================================================
@@ -294,7 +295,7 @@ export default function ProfileFullScreen({
             height: '100%',
           }}
         >
-          <div className="pl-hint">Caricamento…</div>
+          <WavesSpinner />
         </div>
       ) : (
         <>

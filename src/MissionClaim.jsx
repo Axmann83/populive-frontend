@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { apiFetch } from './apiClient';
 import { Target } from './PopuLiveIcons';
+import WavesSpinner from './WavesSpinner';
 
 /**
  * ============================================================
@@ -86,7 +87,7 @@ export default function MissionClaim({ missionId, onClose, viaQrScan = true }) {
           boxShadow: 'var(--shadow-lg)',
         }}
       >
-        {loading && <p className="pl-hint">Caricamento…</p>}
+        {loading && <WavesSpinner />}
 
         {!loading && mission?.notFound && (
           <>
@@ -122,7 +123,7 @@ export default function MissionClaim({ missionId, onClose, viaQrScan = true }) {
                   <strong style={{ color: 'var(--cyan)' }}>+{mission.bonusPoints} punti</strong>
                 </p>
                 <button className="pl-send-btn" onClick={confirm} disabled={confirming}>
-                  {confirming ? 'Un attimo…' : 'Conferma la tua presenza'}
+                  {confirming ? <WavesSpinner size="sm" inline /> : 'Conferma la tua presenza'}
                 </button>
               </>
             ) : (

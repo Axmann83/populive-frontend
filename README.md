@@ -177,7 +177,9 @@ riporta nell'app al termine del checkout Stripe. Perché funzioni il sito deve s
 - `assetlinks.json`: contiene già lo SHA-256 del keystore di debug di questa macchina; sostituire il placeholder con quello di release
   (debug: `keytool -list -v -keystore %USERPROFILE%\.android\debug.keystore -alias androiddebugkey -storepass android`;
   release: quello del keystore di release, oppure quello di Play App Signing se pubblichi sul Play Store)
-- `apple-app-site-association`: già compilato con il Team ID Apple (`JWW33N22VY`)
+- `apple-app-site-association`: già compilato con il Team ID Apple (`JWW33N22VY`). Due formati insieme: `components`
+  (letto da iOS 13 in poi: `/checkin/*`, `/mission/*` e il ritorno da Stripe `/?pulse_purchase=…`) e il vecchio
+  `paths`, che non sa controllare la query
 
 `apple-app-site-association` deve essere servito con `Content-Type: application/json` e senza redirect.
 
@@ -253,8 +255,9 @@ Railpack, che riconosce un'app Create React App e la pubblica come **sito static
 - I file di `public/` vengono serviti così come sono (`.well-known/`, testi legali).
 - Un percorso che non corrisponde a un file restituisce `index.html`, così `/checkin/<id>` e `/mission/<id>` aprono
   l'app.
-- Oggi `apple-app-site-association` viene servito senza `Content-Type`; se Apple non lo accettasse, va aggiunto
-  con una configurazione di Caddy.
+- Oggi `apple-app-site-association` viene servito senza `Content-Type`, ma Apple lo accetta: il 09/11 la sua CDN
+  (`https://app-site-association.cdn-apple.com/a/v1/<dominio>`) lo restituiva corretto. Se un giorno non lo
+  accettasse, va aggiunto con una configurazione di Caddy.
 
 ### Cosa serve lato backend
 

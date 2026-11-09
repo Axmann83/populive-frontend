@@ -974,12 +974,6 @@ button {
   border-radius: 12px;
   margin-top: 10px;
 }
-.pl-chat-loading {
-  text-align: center;
-  color: var(--text-muted);
-  padding: 30px 0;
-  font-size: 12px;
-}
 
 /* ============================================================
    SPLASH — schermata di apertura animata. Copre l'INTERO
@@ -1497,4 +1491,110 @@ body::after {
 .pl-safety-menu-cancel {
   background: none;
   color: var(--text-muted);
+}
+
+/* ============================================================
+   ONDE DEL LOGO COME CARICAMENTO (M2, WavesSpinner.jsx) — stessa
+   geometria dello splash (.pl-splash-*), ma col colore del testo
+   (currentColor: ciano nelle schermate, quello del bottone dentro
+   un bottone) e un ritmo più svelto, da attesa e non da apertura.
+   ============================================================ */
+.pl-waves-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 30px auto;
+  color: var(--cyan);
+}
+.pl-waves-spinner-inline {
+  display: inline-flex;
+  flex-direction: row;
+  gap: 8px;
+  margin: 0;
+  color: inherit;
+  vertical-align: middle;
+}
+.pl-waves-spinner-box {
+  position: relative;
+  display: block;
+  flex-shrink: 0;
+}
+.pl-waves-spinner-anchor {
+  position: absolute;
+  left: 50%;
+  width: 1px;
+  height: 1px;
+  transform-origin: 0 0;
+}
+.pl-waves-spinner-node {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  left: 50%;
+  top: 0;
+  transform: translateX(calc(-50% + 1px));
+  animation: pl-waves-spinner-node 1.8s ease-in-out infinite;
+}
+.pl-waves-spinner-waves {
+  position: absolute;
+  bottom: 100%;
+  left: calc(50% + 1px);
+  width: 1px;
+  height: 1px;
+  transform: translateY(7px);
+}
+.pl-waves-spinner-arc {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  border: var(--pl-waves-border, 1.6px) solid currentColor;
+  border-bottom: none;
+  border-radius: 999px 999px 0 0;
+  opacity: 0;
+  animation: pl-splash-wave-pulse 1.8s ease-out infinite;
+}
+.pl-waves-spinner-arc:nth-child(1) {
+  width: 16px;
+  height: 8px;
+}
+.pl-waves-spinner-arc:nth-child(2) {
+  width: 28px;
+  height: 14px;
+  animation-delay: 0.2s;
+}
+.pl-waves-spinner-arc:nth-child(3) {
+  width: 40px;
+  height: 20px;
+  animation-delay: 0.4s;
+}
+@keyframes pl-waves-spinner-node {
+  0%,
+  100% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+.pl-waves-spinner-label {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.pl-waves-spinner-inline .pl-waves-spinner-label {
+  font-size: inherit;
+  color: inherit;
+}
+@media (prefers-reduced-motion: reduce) {
+  .pl-waves-spinner-node,
+  .pl-waves-spinner-arc {
+    animation: none;
+  }
+  .pl-waves-spinner-arc {
+    opacity: 0.6;
+  }
 }

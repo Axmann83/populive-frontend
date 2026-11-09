@@ -700,7 +700,7 @@ function PricingSection() {
   return (
     <div>
       <p className="pl-hint" style={{ marginBottom: 12 }}>
-        Prezzi dei prodotti del catalogo, uguali per tutta la piattaforma. Il prezzo delle Pulse
+        Prezzi dei prodotti del catalogo, uguali per tutta la piattaforma. Il prezzo dei Pulse
         invece si imposta per locale e per serata, in Organizza serata.
       </p>
 
@@ -1545,7 +1545,7 @@ function VenueOrganizePanel({ venue, onVenueUpdate }) {
         <div
           style={{ fontSize: 10.5, color: 'var(--text-muted)', marginBottom: 10, lineHeight: 1.6 }}
         >
-          {venue.redeemedCount} Pulse ritirate al bancone finora ·{' '}
+          {venue.redeemedCount} Pulse ritirati al bancone finora ·{' '}
           {(venue.venueOwedCents / 100).toFixed(2)}€ dovuti al locale
           <br />
           {venue.expiredUncollectedCount} accettate e scadute senza ritiro (
@@ -1629,11 +1629,11 @@ function VenueOrganizePanel({ venue, onVenueUpdate }) {
         </button>
       </MetricCard>
 
-      <MetricCard title="Prezzo della Pulse">
+      <MetricCard title="Prezzo del Pulse">
         <p className="pl-hint" style={{ marginBottom: 10 }}>
-          Una Pulse vale una consumazione al bancone, al prezzo della serata. Ogni serata nuova
-          nasce con il prezzo predefinito; quello di stasera si può cambiare a parte. Le Pulse già
-          comprate tengono il prezzo pagato. Cosa comprende la consumazione lo decide il locale.
+          Un Pulse vale una consumazione al bancone, al prezzo della serata. Ogni serata nuova nasce
+          con il prezzo predefinito; quello di stasera si può cambiare a parte. I Pulse già comprati
+          tengono il prezzo pagato. Cosa comprende la consumazione lo decide il locale.
         </p>
         <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
           <div style={{ flex: 1 }}>
@@ -2903,8 +2903,8 @@ function VenueDrinksSection({ venueId }) {
   return (
     <MetricCard title="Catalogo drink Pulse">
       <p className="pl-hint" style={{ marginBottom: 10 }}>
-        Il listino dei drink del locale, solo come riferimento: dal novembre 2026 chi invia una
-        Pulse non sceglie più il drink, la Pulse vale una consumazione al prezzo della serata.
+        Il listino dei drink del locale, solo come riferimento: dal novembre 2026 chi invia un Pulse
+        non sceglie più il drink, il Pulse vale una consumazione al prezzo della serata.
       </p>
 
       {loading ? (

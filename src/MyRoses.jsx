@@ -386,7 +386,7 @@ export default function MyPulses({
         }}
       >
         <div className="pl-section-label" style={{ marginTop: 0, marginBottom: 8 }}>
-          Le tue Pulse di stasera
+          I tuoi Pulse di stasera
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <PulseWaveIcon size={30} color="var(--cyan)" />
@@ -411,7 +411,7 @@ export default function MyPulses({
                   }}
                 >
                   {night.isOpen
-                    ? `${night.venueName} · ${formatEuro(night.priceCents)} l'una · valide fino alle ${formatNightTime(night.deadline)}`
+                    ? `${night.venueName} · ${formatEuro(night.priceCents)} l'uno · validi fino alle ${formatNightTime(night.deadline)}`
                     : `${night.venueName} · serata finita`}
                 </div>
               </>
@@ -420,7 +420,7 @@ export default function MyPulses({
                 <div style={{ fontSize: 13, fontWeight: 700 }}>Offri un drink a chi è qui</div>
                 <div style={{ fontSize: 10.5, color: 'var(--text-muted)', marginTop: 2 }}>
                   {arenaSessionId
-                    ? 'In questo locale le Pulse non sono disponibili.'
+                    ? 'In questo locale i Pulse non sono disponibili.'
                     : 'Entra in un locale con il QR per comprare e inviare Pulse.'}
                 </div>
               </>

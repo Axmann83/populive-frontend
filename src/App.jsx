@@ -282,12 +282,12 @@ export default function App() {
   // Esito del controllo al ritorno da Stripe: true se c'era da dire qualcosa.
   function showPurchaseOutcome(outcome) {
     if (outcome === 'credited') {
-      showToast('Pulse aggiunte: puoi offrirle stasera.', { tone: 'success' });
+      showToast('Pulse aggiunti: puoi offrirli stasera.', { tone: 'success' });
       return true;
     }
     if (outcome === 'refunded') {
       showToast(
-        'Il pagamento è arrivato a serata finita: ti abbiamo rimborsato, nessuna Pulse aggiunta.',
+        'Il pagamento è arrivato a serata finita: ti abbiamo rimborsato, nessun Pulse aggiunto.',
         { duration: 9000 }
       );
       return true;
@@ -365,7 +365,7 @@ export default function App() {
       !(await askConfirm({
         title: 'Uscire dal locale?',
         message:
-          'Non sarai più nel radar di stasera. Se torni, inquadra di nuovo il QR: le tue Pulse restano valide se rientri stasera.',
+          'Non sarai più nel radar di stasera. Se torni, inquadra di nuovo il QR: i tuoi Pulse restano validi se rientri stasera.',
         confirmLabel: 'Esci',
         danger: true,
       }))
@@ -1080,7 +1080,7 @@ export default function App() {
     socket.on('pulse_purchase_refunded', ({ venueName } = {}) => {
       notifyPulseNightChanged();
       showToast(
-        `Il pagamento è arrivato a serata finita da ${venueName || 'questo locale'}: ti abbiamo rimborsato le Pulse.`,
+        `Il pagamento è arrivato a serata finita da ${venueName || 'questo locale'}: ti abbiamo rimborsato i Pulse.`,
         { tone: 'info', duration: 9000 }
       );
     });

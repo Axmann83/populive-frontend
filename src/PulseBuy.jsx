@@ -62,7 +62,7 @@ export default function PulseBuySheet({ arenaSessionId, onClose, onBought }) {
       }
       // Account di prova: accreditate subito, senza Stripe.
       notifyPulseNightChanged();
-      showToast(`Aggiunte ${pulsesLabel(quantity)} per stasera.`, { tone: 'success' });
+      showToast(`Aggiunti ${pulsesLabel(quantity)} per stasera.`, { tone: 'success' });
       onBought?.();
     } catch {
       setError('Non siamo riusciti a raggiungere il server — riprova.');
@@ -75,9 +75,9 @@ export default function PulseBuySheet({ arenaSessionId, onClose, onBought }) {
   if (!info) {
     body = <WavesSpinner />;
   } else if (!info.isAvailable) {
-    body = <p className="pl-hint">In questo locale le Pulse non sono disponibili.</p>;
+    body = <p className="pl-hint">In questo locale i Pulse non sono disponibili.</p>;
   } else if (!info.isOpen) {
-    body = <p className="pl-hint">La serata è finita: le Pulse non si possono più comprare.</p>;
+    body = <p className="pl-hint">La serata è finita: i Pulse non si possono più comprare.</p>;
   } else if (!info.canBuy) {
     body = (
       <p className="pl-hint">
@@ -89,10 +89,10 @@ export default function PulseBuySheet({ arenaSessionId, onClose, onBought }) {
     body = (
       <>
         <p className="pl-hint" style={{ lineHeight: 1.5 }}>
-          Una Pulse è una consumazione vera da offrire a qualcuno qui da {info.venueName}: la ritira
-          al bancone. Stasera una Pulse vale <strong>{formatEuro(info.priceCents)}</strong>. Paghi
-          con carta tramite Stripe. Valgono solo stasera in questo locale: quelle che non usi
-          scadono alla chiusura ({closing}) e non vengono rimborsate. Se una Pulse viene rifiutata,
+          Un Pulse è una consumazione vera da offrire a qualcuno qui da {info.venueName}: la ritira
+          al bancone. Stasera un Pulse vale <strong>{formatEuro(info.priceCents)}</strong>. Paghi
+          con carta tramite Stripe. Valgono solo stasera in questo locale: quelli che non usi
+          scadono alla chiusura ({closing}) e non vengono rimborsati. Se un Pulse viene rifiutato,
           ti torna indietro.
         </p>
 
@@ -106,7 +106,7 @@ export default function PulseBuySheet({ arenaSessionId, onClose, onBought }) {
           }}
         >
           <button
-            aria-label="Una Pulse in meno"
+            aria-label="Un Pulse in meno"
             onClick={() => setQuantity((q) => Math.max(1, q - 1))}
             disabled={quantity <= 1 || paying}
             style={stepperButtonStyle}
@@ -122,7 +122,7 @@ export default function PulseBuySheet({ arenaSessionId, onClose, onBought }) {
             </div>
           </div>
           <button
-            aria-label="Una Pulse in più"
+            aria-label="Un Pulse in più"
             onClick={() => setQuantity((q) => Math.min(max, q + 1))}
             disabled={quantity >= max || paying}
             style={stepperButtonStyle}
@@ -144,12 +144,12 @@ export default function PulseBuySheet({ arenaSessionId, onClose, onBought }) {
           onClick={openLegalLink}
           style={{ fontSize: 11, color: 'var(--teak)', textAlign: 'center', margin: '4px 0 8px' }}
         >
-          Condizioni delle Pulse
+          Condizioni dei Pulse
         </a>
 
         {waitingForStripe && (
           <p className="pl-hint" style={{ textAlign: 'center' }}>
-            Completa il pagamento nella pagina di Stripe: al ritorno le Pulse compaiono qui.
+            Completa il pagamento nella pagina di Stripe: al ritorno i Pulse compaiono qui.
           </p>
         )}
         {error && <p className="pl-error">{error}</p>}
@@ -278,9 +278,9 @@ const stepperButtonStyle = {
 
 function purchaseErrorMessage(reason) {
   const messages = {
-    pulse_night_ended: 'La serata è finita: le Pulse non si possono più comprare.',
+    pulse_night_ended: 'La serata è finita: i Pulse non si possono più comprare.',
     not_checked_in: 'Per comprare Pulse devi essere dentro il locale.',
-    pulses_not_available_here: 'In questo locale le Pulse non sono disponibili.',
+    pulses_not_available_here: 'In questo locale i Pulse non sono disponibili.',
     invalid_quantity: 'Quantità non valida.',
     payment_unavailable: 'Il pagamento non è disponibile in questo momento — riprova tra poco.',
   };

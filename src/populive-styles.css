@@ -440,6 +440,21 @@ select {
   outline: none;
   margin-bottom: 10px;
 }
+/* Caselle di spunta e scelte: la loro misura, non tutta la riga. Con
+   width: 100% (regola qui sopra) su iPhone la casella si prendeva la
+   riga e il testo accanto finiva in una colonna stretta (Connector del
+   tavolo, simulatore, 09/11). */
+input[type='checkbox'],
+input[type='radio'] {
+  width: auto;
+  flex-shrink: 0;
+  margin: 0;
+  padding: 0;
+}
+/* nelle righe dei consensi la casella sta a destra del testo */
+.pl-consent-row input[type='checkbox'] {
+  margin-left: 12px;
+}
 input::placeholder,
 textarea::placeholder {
   color: var(--text-muted);

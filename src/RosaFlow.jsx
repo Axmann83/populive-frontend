@@ -69,12 +69,12 @@ export function PulseSend({ receiverId, arenaSessionId, onSent, onCancel }) {
       <div className="pl-sheet-close" onClick={onCancel}>
         Chiudi ✕
       </div>
-      <h3>Offri un drink con una Pulse</h3>
+      <h3>Offri un drink con un Pulse</h3>
 
       {!info && <WavesSpinner />}
 
       {info && !info.isAvailable && (
-        <p className="pl-hint">In questo locale le Pulse non sono disponibili.</p>
+        <p className="pl-hint">In questo locale i Pulse non sono disponibili.</p>
       )}
 
       {info && info.isAvailable && (
@@ -82,7 +82,7 @@ export function PulseSend({ receiverId, arenaSessionId, onSent, onCancel }) {
           <div className="pl-pulse-option selected" style={{ cursor: 'default' }}>
             <div className="pl-pulse-title">Una consumazione al bancone di {info.venueName}</div>
             <div className="pl-pulse-price">
-              Stasera una Pulse vale {formatEuro(info.priceCents)} · la ritira al bancone entro la
+              Stasera un Pulse vale {formatEuro(info.priceCents)} · la ritira al bancone entro la
               chiusura ({formatNightTime(info.deadline)})
             </div>
           </div>
@@ -95,7 +95,7 @@ export function PulseSend({ receiverId, arenaSessionId, onSent, onCancel }) {
       )}
 
       <p className="pl-hint" style={{ marginBottom: 14 }}>
-        Se chi la riceve accetta, si apre la chat. Se la rifiuta, la Pulse ti torna indietro.
+        Se chi lo riceve accetta, si apre la chat. Se lo rifiuta, il Pulse ti torna indietro.
       </p>
 
       {error && <p className="pl-error">{error}</p>}
@@ -130,8 +130,8 @@ function reasonToMessage(reason) {
     receiver_requires_verified: 'Questo profilo accetta contatti solo da utenti verificati.',
     receiver_requires_premium: 'Questo profilo accetta contatti solo da utenti premium.',
     cannot_interact_with_self: 'Non puoi inviare un Pulse a te stesso.',
-    no_pulses_left: 'Non hai Pulse da usare stasera: comprane per inviarla.',
-    pulse_night_ended: 'La serata è finita: le Pulse non si possono più inviare.',
+    no_pulses_left: 'Non hai Pulse da usare stasera: comprane per inviarlo.',
+    pulse_night_ended: 'La serata è finita: i Pulse non si possono più inviare.',
   };
   return messages[reason] || 'Invio non riuscito — riprova.';
 }
@@ -221,7 +221,7 @@ export function PulseNotification({ pulse, currentUserId, arenaSessionId, venueI
       : '';
   const copy = showsSender
     ? {
-        title: `${pulse.senderName || 'Qualcuno'} ti offre un drink con una Pulse`,
+        title: `${pulse.senderName || 'Qualcuno'} ti offre un drink con un Pulse`,
         sub: `Vuoi accettarla? Il tuo profilo è già visibile a chi l'ha inviata.${collectHint}`,
       }
     : {
@@ -374,7 +374,7 @@ export function PulseRedeemSeal({ pulseId, redeemCode, venueId, onDone, onCancel
       );
     } else if (data.reason === 'pulse_expired') {
       setErrorMessage(
-        'Questa Pulse è scaduta: andava ritirata entro la chiusura del locale di quella sera.'
+        'Questo Pulse è scaduto: andava ritirato entro la chiusura del locale di quella sera.'
       );
     } else if (data.reason === 'code_expired') {
       setErrorMessage(

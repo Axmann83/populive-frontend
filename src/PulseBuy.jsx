@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { apiFetch } from './apiClient';
@@ -205,74 +205,56 @@ export default function PulseBuySheet({ arenaSessionId, onClose, onBought }) {
 }
 
 /**
- * Riga sotto il radar: quante Pulse restano stasera, fino a che ora,
- * e "Compra". Nell'ultima ora prima della chiusura diventa un avviso.
- * Nascosta nei locali in cui le Pulse non si vendono.
+ * Avviso sotto il radar (09/11, richiesta dell'utente): compare SOLO
+ * nell'ultima ora prima della chiusura, e solo se restano Pulse da
+ * usare o drink da ritirare. Il saldo e l'acquisto stanno nella scheda
+ * Pulse; toccando l'avviso ci si va. Si ricontrolla ogni minuto, così
+ * compare da solo quando si entra nell'ultima ora.
  */
-export function PulseNightBar({ arenaSessionId }) {
+export function PulseEndingWarning({ arenaSessionId, onOpenPulses }) {
   const { info } = usePulseNight(arenaSessionId);
-  const [showBuy, setShowBuy] = useState(false);
-  if (!info?.isAvailable || !info.isOpen) return null;
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setTick((t) => t + 1), 60 * 1000);
+    return () => clearInterval(id);
+  }, []);
 
-  const endingSoon = isEndingSoon(info.deadline);
-  const closing = formatNightTime(info.deadline);
-  const toCollectText =
-    info.toCollect > 0 ? ` · ${info.toCollect} drink da ritirare al bancone` : '';
+  if (!info?.isAvailable || !info.isOpen || !isEndingSoon(info.deadline)) return null;
+  const pulsesLeft = info.available || 0;
+  const toCollect = info.toCollect || 0;
+  if (pulsesLeft === 0 && toCollect === 0) return null;
+
+  const parts = [];
+  if (pulsesLeft > 0) parts.push(`${pulsesLabel(pulsesLeft)} da usare`);
+  if (toCollect > 0) parts.push(`${toCollect} drink da ritirare al bancone`);
 
   return (
-    <>
-      <div
-        style={{
-          marginTop: 12,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 10,
-          padding: '10px 12px',
-          borderRadius: 14,
-          border: `1px solid ${endingSoon ? 'var(--red)' : 'rgba(255,61,110,0.3)'}`,
-          background: 'var(--surface)',
-        }}
-      >
-        <PulseWaveIcon size={20} color="var(--cyan)" />
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 12, fontWeight: 700 }}>
-            {info.available > 0
-              ? `${pulsesLabel(info.available)} da usare stasera`
-              : `Offri un drink · ${formatEuro(info.priceCents)} a Pulse`}
-          </div>
-          <div style={{ fontSize: 10, color: endingSoon ? 'var(--red)' : 'var(--text-muted)' }}>
-            {endingSoon
-              ? `La serata finisce alle ${closing}: dopo le Pulse scadono${toCollectText}`
-              : `Valide fino alle ${closing}${toCollectText}`}
-          </div>
+    <div
+      role="button"
+      onClick={onOpenPulses}
+      style={{
+        marginTop: 12,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10,
+        padding: '10px 12px',
+        borderRadius: 14,
+        border: '1px solid var(--red)',
+        background: 'var(--surface)',
+        cursor: onOpenPulses ? 'pointer' : 'default',
+      }}
+    >
+      <PulseWaveIcon size={20} color="var(--red)" />
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 12, fontWeight: 700 }}>
+          La serata finisce alle {formatNightTime(info.deadline)}
         </div>
-        {info.canBuy && (
-          <button
-            onClick={() => setShowBuy(true)}
-            style={{
-              padding: '7px 13px',
-              borderRadius: 999,
-              border: 'none',
-              background: 'var(--cyan)',
-              color: '#fff',
-              fontSize: 11,
-              fontWeight: 700,
-              cursor: 'pointer',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            Compra
-          </button>
-        )}
+        <div style={{ fontSize: 10, color: 'var(--red)' }}>
+          Hai ancora {parts.join(' e ')}: dopo scadono.
+        </div>
       </div>
-      {showBuy && (
-        <PulseBuySheet
-          arenaSessionId={arenaSessionId}
-          onClose={() => setShowBuy(false)}
-          onBought={() => setShowBuy(false)}
-        />
-      )}
-    </>
+      {onOpenPulses && <span style={{ fontSize: 16, color: 'var(--text-muted)' }}>›</span>}
+    </div>
   );
 }
 

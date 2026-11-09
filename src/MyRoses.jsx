@@ -7,13 +7,7 @@ import ProfileFullScreen from './ProfileFullScreen';
 import { apiFetch, getOptimizedPhotoUrl } from './apiClient';
 import { askConfirm } from './Dialogs';
 import PulseBuySheet from './PulseBuy';
-import {
-  usePulseNight,
-  formatEuro,
-  formatNightTime,
-  isEndingSoon,
-  pulsesLabel,
-} from './pulseNight';
+import { usePulseNight, formatEuro, formatNightTime, isEndingSoon } from './pulseNight';
 
 /**
  * ============================================================
@@ -382,62 +376,68 @@ export default function MyPulses({
         </div>
       </div>
 
-      {/* Pulse da usare stasera — sempre in cima, prima della lista */}
+      {/* Saldo e acquisto (09/11, richiesta dell'utente: qui e non più
+          nel radar, che mostra solo l'avviso dell'ultima ora). Sempre in
+          cima, prima della lista. */}
       <div
         style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 12,
           background: 'var(--surface)',
           border: `1px solid ${endingSoon ? 'var(--red)' : 'rgba(255,61,110,0.3)'}`,
           borderRadius: 14,
-          padding: 12,
+          padding: 14,
           marginBottom: 14,
           boxShadow: 'var(--shadow-glow-cyan)',
         }}
       >
-        <PulseWaveIcon size={26} color="var(--cyan)" />
-        <div style={{ flex: 1 }}>
-          {night?.isAvailable ? (
-            <>
-              <div style={{ fontSize: 13, fontWeight: 700 }}>
-                {available > 0
-                  ? `${pulsesLabel(available)} da usare stasera`
-                  : 'Nessuna Pulse da usare stasera'}
-              </div>
-              <div style={{ fontSize: 10, color: endingSoon ? 'var(--red)' : 'var(--text-muted)' }}>
-                {night.isOpen
-                  ? `${night.venueName} · ${formatEuro(night.priceCents)} l'una · scadono alle ${formatNightTime(night.deadline)}`
-                  : `${night.venueName} · serata finita`}
-              </div>
-            </>
-          ) : (
-            <>
-              <div style={{ fontSize: 13, fontWeight: 700 }}>Offri un drink a chi è qui</div>
-              <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>
-                {arenaSessionId
-                  ? 'In questo locale le Pulse non sono disponibili.'
-                  : 'Entra in un locale con il QR per comprare e inviare Pulse.'}
-              </div>
-            </>
-          )}
+        <div className="pl-section-label" style={{ marginTop: 0, marginBottom: 8 }}>
+          Le tue Pulse di stasera
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <PulseWaveIcon size={30} color="var(--cyan)" />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            {night?.isAvailable ? (
+              <>
+                <div
+                  style={{
+                    fontFamily: "'Unbounded',sans-serif",
+                    fontWeight: 700,
+                    fontSize: 20,
+                    lineHeight: 1.1,
+                  }}
+                >
+                  {available} <span style={{ fontSize: 12, fontWeight: 600 }}>Pulse da usare</span>
+                </div>
+                <div
+                  style={{
+                    fontSize: 10.5,
+                    marginTop: 3,
+                    color: endingSoon ? 'var(--red)' : 'var(--text-muted)',
+                  }}
+                >
+                  {night.isOpen
+                    ? `${night.venueName} · ${formatEuro(night.priceCents)} l'una · valide fino alle ${formatNightTime(night.deadline)}`
+                    : `${night.venueName} · serata finita`}
+                </div>
+              </>
+            ) : (
+              <>
+                <div style={{ fontSize: 13, fontWeight: 700 }}>Offri un drink a chi è qui</div>
+                <div style={{ fontSize: 10.5, color: 'var(--text-muted)', marginTop: 2 }}>
+                  {arenaSessionId
+                    ? 'In questo locale le Pulse non sono disponibili.'
+                    : 'Entra in un locale con il QR per comprare e inviare Pulse.'}
+                </div>
+              </>
+            )}
+          </div>
         </div>
         {night?.canBuy && (
           <button
+            className="pl-send-btn"
             onClick={() => setShowBuy(true)}
-            style={{
-              padding: '8px 14px',
-              borderRadius: 999,
-              border: 'none',
-              background: 'var(--cyan)',
-              color: '#fff',
-              fontSize: 11,
-              fontWeight: 700,
-              cursor: 'pointer',
-              whiteSpace: 'nowrap',
-            }}
+            style={{ marginTop: 12 }}
           >
-            Compra
+            Acquista Pulse
           </button>
         )}
       </div>

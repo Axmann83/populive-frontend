@@ -61,7 +61,7 @@ import Dashboard from './Dashboard';
 import NearbyMissions from './NearbyMissions';
 import SuperlikeNotification from './SuperlikeNotification';
 import { askConfirm, showToast } from './Dialogs';
-import { PulseNightBar } from './PulseBuy';
+import { PulseEndingWarning } from './PulseBuy';
 import {
   notifyPulseNightChanged,
   syncPulsePurchases,
@@ -1539,8 +1539,13 @@ export default function App() {
                 bluetoothOff={radarLive && !!proximityCode && bluetoothOff}
                 onEnableBluetooth={handleEnableBluetooth}
               />
-              {/* Pulse da usare stasera e "Compra" (M11) */}
-              {arenaSessionId && <PulseNightBar arenaSessionId={arenaSessionId} />}
+              {/* Avviso di fine serata per le Pulse (M11): solo nell'ultima ora */}
+              {arenaSessionId && (
+                <PulseEndingWarning
+                  arenaSessionId={arenaSessionId}
+                  onOpenPulses={() => navigateToTab('pulse')}
+                />
+              )}
               {featureFlags.historical_board && (
                 <button
                   onClick={() => setVenuesMapMode('historical')}

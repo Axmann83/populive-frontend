@@ -519,7 +519,7 @@ export default function VenuesMap({ currentUserId, onClose, mode = 'browse' }) {
 function NewVenueForm({ coords, onCancel, onCreated }) {
   const [name, setName] = useState('');
   const [venueType, setVenueType] = useState('cocktail_bar');
-  const [minUsers, setMinUsers] = useState('5');
+  const [minUsers, setMinUsers] = useState('20'); // M3: 20 per i locali nuovi
   const [saving, setSaving] = useState(false);
 
   async function save() {
@@ -569,7 +569,7 @@ function NewVenueForm({ coords, onCancel, onCreated }) {
           min="1"
           value={minUsers}
           onChange={(e) => setMinUsers(e.target.value)}
-          placeholder="5"
+          placeholder="20"
           style={{ marginBottom: 0 }}
         />
       </div>

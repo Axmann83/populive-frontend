@@ -529,7 +529,7 @@ export default function App() {
   // nella sezione "Nuovo match" del Centro Chat, contato nel pallino
   // della scheda Chat (v. chatTabBadgeCount più sotto).
   const [pendingMatches, setPendingMatches] = useState([]); // [{ conversationId }]
-  // Le chat già aperte (con o senza "Conserva") — a livello app,
+  // Le chat già aperte (si conservano sempre, M4) — a livello app,
   // non più dentro al Profilo, perché ora serve sia al numeretto
   // sulla scheda Chat sia alla nuova schermata dedicata "Centro
   // Chat". Letta SEMPRE fresca dal server, mai dalla sola memoria
@@ -1673,6 +1673,9 @@ export default function App() {
               pendingMatches={pendingMatches}
               activeChats={activeChats}
               onOpenMatch={openMatch}
+              onChatDeleted={(id) =>
+                setActiveChats((prev) => prev.filter((c) => c.conversationId !== id))
+              }
               arenaSessionId={arenaSessionId}
             />
           )}

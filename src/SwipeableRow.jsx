@@ -13,9 +13,13 @@ import { useState, useRef } from 'react';
  * soglia al rilascio, l'elemento si elimina da solo con una piccola
  * animazione di uscita; sotto la soglia, torna semplicemente al suo
  * posto.
+ *
+ * confirmDismiss (facoltativo, M4): funzione asincrona chiamata a
+ * soglia superata, prima dell'uscita; se risponde false la riga torna
+ * al suo posto (es. "Rimuovere la chat?" → Annulla).
  * ============================================================
  */
-export default function SwipeableRow({ onDismiss, children }) {
+export default function SwipeableRow({ onDismiss, confirmDismiss, children }) {
   const [dragX, setDragX] = useState(0);
   const [dragging, setDragging] = useState(false);
   const [removing, setRemoving] = useState(false);
@@ -32,11 +36,28 @@ export default function SwipeableRow({ onDismiss, children }) {
     const delta = e.touches[0].clientX - startXRef.current;
     setDragX(Math.max(MAX_DRAG, Math.min(0, delta))); // mai verso destra, mai oltre il limite
   }
-  function handleTouchEnd() {
+  async function handleTouchEnd(e) {
+    // Riga trascinata: il gesto è suo. Senza questo arrivava anche ad
+    // App.jsx, che con lo stesso scorrimento cambiava scheda (trovato
+    // il 09/11 col lotto 7: la conferma di "Rimuovere la chat?"
+    // compariva sopra la scheda Pulse). Uno scorrimento verso destra
+    // (dragX resta 0) passa ancora e torna alla scheda precedente.
+    if (dragX !== 0) e.stopPropagation();
     setDragging(false);
     if (dragX <= DELETE_THRESHOLD) {
+      if (confirmDismiss && !(await confirmDismiss())) {
+        setDragX(0);
+        return;
+      }
       setRemoving(true);
-      setTimeout(onDismiss, 220); // lascia respirare l'animazione di uscita prima di sparire davvero dalla lista
+      // lascia respirare l'animazione di uscita prima di sparire davvero
+      // dalla lista; se onDismiss risponde false (non riuscito) la riga torna
+      setTimeout(async () => {
+        if ((await onDismiss()) === false) {
+          setRemoving(false);
+          setDragX(0);
+        }
+      }, 220);
     } else {
       setDragX(0);
     }

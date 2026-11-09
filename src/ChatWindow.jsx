@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { BookmarkCheck, Sparkles, ChevronLeft } from './PopuLiveIcons';
+import { ChevronLeft } from './PopuLiveIcons';
 
 import { apiFetch } from './apiClient';
 import { onBackButton } from './native';
-import { askConfirm, isConfirmOpen, showToast } from './Dialogs';
+import { isConfirmOpen, showToast } from './Dialogs';
 import { ReportSheet, blockUserWithConfirm } from './ReportBlock';
+import { deleteChatWithConfirm } from './ChatCenter';
 
 /**
  * ============================================================
@@ -12,7 +13,8 @@ import { ReportSheet, blockUserWithConfirm } from './ReportBlock';
  * ============================================================
  * Si apre quando arriva l'evento 'chat_unlocked' (v. i tre punti
  * di sblocco lato server: Pulse+Superlike, match nel minigioco,
- * Superlike semplice accettato). Chiusa a fine sessione: se
+ * Superlike semplice accettato). Resta anche dopo la serata (M4,
+ * 09/11: niente più "Conserva"); si chiude solo con un blocco: se
  * isClosed è true, il campo di scrittura si disabilita, ma la
  * cronologia resta leggibile finché la schermata è aperta.
  * ============================================================
@@ -47,28 +49,9 @@ export default function ChatWindow({
   const [reporting, setReporting] = useState(false);
   const reportingRef = useRef(false);
   reportingRef.current = reporting;
-  const [myWantsKeep, setMyWantsKeep] = useState(false);
-  const [theirWantsKeep, setTheirWantsKeep] = useState(false);
   const [draft, setDraft] = useState('');
   const [loading, setLoading] = useState(true);
   const messagesRef = useRef(null);
-
-  // Interruttore "Chat: richiedi Conserva esplicito" (26/8) — a
-  // interruttore spento, niente bottone Conserva da mostrare: le
-  // chat si comportano come su Tinder/Hinge, si conservano di
-  // default, meno un pulsante da capire per chi usa l'app per la
-  // prima volta in un locale buio. Default true finché arriva la
-  // risposta vera, per non far comparire/sparire il bottone con un
-  // lampo appena la schermata si apre.
-  const [keepButtonVisible, setKeepButtonVisible] = useState(true);
-  useEffect(() => {
-    apiFetch('/api/feature-flags')
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.success) setKeepButtonVisible(data.flags.chat_keep_required !== false);
-      })
-      .catch(() => {});
-  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -78,8 +61,6 @@ export default function ChatWindow({
       if (!cancelled && data.success) {
         setMessages(data.messages);
         setIsClosed(data.isClosed);
-        setMyWantsKeep(data.myWantsKeep);
-        setTheirWantsKeep(data.theirWantsKeep);
       }
       setLoading(false);
     }
@@ -190,35 +171,6 @@ export default function ChatWindow({
     }
   }, [draft, isClosed, conversationId, currentUserId]);
 
-  const toggleKeep = useCallback(async () => {
-    const newValue = !myWantsKeep;
-    // Solo la direzione rischiosa chiede conferma: tornare indietro
-    // da "conserva" può chiudere la chat SUBITO e senza rimedio, se
-    // la serata originale è già finita — un secondo tocco per
-    // sbaglio sullo stesso interruttore (capitato davvero) non deve
-    // poter cancellare una chat conservata senza nessun avviso.
-    // Scegliere di conservare per la prima volta resta invece un
-    // solo tocco, mai rischioso di suo.
-    if (myWantsKeep && !newValue) {
-      const confirmed = await askConfirm({
-        title: 'Non conservare più la chat?',
-        message:
-          'Se ritiri la scelta, questa chat potrebbe essere rimossa subito per entrambi, senza possibilità di tornare indietro.',
-        confirmLabel: 'Ritira',
-        danger: true,
-      });
-      if (!confirmed) return;
-    }
-    setMyWantsKeep(newValue); // ottimistico
-    const res = await apiFetch(`/api/chat/${conversationId}/keep-preference`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ wantsKeep: newValue }),
-    });
-    const data = await res.json();
-    if (data.chatNowClosed) setIsClosed(true);
-  }, [myWantsKeep, conversationId]);
-
   // Bottone "Blocca utente" (22/8): bloccare qualcuno chiude per
   // forza anche questa conversazione. Dal lotto 6 (B2) passa dallo
   // stesso flusso del profilo (ReportBlock.jsx): blocco nelle due
@@ -227,6 +179,14 @@ export default function ChatWindow({
   const handleBlock = useCallback(async () => {
     if (await blockUserWithConfirm({ conversationId, displayName: otherUserName })) {
       setIsClosed(true);
+      onBackRef.current?.();
+    }
+  }, [conversationId, otherUserName]);
+
+  // Rimuovere la chat solo per sé (M4): nell'elenco si scorre la riga,
+  // qui un tocco (anche col mouse, sul sito). Poi si torna all'elenco.
+  const handleDelete = useCallback(async () => {
+    if (await deleteChatWithConfirm({ conversationId, displayName: otherUserName })) {
       onBackRef.current?.();
     }
   }, [conversationId, otherUserName]);
@@ -245,31 +205,8 @@ export default function ChatWindow({
           <ChevronLeft size={20} />
           <span>{otherUserName}</span>
         </button>
-        {/* Il toggle "conserva" è sempre visibile e sempre cambiabile,
-            non solo a fine serata — così l'utente può decidere fin
-            da subito se vuole provare a "giocarsela" per i giorni
-            successivi. Mostriamo anche se l'altra parte ha già scelto
-            "conserva", per trasparenza (ma mai finché non lo sceglie
-            anche lui/lei stesso/a: nessun modo di vedere la scelta
-            altrui prima di aver fatto la propria).
-            IMPORTANTE (bug vero capitato dal vivo): tornare indietro
-            da "conserva" DOPO che la serata originale è finita chiude
-            la chat SUBITO, senza rimedio — un secondo tocco per
-            sbaglio sullo stesso interruttore l'aveva già cancellata
-            una volta. Ora quella direzione specifica chiede sempre
-            conferma esplicita (v. toggleKeep sopra), e l'etichetta
-            del bottone da attivo dice chiaramente "Chat conservata ✓"
-            (uno STATO confermato) invece di una domanda ambigua
-            ("Vuoi conservarla?"), che si prestava a essere fraintesa
-            come "tocca di nuovo per confermare ancora". */}
-        <button
-          className={`pl-keep-toggle ${myWantsKeep ? 'pl-keep-on' : ''}`}
-          onClick={toggleKeep}
-          disabled={isClosed}
-          style={{ display: keepButtonVisible ? 'flex' : 'none', alignItems: 'center', gap: 5 }}
-        >
-          {myWantsKeep && <BookmarkCheck size={12} />}{' '}
-          {myWantsKeep ? 'Chat conservata ✓' : 'Conserva la chat'}
+        <button onClick={handleDelete} style={chatHeaderLinkStyle}>
+          Rimuovi
         </button>
         <button onClick={() => setReporting(true)} style={chatHeaderLinkStyle}>
           Segnala
@@ -291,27 +228,6 @@ export default function ChatWindow({
         )}
       </div>
 
-      {/* Interruttore "Chat: richiedi Conserva esplicito" spento
-          (26/8, richiesta esplicita per le prime serate test) —
-          niente promemoria da mostrare, la chat si conserva già di
-          default, non c'è nessuna scelta in sospeso da ricordare a
-          nessuno. */}
-      {keepButtonVisible && myWantsKeep && !theirWantsKeep && !isClosed && (
-        <div className="pl-chat-hint">
-          Hai scelto di conservarla — se lo sceglie anche {otherUserName}, resterà disponibile anche
-          nei prossimi giorni.
-        </div>
-      )}
-      {keepButtonVisible && myWantsKeep && theirWantsKeep && !isClosed && (
-        <div
-          className="pl-chat-hint pl-chat-hint-success"
-          style={{ display: 'flex', alignItems: 'center', gap: 5 }}
-        >
-          Anche {otherUserName} ha scelto di conservare questa chat — continuerà a restare attiva e
-          visibile anche dopo stasera. <Sparkles size={12} />
-        </div>
-      )}
-
       <div className="pl-chat-messages" ref={messagesRef}>
         {messages.map((m) => (
           <div
@@ -324,12 +240,7 @@ export default function ChatWindow({
       </div>
 
       {isClosed ? (
-        <div className="pl-chat-closed-notice">
-          Questa chat è chiusa
-          {keepButtonVisible
-            ? ` — ${myWantsKeep && !theirWantsKeep ? `${otherUserName} non ha scelto di conservarla.` : 'la serata è finita.'}`
-            : '.'}
-        </div>
+        <div className="pl-chat-closed-notice">Questa chat è chiusa.</div>
       ) : (
         <div className="pl-chat-input-row">
           <input

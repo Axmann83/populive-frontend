@@ -54,7 +54,7 @@ export default function CheckinRadar({
   const [proximityLevels, setProximityLevels] = useState(() => new Map());
   useEffect(() => subscribeNearby(setProximityLevels), []);
   const [checkinCount, setCheckinCount] = useState(0);
-  const [threshold, setThreshold] = useState(20);
+  const [threshold, setThreshold] = useState(2); // M3: il radar si attiva da 2 persone
   const [radarPeople, setRadarPeople] = useState([]);
   const [boostedUserIds, setBoostedUserIds] = useState([]); // in ordine dal più recente boost
   const [arenaSessionId, setArenaSessionId] = useState(null);
@@ -912,8 +912,8 @@ export default function CheckinRadar({
             {checkinCount}/{threshold}
           </div>
           <p>
-            I tuoi punti si stanno già accumulando — la classifica si sblocca al raggiungimento
-            della soglia.
+            Il Radar si attiva appena entra un'altra persona. Intanto i tuoi punti si stanno già
+            accumulando.
           </p>
         </>
       )}

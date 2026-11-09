@@ -1285,7 +1285,7 @@ function VenueOrganizePanel({ venue, onVenueUpdate }) {
   const [savedHours, setSavedHours] = useState(false);
 
   const [minUsersEdit, setMinUsersEdit] = useState(
-    venue.minUsersForLocalRanking ? String(venue.minUsersForLocalRanking) : '5'
+    venue.minUsersForLocalRanking ? String(venue.minUsersForLocalRanking) : '20'
   );
   const [savingMinUsers, setSavingMinUsers] = useState(false);
   const [savedMinUsers, setSavedMinUsers] = useState(false);
@@ -2302,8 +2302,6 @@ function FeatureFlagsSection() {
     historical_board: 'Bacheca storica',
     venues_map: 'Mappa di tutti i locali',
     instant_influencer: 'Instant Influencer',
-    chat_keep_required:
-      'Chat: richiedi "Conserva" esplicito (se spento, si conservano come su Tinder/Hinge)',
     big_spender: 'Big Spender (soglia di spesa)',
     top_connector: 'Top Connector (Squad via QR)',
   };

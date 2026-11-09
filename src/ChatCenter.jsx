@@ -2,6 +2,45 @@ import { useState, useEffect } from 'react';
 import { PulseWaveIcon, MessageCircle } from './PopuLiveIcons';
 import { apiFetch, getOptimizedPhotoUrl } from './apiClient';
 import { usePhotoPreview } from './PhotoPreview';
+import SwipeableRow from './SwipeableRow';
+import { askConfirm, showToast } from './Dialogs';
+
+/**
+ * Rimuovere una chat solo per sé (M4, novembre 2026): sparisce
+ * dall'elenco di chi la rimuove, l'altra persona la vede ancora. Se
+ * scrive di nuovo, la chat torna qui con i soli messaggi nuovi (come
+ * su WhatsApp). Due passi separati perché nell'elenco la conferma
+ * arriva prima dell'animazione di uscita della riga (SwipeableRow),
+ * nella chat aperta uno dopo l'altro (deleteChatWithConfirm).
+ */
+export function confirmDeleteChat(displayName) {
+  return askConfirm({
+    title: 'Rimuovere la chat?',
+    message: `La chat sparisce solo per te${displayName ? `: ${displayName} la vedrà ancora` : ''}. Se ti scrive di nuovo, la ritroverai qui con i soli messaggi nuovi.`,
+    confirmLabel: 'Rimuovi',
+    danger: true,
+  });
+}
+
+export async function deleteChat(conversationId) {
+  try {
+    const res = await apiFetch(`/api/chat/${conversationId}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (data.success) {
+      showToast('Chat rimossa.');
+      return true;
+    }
+  } catch {
+    /* avviso qui sotto */
+  }
+  showToast('Non è stato possibile rimuovere la chat. Riprova.', { tone: 'error' });
+  return false;
+}
+
+export async function deleteChatWithConfirm({ conversationId, displayName }) {
+  if (!(await confirmDeleteChat(displayName))) return false;
+  return deleteChat(conversationId);
+}
 
 /**
  * ============================================================
@@ -18,9 +57,17 @@ import { usePhotoPreview } from './PhotoPreview';
  * activeChats: TUTTE le conversazioni ancora accessibili, lette
  *   fresche dal server (sopravvivono a un refresh) — filtrate qui
  *   sotto per non duplicare quelle già mostrate come "nuovo match".
+ *   Si rimuovono scorrendo la riga verso sinistra (M4); onChatDeleted
+ *   aggiorna l'elenco in App.jsx.
  * ============================================================
  */
-export default function ChatCenter({ pendingMatches, activeChats, onOpenMatch, arenaSessionId }) {
+export default function ChatCenter({
+  pendingMatches,
+  activeChats,
+  onOpenMatch,
+  onChatDeleted,
+  arenaSessionId,
+}) {
   const [matchProfiles, setMatchProfiles] = useState({}); // { [withUserId]: { displayName, photoUrl } }
 
   useEffect(() => {
@@ -63,14 +110,14 @@ export default function ChatCenter({ pendingMatches, activeChats, onOpenMatch, a
   // chat (v. PhotoPreview.jsx).
   const { photoTapProps, photoPreview } = usePhotoPreview();
 
-  function renderRow(entry) {
+  function renderRow(entry, { swipeable = false } = {}) {
     const info = matchProfiles[entry.withUserId];
     // Un "nuovo match" non porta con sé non letti e anteprima: li
     // prendiamo dalla stessa conversazione in activeChats, se c'è.
     const server = (activeChats || []).find((c) => c.conversationId === entry.conversationId);
     const unread = server?.unreadCount || 0;
     const lastMessage = server?.lastMessage;
-    return (
+    const row = (
       <button
         key={entry.conversationId}
         onClick={() => onOpenMatch(entry.conversationId)}
@@ -83,7 +130,8 @@ export default function ChatCenter({ pendingMatches, activeChats, onOpenMatch, a
           border: 'none',
           borderRadius: 14,
           padding: '12px 14px',
-          marginBottom: 8,
+          // dentro SwipeableRow lo spazio sotto lo mette lei
+          marginBottom: swipeable ? 0 : 8,
           cursor: 'pointer',
           color: 'var(--text)',
         }}
@@ -161,6 +209,19 @@ export default function ChatCenter({ pendingMatches, activeChats, onOpenMatch, a
         )}
       </button>
     );
+    if (!swipeable) return row;
+    return (
+      <SwipeableRow
+        key={entry.conversationId}
+        confirmDismiss={() => confirmDeleteChat(info?.displayName)}
+        onDismiss={async () => {
+          if (!(await deleteChat(entry.conversationId))) return false; // la riga torna al suo posto
+          onChatDeleted?.(entry.conversationId);
+        }}
+      >
+        {row}
+      </SwipeableRow>
+    );
   }
 
   return (
@@ -188,7 +249,7 @@ export default function ChatCenter({ pendingMatches, activeChats, onOpenMatch, a
           <div className="pl-section-label" style={{ marginTop: 0, marginBottom: 8 }}>
             {pendingMatches.length > 1 ? `${pendingMatches.length} nuovi match` : 'Nuovo match'}
           </div>
-          {pendingMatches.map(renderRow)}
+          {pendingMatches.map((m) => renderRow(m))}
         </div>
       )}
 
@@ -199,7 +260,7 @@ export default function ChatCenter({ pendingMatches, activeChats, onOpenMatch, a
               Conversazioni
             </div>
           )}
-          {savedChats.map(renderRow)}
+          {savedChats.map((c) => renderRow(c, { swipeable: true }))}
         </div>
       )}
 

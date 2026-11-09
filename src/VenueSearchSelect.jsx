@@ -96,7 +96,10 @@ export default function VenueSearchSelect({
             top: '100%',
             left: 0,
             right: 0,
-            zIndex: 20,
+            // sopra la mappa: Leaflet usa z-index da 400 a 1000 per livelli e
+            // controlli, e con la tastiera aperta la tendina finiva tutta sotto
+            // (simulatore iPhone, 09/11)
+            zIndex: 1100,
             maxHeight: 260,
             overflowY: 'auto',
             background: 'var(--surface)',

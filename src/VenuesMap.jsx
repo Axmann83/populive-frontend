@@ -426,7 +426,10 @@ export default function VenuesMap({ currentUserId, onClose, mode = 'browse' }) {
       {subView}
       <div className="pl-sheet" style={subView ? { display: 'none' } : undefined}>
         <div className="pl-sheet-close" onClick={onClose}>
-          Chiudi ✕
+          Chiudi{' '}
+          <span className="pl-sheet-close-x" aria-hidden="true">
+            ✕
+          </span>
         </div>
         <h3>Sfoglia i locali</h3>
         <p className="pl-hint" style={{ marginBottom: 10 }}>

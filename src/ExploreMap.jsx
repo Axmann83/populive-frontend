@@ -35,7 +35,10 @@ export default function ExploreMap({ onClose }) {
   return (
     <div className="pl-sheet">
       <div className="pl-sheet-close" onClick={onClose}>
-        Chiudi ✕
+        Chiudi{' '}
+        <span className="pl-sheet-close-x" aria-hidden="true">
+          ✕
+        </span>
       </div>
       <h3>I locali stanotte</h3>
       <p className="pl-hint" style={{ marginBottom: 12 }}>

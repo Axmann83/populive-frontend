@@ -439,7 +439,10 @@ function EditProfileForm({ userId, initialBio, initialHashtags, onSaved, onCance
   return (
     <div className="pl-screen">
       <div className="pl-sheet-close" onClick={onCancel}>
-        Annulla ✕
+        Annulla{' '}
+        <span className="pl-sheet-close-x" aria-hidden="true">
+          ✕
+        </span>
       </div>
       <h3>Modifica bio e hashtag</h3>
 

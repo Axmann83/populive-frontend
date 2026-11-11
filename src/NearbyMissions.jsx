@@ -45,7 +45,10 @@ export default function NearbyMissions({ onClose }) {
   return (
     <div className="pl-sheet">
       <div className="pl-sheet-close" onClick={onClose}>
-        Chiudi ✕
+        Chiudi{' '}
+        <span className="pl-sheet-close-x" aria-hidden="true">
+          ✕
+        </span>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
         <Target size={18} color="var(--cyan)" />

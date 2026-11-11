@@ -1006,7 +1006,10 @@ export default function CheckinRadar({
                 setTableCode('');
               }}
             >
-              Annulla ✕
+              Annulla{' '}
+              <span className="pl-sheet-close-x" aria-hidden="true">
+                ✕
+              </span>
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
               <input

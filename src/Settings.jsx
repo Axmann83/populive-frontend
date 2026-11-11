@@ -202,7 +202,10 @@ export default function Settings({ userId, onClose, onAccountDeleted }) {
   return (
     <div className="pl-sheet">
       <div className="pl-sheet-close" onClick={onClose}>
-        Chiudi ✕
+        Chiudi{' '}
+        <span className="pl-sheet-close-x" aria-hidden="true">
+          ✕
+        </span>
       </div>
       <h3>Impostazioni</h3>
 

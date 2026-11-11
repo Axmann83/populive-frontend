@@ -199,7 +199,10 @@ export default function PulseBuySheet({ arenaSessionId, onClose, onBought }) {
       >
         <div className="pl-sheet">
           <div className="pl-sheet-close" onClick={onClose}>
-            Chiudi ✕
+            Chiudi{' '}
+            <span className="pl-sheet-close-x" aria-hidden="true">
+              ✕
+            </span>
           </div>
           <h3>Compra Pulse</h3>
           {body}

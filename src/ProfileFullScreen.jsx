@@ -138,6 +138,9 @@ export default function ProfileFullScreen({
         showToast(
           "Hai già mandato un Like a questa persona stasera — puoi riprovare in un'altra serata."
         );
+      } else if (data.reason === 'already_matched') {
+        setActionState(null);
+        showToast('Avete già fatto match: scrivetevi in chat.');
       } else if (data.reason === 'superlike_already_sent_tonight') {
         setActionState(null);
         showToast(
@@ -581,9 +584,9 @@ export default function ProfileFullScreen({
                   {!viaHistoricalBoard && (
                     <ActionButton
                       icon={PulseWaveIcon}
-                      label="Pulse"
+                      label={relation.matched ? 'Match' : 'Pulse'}
                       onClick={() => setShowPulseSend(true)}
-                      disabled={actionState === 'sending'}
+                      disabled={actionState === 'sending' || relation.matched}
                     />
                   )}
                 </div>

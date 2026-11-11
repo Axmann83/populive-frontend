@@ -828,6 +828,13 @@ button {
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
+/* La ✕ su iPhone esce più piccola che sul web (altro carattere di
+   ripiego): la ingrandiamo a parte, la scritta resta a 14 px. */
+.pl-sheet-close-x {
+  font-size: 20px;
+  line-height: 1;
+  margin-left: 6px;
+}
 .pl-pulse-option {
   display: flex;
   flex-direction: column;

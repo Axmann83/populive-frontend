@@ -136,7 +136,7 @@ export default function ProfileFullScreen({
       } else if (data.reason === 'like_already_sent_tonight') {
         setActionState(null);
         showToast(
-          "Hai già mandato un Like a questa persona stasera — puoi riprovare in un'altra serata."
+          "Hai già inviato un Like a questa persona stasera — puoi riprovare in un'altra serata."
         );
       } else if (data.reason === 'already_matched') {
         setActionState(null);
@@ -144,7 +144,7 @@ export default function ProfileFullScreen({
       } else if (data.reason === 'superlike_already_sent_tonight') {
         setActionState(null);
         showToast(
-          "Hai già mandato un Superlike a questa persona stasera — puoi riprovare in un'altra serata."
+          "Hai già inviato un Superlike a questa persona stasera — puoi riprovare in un'altra serata."
         );
       } else {
         setActionState(null);

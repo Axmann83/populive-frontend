@@ -68,7 +68,7 @@ function describeEntry(entry) {
   const kindLabel = KIND_META[entry.kind]?.label || entry.kind;
   const who = entry.otherPerson ? entry.otherPerson.displayName : 'Qualcuno';
   return entry.otherPerson
-    ? `${who} ti ha mandato un ${kindLabel}`
+    ? `${who} ti ha inviato un ${kindLabel}`
     : `Hai ricevuto un ${kindLabel}`;
 }
 

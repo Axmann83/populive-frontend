@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { apiFetch, getOptimizedPhotoUrl } from './apiClient';
 import { usePhotoPreview } from './PhotoPreview';
-import { History } from './PopuLiveIcons';
+import { History, SheetCloseX } from './PopuLiveIcons';
 import ProfileFullScreen from './ProfileFullScreen';
 import WavesSpinner from './WavesSpinner';
 
@@ -42,10 +42,7 @@ export default function HistoricalBoard({ venueId, currentUserId, onClose }) {
   return (
     <div className="pl-sheet">
       <div className="pl-sheet-close" onClick={onClose}>
-        Chiudi{' '}
-        <span className="pl-sheet-close-x" aria-hidden="true">
-          ✕
-        </span>
+        Chiudi <SheetCloseX />
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
         <History size={18} color="var(--cyan)" />

@@ -171,8 +171,11 @@ Download) e ricaricato in Codemagic con lo stesso nome, togliendo il vecchio. Al
 ### Deep link (QR) e ritorno da Stripe
 
 I QR contengono URL `https://populive-frontend-production.up.railway.app/checkin/<id>` e `/mission/<id>`.
-Con App Links (Android) e Universal Links (iOS) quegli URL aprono direttamente l'app; lo stesso meccanismo
-riporta nell'app al termine del checkout Stripe. Perché funzioni il sito deve servire i due file in
+Con App Links (Android) e Universal Links (iOS) quegli URL aprono direttamente l'app; su Android lo stesso
+meccanismo riporta nell'app al termine del checkout Stripe. Su iPhone no (iOS apre un Universal Link solo se lo
+tocca l'utente, e Stripe rimanda da solo): dall'11/11 il checkout si apre con il plugin nostro `CheckoutSession`
+(`ios/App/App/CheckoutSessionPlugin.swift`, `ASWebAuthenticationSession`) e il backend fa tornare Stripe a
+`populive://app/?…`, che chiude la pagina da sola (`openCheckout` e `checkoutReturnParams` in `src/native.js`). Perché funzioni il sito deve servire i due file in
 `public/.well-known/` — vanno completati:
 - `assetlinks.json`: contiene già lo SHA-256 del keystore di debug di questa macchina; sostituire il placeholder con quello di release
   (debug: `keytool -list -v -keystore %USERPROFILE%\.android\debug.keystore -alias androiddebugkey -storepass android`;
@@ -262,7 +265,7 @@ Railpack, che riconosce un'app Create React App e la pubblica come **sito static
 ### Cosa serve lato backend
 
 - CORS (HTTP e Socket.io): aggiungere le origini `capacitor://localhost` (iOS) e `https://localhost` (Android)
-- Stripe: success/cancel URL devono restare sul dominio del frontend (`https://populive-frontend-production.up.railway.app/?pulse_sent=1` ecc.), così l'Universal/App Link riporta nell'app
+- Stripe: per web e Android success/cancel URL restano sul dominio del frontend (`/?pulse_purchase=done` ecc.), così l'App Link riporta nell'app; per l'app iOS (`appReturn: true`) passano da `/api/app-return` del backend verso `populive://app/?…`
 
 ## Struttura
 

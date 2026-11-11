@@ -324,7 +324,7 @@ export default function HistoricalStories({ people, currentUserId, venueName, da
               profilo" vedi il profilo completo.
             </p>
             <p style={{ fontSize: 13, lineHeight: 1.5, margin: '0 0 16px' }}>
-              Da qui puoi mandare solo un <strong>Superlike</strong>: se lo accetta, si apre la
+              Da qui puoi inviare solo un <strong>Superlike</strong>: se lo accetta, si apre la
               chat.
             </p>
             {/* stessi bottoni dei nostri dialoghi (Dialogs.jsx) */}

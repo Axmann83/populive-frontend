@@ -81,7 +81,7 @@ export default function Login({ onLoggedIn }) {
       {step === 'phone' && (
         <form onSubmit={submitPhone}>
           <h2>Accedi a PopuLive</h2>
-          <p className="pl-hint">Ti mandiamo un codice via SMS per verificare il tuo numero.</p>
+          <p className="pl-hint">Ti inviamo un codice via SMS per verificare il tuo numero.</p>
           <input
             type="tel"
             value={phoneNumber}
@@ -100,7 +100,7 @@ export default function Login({ onLoggedIn }) {
         <form onSubmit={submitCode}>
           <h2>Inserisci il codice</h2>
           <p className="pl-hint">
-            Ti abbiamo mandato un codice a 6 cifre via SMS al numero inserito.
+            Ti abbiamo inviato un codice a 6 cifre via SMS al numero inserito.
           </p>
           <input
             type="text"

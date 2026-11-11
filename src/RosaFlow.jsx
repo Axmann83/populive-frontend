@@ -11,6 +11,7 @@ import {
   pulsesLabel,
 } from './pulseNight';
 import WavesSpinner from './WavesSpinner';
+import { SheetCloseX } from './PopuLiveIcons';
 
 /**
  * ============================================================
@@ -67,10 +68,7 @@ export function PulseSend({ receiverId, arenaSessionId, onSent, onCancel }) {
   return (
     <div className="pl-sheet">
       <div className="pl-sheet-close" onClick={onCancel}>
-        Chiudi{' '}
-        <span className="pl-sheet-close-x" aria-hidden="true">
-          ✕
-        </span>
+        Chiudi <SheetCloseX />
       </div>
       <h3>Offri un drink con un Pulse</h3>
 
@@ -237,10 +235,7 @@ export function PulseNotification({ pulse, currentUserId, arenaSessionId, venueI
     <div className="pl-sheet">
       {/* Chiudere senza decidere (B9, 1/11): la Pulse resta com'era */}
       <div className="pl-sheet-close" onClick={() => onResolved({ action: 'closed' })}>
-        Chiudi{' '}
-        <span className="pl-sheet-close-x" aria-hidden="true">
-          ✕
-        </span>
+        Chiudi <SheetCloseX />
       </div>
       {/* Anteprima vera del profilo di chi la manda, stessa
           esperienza già costruita per il Superlike. */}
@@ -401,10 +396,7 @@ export function PulseRedeemSeal({ pulseId, redeemCode, venueId, onDone, onCancel
           onClick={onCancel}
           style={{ alignSelf: 'flex-end', margin: '14px 16px 0 0' }}
         >
-          Non ora{' '}
-          <span className="pl-sheet-close-x" aria-hidden="true">
-            ✕
-          </span>
+          Non ora <SheetCloseX />
         </div>
       )}
       <h3>Riscatta il tuo Pulse</h3>

@@ -9,6 +9,7 @@ import {
 import { PRIVACY_POLICY_URL, TERMS_URL, openLegalLink } from './legalLinks';
 import { askConfirm, showToast } from './Dialogs';
 import WavesSpinner from './WavesSpinner';
+import { SheetCloseX } from './PopuLiveIcons';
 
 const MAX_PHOTOS = 6; // stessa galleria di ProfileCreation.jsx
 
@@ -202,10 +203,7 @@ export default function Settings({ userId, onClose, onAccountDeleted }) {
   return (
     <div className="pl-sheet">
       <div className="pl-sheet-close" onClick={onClose}>
-        Chiudi{' '}
-        <span className="pl-sheet-close-x" aria-hidden="true">
-          ✕
-        </span>
+        Chiudi <SheetCloseX />
       </div>
       <h3>Impostazioni</h3>
 

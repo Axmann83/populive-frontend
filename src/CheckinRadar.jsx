@@ -5,7 +5,7 @@ import { usePhotoPreview } from './PhotoPreview';
 import ProfileFullScreen from './ProfileFullScreen';
 import { onPairHidden } from './ReportBlock';
 import QrScannerModal from './QrScannerModal';
-import { Armchair, Radar as RadarIcon, Signal, SignalMedium } from './PopuLiveIcons';
+import { Armchair, Radar as RadarIcon, Signal, SignalMedium, SheetCloseX } from './PopuLiveIcons';
 import { subscribeNearby } from './proximity';
 import { showToast } from './Dialogs';
 import WavesSpinner from './WavesSpinner';
@@ -1006,10 +1006,7 @@ export default function CheckinRadar({
                 setTableCode('');
               }}
             >
-              Annulla{' '}
-              <span className="pl-sheet-close-x" aria-hidden="true">
-                ✕
-              </span>
+              Annulla <SheetCloseX />
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
               <input

@@ -198,7 +198,7 @@ export default function LikeCenter({ userId, arenaSessionId, venueId, onOpenChat
         <div style={{ textAlign: 'center', marginTop: 60, color: 'var(--text-muted)' }}>
           <Bell size={32} style={{ marginBottom: 10, opacity: 0.5 }} />
           <p className="pl-hint">
-            {tab === 'ricevuti' ? 'Niente da decidere per ora.' : 'Non hai ancora mandato nulla.'}
+            {tab === 'ricevuti' ? 'Niente da decidere per ora.' : 'Non hai ancora inviato nulla.'}
           </p>
         </div>
       )}

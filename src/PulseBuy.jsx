@@ -5,7 +5,7 @@ import { apiFetch } from './apiClient';
 import { checkoutReturnParams, openCheckout } from './native';
 import { showToast } from './Dialogs';
 import { TERMS_URL, openLegalLink } from './legalLinks';
-import { PulseWaveIcon } from './PopuLiveIcons';
+import { PulseWaveIcon, SheetCloseX } from './PopuLiveIcons';
 import {
   usePulseNight,
   notifyPulseNightChanged,
@@ -199,10 +199,7 @@ export default function PulseBuySheet({ arenaSessionId, onClose, onBought }) {
       >
         <div className="pl-sheet">
           <div className="pl-sheet-close" onClick={onClose}>
-            Chiudi{' '}
-            <span className="pl-sheet-close-x" aria-hidden="true">
-              ✕
-            </span>
+            Chiudi <SheetCloseX />
           </div>
           <h3>Compra Pulse</h3>
           {body}

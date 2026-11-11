@@ -29,6 +29,7 @@ import {
   SignalMedium,
   ChevronLeft,
   Flag,
+  X,
 } from 'lucide-react';
 
 /**
@@ -99,4 +100,13 @@ export function PulseWaveIcon({ size = 20, color = 'currentColor', strokeWidth =
       <path d="M0.5 22a11.5 11.5 0 0 1 23 0" />
     </svg>
   );
+}
+
+/**
+ * ✕ dei tasti "Chiudi ✕" dei pannelli (B17, 11/11): icona e non
+ * carattere, perché su iPhone il carattere ✕ esce minuscolo anche a
+ * 20 px. Misura e margine in .pl-sheet-close-x (populive-styles.css).
+ */
+export function SheetCloseX() {
+  return <X className="pl-sheet-close-x" size={18} strokeWidth={2.5} aria-hidden="true" />;
 }

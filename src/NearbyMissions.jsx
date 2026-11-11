@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { apiFetch } from './apiClient';
-import { Target } from './PopuLiveIcons';
+import { Target, SheetCloseX } from './PopuLiveIcons';
 import MissionClaim from './MissionClaim';
 import WavesSpinner from './WavesSpinner';
 
@@ -45,10 +45,7 @@ export default function NearbyMissions({ onClose }) {
   return (
     <div className="pl-sheet">
       <div className="pl-sheet-close" onClick={onClose}>
-        Chiudi{' '}
-        <span className="pl-sheet-close-x" aria-hidden="true">
-          ✕
-        </span>
+        Chiudi <SheetCloseX />
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
         <Target size={18} color="var(--cyan)" />

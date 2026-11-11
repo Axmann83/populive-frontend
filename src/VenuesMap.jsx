@@ -8,6 +8,7 @@ import HistoricalStories from './HistoricalStories';
 import VenueSearchSelect from './VenueSearchSelect';
 import { showToast } from './Dialogs';
 import WavesSpinner from './WavesSpinner';
+import { SheetCloseX } from './PopuLiveIcons';
 
 /**
  * ============================================================
@@ -426,10 +427,7 @@ export default function VenuesMap({ currentUserId, onClose, mode = 'browse' }) {
       {subView}
       <div className="pl-sheet" style={subView ? { display: 'none' } : undefined}>
         <div className="pl-sheet-close" onClick={onClose}>
-          Chiudi{' '}
-          <span className="pl-sheet-close-x" aria-hidden="true">
-            ✕
-          </span>
+          Chiudi <SheetCloseX />
         </div>
         <h3>Sfoglia i locali</h3>
         <p className="pl-hint" style={{ marginBottom: 10 }}>

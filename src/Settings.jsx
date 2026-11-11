@@ -207,6 +207,8 @@ export default function Settings({ userId, onClose, onAccountDeleted }) {
       </div>
       <h3>Impostazioni</h3>
 
+      <DashboardShortcut />
+
       {/* Galleria vera, fino a MAX_PHOTOS (18/9) — sostituisce il
           vecchio cerchietto singolo. La prima è sempre quella
           mostrata ovunque nell'app fuori dal profilo a tutto
@@ -453,6 +455,56 @@ export default function Settings({ userId, onClose, onAccountDeleted }) {
         </div>
       )}
     </div>
+  );
+}
+
+/**
+ * Accesso alla dashboard (11/11) — nell'app non si può scrivere
+ * /dashboard nella barra degli indirizzi, quindi agli Architetti
+ * serve una voce qui. Agli altri non compare nulla; il controllo
+ * vero resta comunque quello del server dentro Dashboard.jsx.
+ */
+function DashboardShortcut() {
+  const [isArchitect, setIsArchitect] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    apiFetch('/api/auth/is-architect')
+      .then((r) => r.json())
+      .then((data) => !cancelled && setIsArchitect(Boolean(data.success && data.isArchitect)))
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (!isArchitect) return null;
+
+  // Stesso passaggio della push "Nuova segnalazione" (App.jsx): la
+  // dashboard si legge dall'indirizzo all'avvio, quindi si ricarica.
+  function openDashboard() {
+    window.history.pushState(null, '', '/dashboard');
+    window.location.reload();
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={openDashboard}
+      style={{
+        width: '100%',
+        padding: 12,
+        marginBottom: 18,
+        borderRadius: 12,
+        border: '1px solid var(--cyan)',
+        background: 'none',
+        color: 'var(--cyan)',
+        fontWeight: 700,
+        cursor: 'pointer',
+      }}
+    >
+      Apri la dashboard →
+    </button>
   );
 }
 

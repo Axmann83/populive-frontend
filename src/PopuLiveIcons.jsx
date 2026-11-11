@@ -30,6 +30,7 @@ import {
   ChevronLeft,
   Flag,
   X,
+  Gem,
 } from 'lucide-react';
 
 /**
@@ -109,4 +110,28 @@ export function PulseWaveIcon({ size = 20, color = 'currentColor', strokeWidth =
  */
 export function SheetCloseX() {
   return <X className="pl-sheet-close-x" size={18} strokeWidth={2.5} aria-hidden="true" />;
+}
+
+/**
+ * Segni accanto al nome (11/11): ✓ blu del Verificato (come Instagram) e
+ * diamante del Premium. Il Premium ha anche l'anello sfumato attorno alla
+ * foto (.pl-premium-ring in populive-styles.css): colori diversi dall'oro
+ * di Big Spender e Founder.
+ */
+export function IdentityBadges({ isVerified, isPremium, size = 14 }) {
+  if (!isVerified && !isPremium) return null;
+  return (
+    <span className="pl-identity-badges">
+      {isVerified && (
+        <BadgeCheck
+          size={size}
+          color="#fff"
+          fill="#3897F0"
+          strokeWidth={2.2}
+          aria-label="Verificato"
+        />
+      )}
+      {isPremium && <Gem size={size} color="#B57BFF" strokeWidth={2.4} aria-label="Premium" />}
+    </span>
+  );
 }

@@ -745,6 +745,11 @@ export default function App() {
       window.history.pushState(null, '', '/dashboard?section=reports');
       window.location.reload();
     }
+    // Nuova verifica (lotto 9), solo agli Architetti: sezione Verifiche.
+    else if (type === 'verification_request') {
+      window.history.pushState(null, '', '/dashboard?section=verifications');
+      window.location.reload();
+    }
     // openMatch e navigateToTab sono funzioni normali, ricreate a ogni
     // render: servono solo nel momento del tocco.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -903,7 +908,7 @@ export default function App() {
     const confirmed = await askConfirm({
       title: 'Like senza punti',
       message:
-        'Da qui in poi i tuoi Like in questa Arena non ti fanno più guadagnare punti. Vuoi sbloccarne altri 10?',
+        'Da qui in poi i tuoi Like di stasera non ti fanno più guadagnare punti. Vuoi sbloccarne altri 10?',
       confirmLabel: 'Sblocca',
     });
     if (!confirmed) return;

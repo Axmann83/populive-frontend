@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Settings as SettingsIcon, Zap, BadgeCheck, SheetCloseX } from './PopuLiveIcons';
+import { Settings as SettingsIcon, Zap, SheetCloseX } from './PopuLiveIcons';
 
 import { apiFetch, getOptimizedPhotoUrl } from './apiClient';
 import { usePhotoPreview } from './PhotoPreview';
 import { checkoutReturnParams, openCheckout } from './native';
 import WavesSpinner from './WavesSpinner';
+import { StatusBadgeCard, PurchaseCard } from './ProfileCards';
+import VerificationCard from './Verification';
 
 const MAX_HASHTAGS = 5;
 
@@ -216,7 +218,7 @@ export default function MyProfile({ userId, arenaSessionId, onOpenSettings }) {
 }
 
 function PremiumVerifiedSection({ profile, arenaSessionId, onProfileRefresh }) {
-  const [purchasing, setPurchasing] = useState(null); // 'premium' | 'verified' | null
+  const [purchasing, setPurchasing] = useState(null); // 'premium' | null
   const [error, setError] = useState(null);
 
   const buy = useCallback(
@@ -253,8 +255,6 @@ function PremiumVerifiedSection({ profile, arenaSessionId, onProfileRefresh }) {
         if (purchaseData.success) {
           if (productType === 'premium_subscription') {
             onProfileRefresh({ isPremium: true });
-          } else if (productType === 'verified_badge') {
-            onProfileRefresh({ verificationPending: true });
           }
         } else {
           setError('Qualcosa è andato storto — riprova.');
@@ -281,117 +281,28 @@ function PremiumVerifiedSection({ profile, arenaSessionId, onProfileRefresh }) {
           sub={
             profile.premiumExpiresAt
               ? `Fino al ${new Date(profile.premiumExpiresAt).toLocaleDateString('it-IT')}`
-              : 'Punti moltiplicati 1.2x'
+              : 'Punti moltiplicati 1.5x'
           }
         />
       ) : (
         <PurchaseCard
           icon={Zap}
           title="Diventa Premium"
-          sub="1.2x sui punti guadagnati per 30 giorni"
+          sub="30 giorni: punti 1.5x, +5 Superlike (fino a 15 a settimana), segno Premium sul profilo"
           buttonLabel={purchasing === 'premium' ? <WavesSpinner size="sm" inline /> : 'Attiva'}
           disabled={purchasing !== null}
           onClick={() => buy('premium_subscription', 'premium')}
         />
       )}
 
-      {/* Verificato */}
-      {profile?.isVerified ? (
-        <StatusBadgeCard
-          icon={BadgeCheck}
-          color="var(--gold-medal, #E8C77E)"
-          title="Profilo Verificato"
-          sub="La tua identità è confermata"
-        />
-      ) : profile?.verificationPending ? (
-        <StatusBadgeCard
-          icon={BadgeCheck}
-          color="var(--text-muted)"
-          title="Verifica in corso"
-          sub="La rivediamo a mano, ci vuole un po'"
-        />
-      ) : (
-        <PurchaseCard
-          icon={BadgeCheck}
-          title="Verifica il profilo"
-          sub="Badge identità confermata, revisione manuale"
-          buttonLabel={purchasing === 'verified' ? <WavesSpinner size="sm" inline /> : 'Richiedi'}
-          disabled={purchasing !== null}
-          onClick={() => buy('verified_badge', 'verified')}
-        />
-      )}
+      {/* Verificato: gratis, selfie con un gesto (lotto 9, Verification.jsx) */}
+      <VerificationCard />
 
       {error && (
         <p className="pl-error" style={{ marginTop: 8 }}>
           {error}
         </p>
       )}
-    </div>
-  );
-}
-
-function StatusBadgeCard({ icon: Icon, color, title, sub }) {
-  return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 12,
-        background: 'var(--surface)',
-        border: `1px solid ${color}55`,
-        borderRadius: 14,
-        padding: 12,
-        marginBottom: 8,
-        boxShadow: 'var(--shadow-sm)',
-      }}
-    >
-      <Icon size={22} color={color} />
-      <div>
-        <div style={{ fontSize: 12.5, fontWeight: 700, color }}>{title}</div>
-        <div style={{ fontSize: 10.5, color: 'var(--text-muted)' }}>{sub}</div>
-      </div>
-    </div>
-  );
-}
-
-function PurchaseCard({ icon: Icon, title, sub, buttonLabel, disabled, onClick }) {
-  return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 12,
-        background: 'var(--surface)',
-        border: '1px solid rgba(228,212,200,0.12)',
-        borderRadius: 14,
-        padding: 12,
-        marginBottom: 8,
-        boxShadow: 'var(--shadow-sm)',
-      }}
-    >
-      <Icon size={22} color="var(--teak)" />
-      <div style={{ flex: 1 }}>
-        <div style={{ fontSize: 12.5, fontWeight: 700 }}>{title}</div>
-        <div style={{ fontSize: 10.5, color: 'var(--text-muted)' }}>{sub}</div>
-      </div>
-      <button
-        onClick={onClick}
-        disabled={disabled}
-        style={{
-          background: 'var(--cyan)',
-          color: '#fff',
-          border: 'none',
-          borderRadius: 10,
-          padding: '8px 14px',
-          fontSize: 11,
-          fontWeight: 700,
-          cursor: disabled ? 'default' : 'pointer',
-          opacity: disabled ? 0.6 : 1,
-          flexShrink: 0,
-        }}
-      >
-        {buttonLabel}
-      </button>
     </div>
   );
 }

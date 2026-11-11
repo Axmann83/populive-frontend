@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { apiFetch, getOptimizedPhotoUrl, getStoredUserId } from './apiClient';
 import { usePhotoPreview } from './PhotoPreview';
-import { Link2, Coins, Crown, Sparkles } from './PopuLiveIcons';
+import { Link2, Coins, Crown, Sparkles, IdentityBadges } from './PopuLiveIcons';
 import { SafetyMenuButton } from './ReportBlock';
 import WavesSpinner from './WavesSpinner';
 
@@ -160,6 +160,11 @@ export default function ProfileDetail({ userId, arenaSessionId, onClose, onBack 
               <span style={{ fontFamily: "'Unbounded',sans-serif", fontWeight: 700, fontSize: 18 }}>
                 {profile.displayName}
               </span>
+              <IdentityBadges
+                isVerified={profile.isVerified}
+                isPremium={profile.isPremium}
+                size={16}
+              />
               {profile.isTopConnector && <Link2 size={13} color="#C7C9CC" title="Top Connector" />}
               {profile.isTopSpender && <Coins size={13} color="#E8C77E" title="Top Spender" />}
               {profile.isFounder && <Crown size={13} color="#E8C77E" title="Founder" />}

@@ -13,6 +13,7 @@ import {
   Armchair,
   Crown,
   Flag,
+  BadgeCheck,
 } from './PopuLiveIcons';
 import LiveRanking from './LiveRanking';
 import { askConfirm, showToast } from './Dialogs';
@@ -41,14 +42,18 @@ export default function Dashboard({ userId }) {
   const [accessState, setAccessState] = useState('checking'); // checking | denied | granted
   // ?section=reports (tocco sulla push "Nuova segnalazione") apre
   // direttamente le Segnalazioni
-  const [activeSection, setActiveSection] = useState(() =>
-    new URLSearchParams(window.location.search).get('section') === 'reports'
-      ? 'segnalazioni'
-      : 'missioni'
-  );
+  // ?section=verifications (push "Nuova verifica", lotto 9) apre le Verifiche
+  const [activeSection, setActiveSection] = useState(() => {
+    const section = new URLSearchParams(window.location.search).get('section');
+    if (section === 'reports') return 'segnalazioni';
+    if (section === 'verifications') return 'verifiche';
+    return 'missioni';
+  });
   // Segnalazioni ancora da decidere (B2): il numero sta sulla scheda,
   // così si vede appena si apre la dashboard.
   const [openReportCount, setOpenReportCount] = useState(0);
+  // Selfie da controllare (Verificato, lotto 9): numero sulla scheda.
+  const [pendingVerificationCount, setPendingVerificationCount] = useState(0);
 
   useEffect(() => {
     apiFetch('/api/auth/is-architect')
@@ -62,6 +67,10 @@ export default function Dashboard({ userId }) {
     apiFetch('/api/dashboard/reports')
       .then((r) => r.json())
       .then((data) => data.success && setOpenReportCount(data.openCount))
+      .catch(() => {});
+    apiFetch('/api/dashboard/verifications')
+      .then((r) => r.json())
+      .then((data) => data.success && setPendingVerificationCount(data.requests.length))
       .catch(() => {});
   }, [accessState]);
 
@@ -173,6 +182,14 @@ export default function Dashboard({ userId }) {
             onClick={() => setActiveSection('segnalazioni')}
           />
           <SectionTab
+            icon={BadgeCheck}
+            label={
+              pendingVerificationCount > 0 ? `Verifiche (${pendingVerificationCount})` : 'Verifiche'
+            }
+            active={activeSection === 'verifiche'}
+            onClick={() => setActiveSection('verifiche')}
+          />
+          <SectionTab
             icon={SettingsIcon}
             label="Funzioni"
             active={activeSection === 'funzionalita'}
@@ -196,6 +213,9 @@ export default function Dashboard({ userId }) {
         {activeSection === 'prezzi' && <PricingSection />}
         {activeSection === 'funzionalita' && <FeatureFlagsSection />}
         {activeSection === 'segnalazioni' && <ReportsSection onOpenCount={setOpenReportCount} />}
+        {activeSection === 'verifiche' && (
+          <VerificationsSection onPendingCount={setPendingVerificationCount} />
+        )}
       </div>
     </div>
   );
@@ -1986,6 +2006,121 @@ const REPORT_REASON_LABELS = {
   fake_or_spam: 'Profilo falso, spam o truffa',
 };
 const REPORT_CONTEXT_LABELS = { profile: 'Profilo', photo: 'Foto', chat: 'Chat' };
+
+/**
+ * Verifiche (lotto 9, 11/11): selfie con il gesto richiesto accanto alle
+ * foto del profilo. Approva = spunta blu; Rifiuta con un motivo, che
+ * l'utente vede nel profilo (può riprovare con un gesto nuovo).
+ */
+function VerificationsSection({ onPendingCount }) {
+  const [data, setData] = useState(null);
+  const [busyId, setBusyId] = useState(null);
+  const { photoTapProps, photoPreview } = usePhotoPreview();
+
+  const load = useCallback(async () => {
+    try {
+      const res = await apiFetch('/api/dashboard/verifications');
+      const json = await res.json();
+      setData(json.success ? json : { requests: [], rejectReasons: [] });
+      if (json.success) onPendingCount?.(json.requests.length);
+    } catch {
+      setData({ requests: [], rejectReasons: [] });
+    }
+  }, [onPendingCount]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  async function review(request, approve, rejectReason) {
+    setBusyId(request.id);
+    try {
+      const res = await apiFetch(`/api/dashboard/verifications/${request.id}/review`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ approve, rejectReason }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        showToast(approve ? `${request.user.displayName} è verificato.` : 'Verifica rifiutata.', {
+          tone: 'success',
+        });
+      } else {
+        showToast('Già decisa da un altro Architetto, o qualcosa è andato storto.', {
+          tone: 'error',
+        });
+      }
+      await load();
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  if (!data) return <p className="pl-hint">Caricamento…</p>;
+  if (data.requests.length === 0) {
+    return <p className="pl-hint">Nessun selfie da controllare.</p>;
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <p className="pl-hint">
+        Controlla che nel selfie si veda il gesto richiesto e che il volto sia quello delle foto.
+      </p>
+      {data.requests.map((r) => (
+        <div key={r.id} className="pl-verify-review">
+          <div style={{ fontWeight: 700 }}>{r.user.displayName}</div>
+          <div className="pl-hint" style={{ margin: '2px 0 8px' }}>
+            Gesto richiesto: <strong>{r.gesture?.text}</strong>
+          </div>
+          <div className="pl-verify-review-photos">
+            <img
+              className="pl-verify-review-selfie"
+              src={getOptimizedPhotoUrl(r.selfieUrl, { width: 400 })}
+              alt={`Selfie di ${r.user.displayName}`}
+              {...photoTapProps(r.selfieUrl, `Selfie di ${r.user.displayName}`)}
+            />
+            <div className="pl-verify-review-profile">
+              {r.user.photoUrls.length === 0 && (
+                <span style={{ fontSize: 28 }}>{r.user.avatarEmoji}</span>
+              )}
+              {r.user.photoUrls.map((url) => (
+                <img
+                  key={url}
+                  src={getOptimizedPhotoUrl(url, { width: 160, height: 160 })}
+                  alt={`Foto di ${r.user.displayName}`}
+                  {...photoTapProps(url, r.user.displayName)}
+                />
+              ))}
+            </div>
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
+            <button
+              type="button"
+              className="pl-send-btn"
+              style={{ flex: '1 1 100%' }}
+              disabled={busyId === r.id}
+              onClick={() => review(r, true)}
+            >
+              Approva
+            </button>
+            {data.rejectReasons.map((reason) => (
+              <button
+                key={reason.key}
+                type="button"
+                className="pl-verify-reject"
+                disabled={busyId === r.id}
+                onClick={() => review(r, false, reason.key)}
+              >
+                Rifiuta: {reason.text}
+              </button>
+            ))}
+          </div>
+        </div>
+      ))}
+      {photoPreview}
+    </div>
+  );
+}
 
 function ReportsSection({ onOpenCount }) {
   const [view, setView] = useState('open'); // open | closed

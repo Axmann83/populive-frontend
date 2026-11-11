@@ -5,7 +5,14 @@ import { usePhotoPreview } from './PhotoPreview';
 import ProfileFullScreen from './ProfileFullScreen';
 import { onPairHidden } from './ReportBlock';
 import QrScannerModal from './QrScannerModal';
-import { Armchair, Radar as RadarIcon, Signal, SignalMedium, SheetCloseX } from './PopuLiveIcons';
+import {
+  Armchair,
+  Radar as RadarIcon,
+  Signal,
+  SignalMedium,
+  SheetCloseX,
+  IdentityBadges,
+} from './PopuLiveIcons';
 import { subscribeNearby } from './proximity';
 import { showToast } from './Dialogs';
 import WavesSpinner from './WavesSpinner';
@@ -1147,18 +1154,21 @@ function RadarCard({ personId, arenaSessionId, proximityLevel, onClick }) {
 
   return (
     <div className="pl-radar-card" onClick={onClick} style={{ cursor: 'pointer' }}>
-      <span className="pl-radar-card-avatar" style={ringStyleFor(badgeColors)}>
-        {preview?.photoUrl ? (
-          <img
-            src={getOptimizedPhotoUrl(preview.photoUrl, { width: 32, height: 32 })}
-            alt={preview.displayName}
-            {...photoTapProps(preview.photoUrl, preview.displayName)}
-          />
-        ) : (
-          preview?.avatarEmoji || '🙂'
-        )}
+      <span className={preview?.isPremium ? 'pl-premium-ring' : undefined}>
+        <span className="pl-radar-card-avatar" style={ringStyleFor(badgeColors)}>
+          {preview?.photoUrl ? (
+            <img
+              src={getOptimizedPhotoUrl(preview.photoUrl, { width: 32, height: 32 })}
+              alt={preview.displayName}
+              {...photoTapProps(preview.photoUrl, preview.displayName)}
+            />
+          ) : (
+            preview?.avatarEmoji || '🙂'
+          )}
+        </span>
       </span>
       <span className="pl-radar-card-id">{preview?.displayName || 'Caricamento…'}</span>
+      <IdentityBadges isVerified={preview?.isVerified} isPremium={preview?.isPremium} size={13} />
       {/* Vicinanza via Bluetooth (D4): solo l'icona, senza testo —
           segnale pieno = vicino, metà segnale = media distanza. */}
       {proximityLevel === 'near' && (

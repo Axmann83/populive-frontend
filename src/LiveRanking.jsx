@@ -4,7 +4,7 @@ import { API_BASE, getOptimizedPhotoUrl } from './apiClient';
 import ProfileFullScreen from './ProfileFullScreen';
 import ProfileDetail from './ProfileDetail';
 import AdminChatPanel from './AdminChatPanel';
-import { Link2, Coins, Crown } from './PopuLiveIcons';
+import { Link2, Coins, Crown, IdentityBadges } from './PopuLiveIcons';
 import { usePhotoPreview } from './PhotoPreview';
 import { apiFetch } from './apiClient';
 import { onPairHidden } from './ReportBlock';
@@ -100,10 +100,12 @@ export default function LiveRanking({
       if (genderFilter) params.set('gender', genderFilter);
       const qs = params.toString();
 
-      const url = isGlobal
-        ? `${API_BASE}/api/ranking/global${qs ? `?${qs}` : ''}`
-        : `${API_BASE}/api/arenas/${arenaSessionId}/ranking${qs ? `?${qs}` : ''}`;
-      const res = await fetch(url);
+      // Con l'accesso (apiFetch manda il token): dall'11/11 le classifiche
+      // non rispondono più senza.
+      const path = isGlobal
+        ? `/api/ranking/global${qs ? `?${qs}` : ''}`
+        : `/api/arenas/${arenaSessionId}/ranking${qs ? `?${qs}` : ''}`;
+      const res = await apiFetch(path);
       const data = await res.json();
       if (mountedRef.current && data.success) {
         setRanking(data.ranking);
@@ -420,7 +422,7 @@ function RankRow({ entry, isMe, delta, onClick, photoTapProps }) {
           non coprono mai il viso: stanno impilati in un angolino
           dell'avatar (in basso a destra), non accanto al nome —
           stesso pattern sia qui che nel radar, per coerenza visiva. */}
-      <span className="pl-rank-avatar-wrap">
+      <span className={`pl-rank-avatar-wrap${entry.isPremium ? ' pl-premium-ring' : ''}`}>
         <span className="pl-rank-avatar">
           {entry.photoUrl ? (
             <img
@@ -439,7 +441,10 @@ function RankRow({ entry, isMe, delta, onClick, photoTapProps }) {
         </span>
       </span>
 
-      <span className="pl-rank-name">{entry.displayName}</span>
+      <span className="pl-rank-name">
+        {entry.displayName}{' '}
+        <IdentityBadges isVerified={entry.isVerified} isPremium={entry.isPremium} size={12} />
+      </span>
 
       {/* Badge Top Connector A VITA (19/9, idea dell'utente) — a
           differenza dell'iconcina ⛓ nell'angolino (quella è SOLO

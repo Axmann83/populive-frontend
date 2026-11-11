@@ -4,7 +4,16 @@ import { apiFetch, getOptimizedPhotoUrl } from './apiClient';
 import { checkoutReturnParams, openCheckout } from './native';
 import { PulseSend } from './RosaFlow';
 import ProfileDetail from './ProfileDetail';
-import { Heart, Star, PulseWaveIcon, Link2, Coins, Crown, Sparkles } from './PopuLiveIcons';
+import {
+  Heart,
+  Star,
+  PulseWaveIcon,
+  Link2,
+  Coins,
+  Crown,
+  Sparkles,
+  IdentityBadges,
+} from './PopuLiveIcons';
 import { askConfirm, showToast } from './Dialogs';
 import { SafetyMenuButton } from './ReportBlock';
 import WavesSpinner from './WavesSpinner';
@@ -377,6 +386,11 @@ export default function ProfileFullScreen({
                 >
                   {profile.displayName}
                 </span>
+                <IdentityBadges
+                  isVerified={profile.isVerified}
+                  isPremium={profile.isPremium}
+                  size={18}
+                />
                 {profile.isTopConnector && (
                   <Link2 size={14} color="#C7C9CC" title="Top Connector" />
                 )}

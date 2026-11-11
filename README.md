@@ -264,7 +264,8 @@ Railpack, che riconosce un'app Create React App e la pubblica come **sito static
 
 ### Cosa serve lato backend
 
-- CORS (HTTP e Socket.io): aggiungere le origini `capacitor://localhost` (iOS) e `https://localhost` (Android)
+- CORS (HTTP e Socket.io): deve accettare le origini `capacitor://localhost` (iOS) e `https://localhost` (Android);
+  oggi il backend risponde `Access-Control-Allow-Origin: *`
 - Stripe: per web e Android success/cancel URL restano sul dominio del frontend (`/?pulse_purchase=done` ecc.), così l'App Link riporta nell'app; per l'app iOS (`appReturn: true`) passano da `/api/app-return` del backend verso `populive://app/?…`
 
 ## Struttura
@@ -276,7 +277,8 @@ src/App.jsx             root dell'app e navigazione tra le schermate
 src/apiClient.js        client HTTP centralizzato (token, sessione, apiFetch)
 src/Dialogs.jsx         avvisi (showToast) e conferme (askConfirm) dell'app, al posto di alert/confirm
 src/ReportBlock.jsx     segnala e blocca (menu ⋯ dei profili, finestra della segnalazione, conferma del blocco)
-src/*.jsx               schermate e componenti (Login, Dashboard, ExploreMap, ChatCenter, ...)
+src/Dashboard.jsx       dashboard degli Architetti su /dashboard (nell'app: Impostazioni → "Apri la dashboard →")
+src/*.jsx               schermate e componenti (Login, ExploreMap, ChatCenter, ...)
 src/native.js           ponte verso Capacitor (unico file che lo importa): browser in-app, deep link, back, posizione, vibrazione, push, Bluetooth
 src/proximity.js        vicinanza via Bluetooth nel radar (fasce dal segnale)
 src/legalLinks.js       indirizzi di Privacy Policy e Termini, aperti nel browser in-app nell'app

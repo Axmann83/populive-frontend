@@ -263,22 +263,36 @@ export default function App() {
   // login non c'è nessuna serata in corso né un QR appena aperto, si
   // chiede al server e si riprende la sua (la ripresa la riconferma).
   const serverResumeCheckedRef = useRef(false);
+  const arrivedViaQrRef = useRef(arrivedViaQr);
+  arrivedViaQrRef.current = arrivedViaQr;
+  const resumeFromServer = useCallback(() => {
+    apiFetch('/api/checkin/current')
+      .then((res) => res.json())
+      .then((data) => {
+        if (!data?.current || arrivedViaQrRef.current || getLastVenue()) return;
+        setVenueId(data.current.venueId);
+        setResumeSessionId(data.current.arenaSessionId);
+        setArrivedViaQr(true);
+      })
+      .catch(() => {});
+  }, []);
   useEffect(() => {
     if (authState !== 'app' || !userId || serverResumeCheckedRef.current) return;
     serverResumeCheckedRef.current = true;
     // arrivedViaQr è già vero se all'avvio è arrivato un QR o se c'era
     // una serata memorizzata (v. effetto qui sopra).
     if (arrivedViaQr || getLastVenue()) return;
-    apiFetch('/api/checkin/current')
-      .then((res) => res.json())
-      .then((data) => {
-        if (!data?.current) return;
-        setVenueId(data.current.venueId);
-        setResumeSessionId(data.current.arenaSessionId);
-        setArrivedViaQr(true);
-      })
-      .catch(() => {});
-  }, [authState, userId, arrivedViaQr]);
+    resumeFromServer();
+  }, [authState, userId, arrivedViaQr, resumeFromServer]);
+  // Anche al ritorno in primo piano (11/11): una scheda del sito aperta
+  // da prima restava su "Inquadra il QR" mentre lo stesso account era
+  // entrato nella serata da un altro dispositivo.
+  useEffect(() => {
+    if (authState !== 'app' || !userId) return undefined;
+    return onAppForeground(() => {
+      if (!arrivedViaQrRef.current && !getLastVenue()) resumeFromServer();
+    });
+  }, [authState, userId, resumeFromServer]);
 
   // Esito del controllo al ritorno da Stripe: true se c'era da dire qualcosa.
   function showPurchaseOutcome(outcome) {
@@ -1082,6 +1096,22 @@ export default function App() {
       notifyPulseNightChanged();
       setPulseListVersion((v) => v + 1);
       refreshPulseBadge();
+    });
+    // Esito del Verificato (lotto 9): con l'app aperta iOS non mostra la
+    // push (presentationOptions vuoto, v. capacitor.config.ts), quindi
+    // l'avviso arriva qui; la scheda del profilo si aggiorna da sola.
+    socket.on('verification_result', ({ result, rejectReason } = {}) => {
+      window.dispatchEvent(new Event('pl-verification-changed'));
+      if (result === 'approved') {
+        showToast("Profilo verificato ✓ Ora accanto al tuo nome c'è la spunta blu.", {
+          tone: 'success',
+          duration: 7000,
+        });
+      } else {
+        showToast(`Verifica non riuscita. ${rejectReason || ''} Puoi riprovare dal profilo.`, {
+          duration: 9000,
+        });
+      }
     });
     socket.on('pulse_purchase_refunded', ({ venueName } = {}) => {
       notifyPulseNightChanged();

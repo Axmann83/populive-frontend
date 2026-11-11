@@ -35,6 +35,9 @@ export default function VerificationCard() {
 
   useEffect(() => {
     load();
+    // Esito arrivato mentre si è nell'app (evento socket in App.jsx)
+    window.addEventListener('pl-verification-changed', load);
+    return () => window.removeEventListener('pl-verification-changed', load);
   }, [load]);
 
   async function start() {

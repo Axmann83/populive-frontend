@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { io } from 'socket.io-client';
 import {
-  openExternal,
+  openCheckout,
+  checkoutReturnParams,
   onAppUrlOpen,
   onAppForeground,
   onInAppBrowserClosed,
@@ -916,12 +917,12 @@ export default function App() {
       const purchaseRes = await apiFetch('/api/purchases/initiate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ productId: product.id, arenaSessionId }),
+        body: JSON.stringify({ productId: product.id, arenaSessionId, ...checkoutReturnParams() }),
       });
       const purchaseData = await purchaseRes.json();
 
       if (purchaseData.requiresPayment) {
-        openExternal(purchaseData.checkoutUrl);
+        openCheckout(purchaseData.checkoutUrl);
       }
     } catch (err) {
       console.error('Errore nella proposta di acquisto Like extra:', err);

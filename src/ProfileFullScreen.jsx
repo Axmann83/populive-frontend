@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { apiFetch, getOptimizedPhotoUrl } from './apiClient';
-import { openExternal } from './native';
+import { checkoutReturnParams, openCheckout } from './native';
 import { PulseSend } from './RosaFlow';
 import ProfileDetail from './ProfileDetail';
 import { Heart, Star, PulseWaveIcon, Link2, Coins, Crown, Sparkles } from './PopuLiveIcons';
@@ -178,12 +178,12 @@ export default function ProfileFullScreen({
       const purchaseRes = await apiFetch('/api/purchases/initiate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ productId: product.id, arenaSessionId }),
+        body: JSON.stringify({ productId: product.id, arenaSessionId, ...checkoutReturnParams() }),
       });
       const purchaseData = await purchaseRes.json();
 
       if (purchaseData.requiresPayment) {
-        openExternal(purchaseData.checkoutUrl);
+        openCheckout(purchaseData.checkoutUrl);
       } else {
         // freeOrTest (account di prova): il saldo è già ricaricato sul
         // server, lo rileggiamo perché il bottone si riaccenda (B11).

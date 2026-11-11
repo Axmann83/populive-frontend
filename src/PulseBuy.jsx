@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { apiFetch } from './apiClient';
-import { openExternal } from './native';
+import { checkoutReturnParams, openCheckout } from './native';
 import { showToast } from './Dialogs';
 import { TERMS_URL, openLegalLink } from './legalLinks';
 import { PulseWaveIcon } from './PopuLiveIcons';
@@ -47,7 +47,7 @@ export default function PulseBuySheet({ arenaSessionId, onClose, onBought }) {
       const res = await apiFetch('/api/pulse-purchases', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ arenaSessionId, quantity }),
+        body: JSON.stringify({ arenaSessionId, quantity, ...checkoutReturnParams() }),
       });
       const data = await res.json();
       if (!data.success) {
@@ -57,7 +57,7 @@ export default function PulseBuySheet({ arenaSessionId, onClose, onBought }) {
       if (data.requiresPayment) {
         markCheckoutStarted();
         setWaitingForStripe(true);
-        openExternal(data.checkoutUrl);
+        openCheckout(data.checkoutUrl);
         return;
       }
       // Account di prova: accreditate subito, senza Stripe.

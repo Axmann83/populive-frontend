@@ -43,6 +43,61 @@ export async function openExternal(url) {
   }
 }
 
+/**
+ * ============================================================
+ * PAGINA DI PAGAMENTO DI STRIPE (B18, 11/11/2026)
+ * ============================================================
+ * Web e Android: come openExternal (su Android, dopo il pagamento,
+ * l'App Link riapre l'app da solo). iPhone: plugin nostro
+ * CheckoutSession (CheckoutSessionPlugin.swift, ASWebAuthenticationSession),
+ * perché iOS non apre un Universal Link quando è Stripe a rimandare in
+ * automatico: si restava sulla pagina web di PopuLive. Il backend, se
+ * gli si passa appReturn (checkoutReturnParams), fa tornare Stripe a
+ * populive://app/?… e la pagina si chiude da sola: quell'indirizzo va
+ * agli stessi handler di onAppUrlOpen, come un Universal Link.
+ * ============================================================
+ */
+const CheckoutSession = registerPlugin('CheckoutSession');
+const CHECKOUT_RETURN_SCHEME = 'populive';
+const appUrlHandlers = new Set();
+
+function usesCheckoutSession() {
+  return Capacitor.getPlatform() === 'ios';
+}
+
+function dispatchAppUrl(url) {
+  try {
+    const parsed = new URL(url);
+    appUrlHandlers.forEach((handler) =>
+      handler({ pathname: parsed.pathname || '/', search: parsed.search })
+    );
+  } catch {
+    /* URL non valido: ignorato */
+  }
+}
+
+/** Da aggiungere al corpo delle richieste che creano un pagamento Stripe. */
+export function checkoutReturnParams() {
+  return usesCheckoutSession() ? { appReturn: true } : {};
+}
+
+/** Apre la pagina di pagamento di Stripe (checkoutUrl dal backend). */
+export async function openCheckout(url) {
+  if (!usesCheckoutSession()) return openExternal(url);
+  let result;
+  try {
+    result = await CheckoutSession.open({ url, callbackScheme: CHECKOUT_RETURN_SCHEME });
+  } catch {
+    // Pagina non aperta: ripieghiamo sul browser in-app (al ritorno
+    // resta il controllo alla chiusura, onInAppBrowserClosed).
+    return openExternal(url);
+  }
+  // Chiusa con "Annulla" senza tornare da Stripe: come l'annullamento
+  // (il server controlla comunque se nel frattempo il pagamento è arrivato).
+  dispatchAppUrl(result?.url || `${CHECKOUT_RETURN_SCHEME}://app/?pulse_purchase=cancelled`);
+  return undefined;
+}
+
 /** Chiude il browser in-app se aperto (no-op sul web). */
 export async function closeInAppBrowser() {
   if (!isNative()) return;
@@ -74,6 +129,8 @@ export function onInAppBrowserClosed(handler) {
  */
 export function onAppUrlOpen(handler) {
   if (!isNative()) return () => {};
+  // Anche il ritorno da Stripe su iPhone (openCheckout) arriva qui.
+  appUrlHandlers.add(handler);
   const listener = CapApp.addListener('appUrlOpen', ({ url }) => {
     try {
       const parsed = new URL(url);
@@ -83,6 +140,7 @@ export function onAppUrlOpen(handler) {
     }
   });
   return () => {
+    appUrlHandlers.delete(handler);
     listener.then((l) => l.remove());
   };
 }

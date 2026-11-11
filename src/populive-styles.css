@@ -809,12 +809,24 @@ button {
   flex-direction: column;
   gap: 6px;
 }
+/* B17 (11/11): prima testo a 11 px, difficile da toccare sull'iPhone.
+   Ora area di tocco di almeno 44 px (minimo di Apple), a destra; il
+   margine negativo in alto non allunga i pannelli. */
 .pl-sheet-close {
-  text-align: right;
-  font-size: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  align-self: flex-end;
+  width: fit-content;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 4px 0 14px;
+  margin: -10px -4px 0 auto;
+  font-size: 14px;
+  font-weight: 600;
   color: var(--text-muted);
   cursor: pointer;
-  margin-bottom: 6px;
+  -webkit-tap-highlight-color: transparent;
 }
 .pl-pulse-option {
   display: flex;

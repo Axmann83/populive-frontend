@@ -3,7 +3,7 @@ import { Settings as SettingsIcon, Zap, BadgeCheck } from './PopuLiveIcons';
 
 import { apiFetch, getOptimizedPhotoUrl } from './apiClient';
 import { usePhotoPreview } from './PhotoPreview';
-import { openExternal } from './native';
+import { checkoutReturnParams, openCheckout } from './native';
 import WavesSpinner from './WavesSpinner';
 
 const MAX_HASHTAGS = 5;
@@ -235,12 +235,16 @@ function PremiumVerifiedSection({ profile, arenaSessionId, onProfileRefresh }) {
         const purchaseRes = await apiFetch('/api/purchases/initiate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ productId: product.id, arenaSessionId }),
+          body: JSON.stringify({
+            productId: product.id,
+            arenaSessionId,
+            ...checkoutReturnParams(),
+          }),
         });
         const purchaseData = await purchaseRes.json();
 
         if (purchaseData.requiresPayment) {
-          openExternal(purchaseData.checkoutUrl);
+          openCheckout(purchaseData.checkoutUrl);
           return; // usciamo dall'app per andare su Stripe
         }
 
